@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+{% if not usuario %}
+  <h1>Ayuda después de un desastre, con seguimiento</h1>
+  <p>Si el desastre le afectó, cree una cuenta para pedir ayuda y ver cómo avanza su solicitud. Si quiere ayudar, puede registrarse como donante.</p>
+  <div class="acciones">
+    <a class="boton" href="/registro">Crear cuenta</a>
+    <a class="boton" href="/entrar">Entrar</a>
+  </div>
+{% else %}
+  <h1>Hola, {{ usuario.nombre.split(' ')[0] }}</h1>
+  <div class="tarjetas">
+  {% if usuario.rol == 'solicitante' %}
+    <section class="tarjeta"><h2>Necesito ayuda</h2><p>Cuéntenos qué necesita.</p><a class="boton" href="/solicitudes/nueva">Pedir ayuda</a></section>
+    <section class="tarjeta"><h2>Mis solicitudes</h2><p>Vea cómo avanza lo que pidió.</p><a class="boton" href="/solicitudes">Ver solicitudes</a></section>
+  {% endif %}
+  {% if usuario.rol in ('solicitante', 'brigadista', 'entidad') %}
+    <section class="tarjeta"><h2>Avisar de daños</h2><p>Informe cómo quedó un sector.</p><a class="boton" href="/reportes/nuevo">Enviar reporte</a></section>
+    <section class="tarjeta"><h2>Mis reportes</h2><p>Los reportes que usted envió.</p><a class="boton" href="/reportes">Ver reportes</a></section>
+  {% endif %}
+  {% if usuario.rol == 'donante' %}
+    <section class="tarjeta"><h2>Quiero donar</h2><p>Ofrezca alimentos, agua u otros bienes, o una donación en dinero.</p><a class="boton" href="/donaciones/nueva">Registrar donación</a></section>
+    <section class="tarjeta"><h2>Mis donaciones</h2><p>Vea en qué estado está cada una.</p><a class="boton" href="/donaciones">Ver donaciones</a></section>
+  {% endif %}
+  {% if usuario.rol == 'administrador' %}
+    <section class="tarjeta"><h2>Cuentas</h2><p>Cree cuentas de brigadistas, entidades y equipos de entrega.</p><a class="boton" href="/admin/usuarios">Administrar cuentas</a></section>
+  {% endif %}
+  {% if usuario.rol in ('equipo_entrega', 'centro_acopio') %}
+    <section class="tarjeta"><h2>Próximamente</h2><p>Sus entregas y su inventario estarán disponibles en la siguiente versión.</p></section>
+  {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

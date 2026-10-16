@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Mis donaciones{% endblock %}
+{% block contenido %}
+<h1>Mis donaciones</h1>
+{% if filas %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Estado de cada donación que usted registró.</caption>
+  <thead><tr><th scope="col">Qué donó</th><th scope="col">Estado</th><th scope="col">Registrada</th></tr></thead>
+  <tbody>
+  {% for d in filas %}
+    <tr>
+      <td>{% if d.monetaria %}Dinero: ${{ '{:,}'.format(d.monto or 0).replace(',', '.') }}{% else %}{{ d.cantidad }} {{ d.unidad }} de {{ tipos[d.tipo_bien]|lower }}{% endif %}</td>
+      <td><span class="estado">{{ d.estado.replace('_', ' ')|capitalize }}</span></td>
+      <td>{{ d.creado_en.strftime('%d/%m/%Y') }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<p>Todavía no ha registrado donaciones.</p>{% endif %}
+<a class="boton" href="/donaciones/nueva">Registrar una donación</a>
+{% endblock %}

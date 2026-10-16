@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_campos.html" import campo, selector, casilla, opciones_radio, resumen_errores %}
+{% block titulo %}Crear cuenta{% endblock %}
+{% block contenido %}
+<h1>Crear cuenta</h1>
+<p>Necesitamos saber quién es para poder darle seguimiento a su ayuda y verificarla.</p>
+{{ resumen_errores(errores) }}
+<form method="post" action="/registro" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {{ opciones_radio('tipo_cuenta', 'Quiero registrarme como', [('solicitante', 'Persona que necesita ayuda'), ('donante', 'Donante')], datos or {'tipo_cuenta': 'solicitante'}, errores) }}
+  {{ campo('nombre', 'Nombre completo', datos, errores, extra='autocomplete="name"') }}
+  {{ campo('telefono', 'Teléfono', datos, errores, tipo='tel', ayuda='Lo usará para entrar. Solo números.', extra='autocomplete="tel" inputmode="numeric"') }}
+  {{ selector('sector_id', 'Sector donde vive', sectores, datos, errores, ayuda='Solo es obligatorio si necesita ayuda.', requerido=False) }}
+  {{ campo('documento', 'Documento de identidad', datos, errores, ayuda='Solo se pedirá para entregas de mayor valor.', requerido=False, extra='inputmode="numeric"') }}
+  {{ selector('tipo_donante', 'Tipo de donante', [('persona', 'Persona'), ('organizacion', 'Organización'), ('empresa', 'Empresa')], datos, errores, requerido=False, ayuda='Solo para donantes.') }}
+  {{ campo('password', 'Contraseña', datos, errores, tipo='password', ayuda='Mínimo 8 caracteres.', extra='autocomplete="new-password"') }}
+  {{ campo('password2', 'Repita la contraseña', datos, errores, tipo='password', extra='autocomplete="new-password"') }}
+  {{ casilla('consentimiento', 'Autorizo el uso de mis datos para dar seguimiento y verificar mi ayuda. Solo los verán las personas que atienden mi caso.', false, errores) }}
+  <button class="principal" type="submit">Crear cuenta</button>
+</form>
+<p>¿Ya tiene cuenta? <a href="/entrar">Entrar</a></p>
+{% endblock %}

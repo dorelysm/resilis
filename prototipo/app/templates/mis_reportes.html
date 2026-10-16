@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Mis reportes{% endblock %}
+{% block contenido %}
+<h1>Mis reportes</h1>
+{% if filas %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Reportes que usted envió, del más reciente al más antiguo.</caption>
+  <thead><tr><th scope="col">Sector</th><th scope="col">Daño</th><th scope="col">Personas</th><th scope="col">Enviado</th></tr></thead>
+  <tbody>
+  {% for r, sector in filas %}
+    <tr><td>{{ sector }}</td><td>{{ niveles[r.nivel_dano] }}</td><td>{{ r.personas_afectadas }}</td><td>{{ r.hora_captura.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<p>Todavía no ha enviado reportes.</p>{% endif %}
+<a class="boton" href="/reportes/nuevo">Enviar un reporte</a>
+{% endblock %}

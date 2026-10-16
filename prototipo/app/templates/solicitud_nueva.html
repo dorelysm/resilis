@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_campos.html" import campo, selector, texto_largo, casilla, opciones_radio, resumen_errores %}
+{% block titulo %}Pedir ayuda{% endblock %}
+{% block contenido %}
+<h1>Pedir ayuda</h1>
+<p>Cuéntenos qué necesita. Una persona verificará su solicitud antes de enviarle la ayuda.</p>
+{{ resumen_errores(errores) }}
+<form method="post" action="/solicitudes/nueva" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {{ selector('necesidad', 'Qué necesita', necesidades, datos, errores) }}
+  {{ campo('personas_hogar', 'Cuántas personas viven con usted', datos, errores, tipo='number', ayuda='Cuéntese a usted también.', extra='min="1" max="30" inputmode="numeric"') }}
+  {{ opciones_radio('urgencia', 'Qué tan urgente es', urgencias, datos, errores) }}
+  {{ texto_largo('descripcion', 'Cuéntenos su situación', datos, errores) }}
+  {{ selector('sector_id', 'Sector donde está', sectores, datos, errores, vacio='Elija el sector') }}
+  {{ campo('direccion', 'Dirección o punto de referencia', datos, errores, ayuda='Por ejemplo: calle, número o "frente a la iglesia".', extra='autocomplete="street-address"') }}
+
+  <details{% if datos.get('vulnerable') == 'si' or errores.get('vuln_tipo') or errores.get('vuln_descripcion') or errores.get('vuln_consentimiento') %} open{% endif %}>
+    <summary>Hay una persona en situación de vulnerabilidad</summary>
+    <p class="ayuda">Por ejemplo, una persona con discapacidad, un adulto mayor, un niño pequeño o una persona enferma. Así podemos enviar lo que realmente necesita.</p>
+    {{ casilla('vulnerable', 'Sí, hay una persona en situación de vulnerabilidad', datos.get('vulnerable') == 'si', errores) }}
+    {{ selector('vuln_tipo', 'Situación', vulnerabilidades, datos, errores, requerido=False) }}
+    {{ texto_largo('vuln_descripcion', 'Describa la situación de la persona', datos, errores, requerido=False) }}
+    {{ campo('vuln_necesidad', 'Qué necesita en especial', datos, errores, requerido=False, ayuda='Por ejemplo: silla de ruedas, medicamento o leche.') }}
+    {{ casilla('vuln_consentimiento', 'Autorizo de forma expresa que se guarden estos datos de salud o discapacidad, solo para enviar la ayuda que se necesita.', false, errores) }}
+  </details>
+
+  <button class="principal" type="submit">Enviar solicitud</button>
+</form>
+{% endblock %}

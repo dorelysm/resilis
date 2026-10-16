@@ -1,0 +1,60 @@
+{# Piezas de formulario accesibles: etiqueta visible, ayuda y error asociados al campo. #}
+{% macro resumen_errores(errores) %}
+{% if errores %}
+<div class="resumen-errores" role="alert" tabindex="-1" id="resumen-errores">
+  <h2>Revise estos datos</h2>
+  <ul>{% for campo, texto in errores.items() %}<li><a href="#{{ campo }}">{{ texto }}</a></li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro descripcion_de(nombre, ayuda, errores) -%}
+{%- if ayuda or errores.get(nombre) %} aria-describedby="{% if ayuda %}{{ nombre }}-ayuda{% endif %}{% if ayuda and errores.get(nombre) %} {% endif %}{% if errores.get(nombre) %}{{ nombre }}-error{% endif %}"{% endif -%}
+{%- endmacro %}
+
+{% macro campo(nombre, etiqueta, datos, errores, tipo='text', ayuda='', requerido=True, extra='') %}
+<div class="campo">
+  <label for="{{ nombre }}">{{ etiqueta }}{% if not requerido %} <span class="opcional">(opcional)</span>{% endif %}</label>
+  {% if ayuda %}<p class="ayuda" id="{{ nombre }}-ayuda">{{ ayuda }}</p>{% endif %}
+  <input id="{{ nombre }}" name="{{ nombre }}" type="{{ tipo }}"{% if tipo != 'password' %} value="{{ datos.get(nombre, '') }}"{% endif %}{% if requerido %} required{% endif %}{{ descripcion_de(nombre, ayuda, errores) }}{% if errores.get(nombre) %} aria-invalid="true"{% endif %} {{ extra|safe }}>
+  {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro texto_largo(nombre, etiqueta, datos, errores, ayuda='', requerido=True) %}
+<div class="campo">
+  <label for="{{ nombre }}">{{ etiqueta }}{% if not requerido %} <span class="opcional">(opcional)</span>{% endif %}</label>
+  {% if ayuda %}<p class="ayuda" id="{{ nombre }}-ayuda">{{ ayuda }}</p>{% endif %}
+  <textarea id="{{ nombre }}" name="{{ nombre }}"{% if requerido %} required{% endif %}{{ descripcion_de(nombre, ayuda, errores) }}{% if errores.get(nombre) %} aria-invalid="true"{% endif %}>{{ datos.get(nombre, '') }}</textarea>
+  {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro selector(nombre, etiqueta, opciones, datos, errores, vacio='Elija una opción', requerido=True, ayuda='') %}
+<div class="campo">
+  <label for="{{ nombre }}">{{ etiqueta }}{% if not requerido %} <span class="opcional">(opcional)</span>{% endif %}</label>
+  {% if ayuda %}<p class="ayuda" id="{{ nombre }}-ayuda">{{ ayuda }}</p>{% endif %}
+  <select id="{{ nombre }}" name="{{ nombre }}"{% if requerido %} required{% endif %}{{ descripcion_de(nombre, ayuda, errores) }}{% if errores.get(nombre) %} aria-invalid="true"{% endif %}>
+    <option value="">{{ vacio }}</option>
+    {% for valor, texto in opciones %}<option value="{{ valor }}"{% if datos.get(nombre)|string == valor|string %} selected{% endif %}>{{ texto }}</option>{% endfor %}
+  </select>
+  {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro opciones_radio(nombre, leyenda, opciones, datos, errores) %}
+<fieldset id="{{ nombre }}"{% if errores.get(nombre) %} aria-describedby="{{ nombre }}-error"{% endif %}>
+  <legend>{{ leyenda }}</legend>
+  {% for valor, texto in opciones %}
+  <div class="opcion"><input type="radio" id="{{ nombre }}-{{ loop.index }}" name="{{ nombre }}" value="{{ valor }}"{% if datos.get(nombre)|string == valor|string %} checked{% endif %}{% if loop.first %} required{% endif %}><label for="{{ nombre }}-{{ loop.index }}">{{ texto }}</label></div>
+  {% endfor %}
+  {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+</fieldset>
+{% endmacro %}
+
+{% macro casilla(nombre, etiqueta, marcada, errores, valor='si') %}
+<div class="campo">
+  <div class="opcion"><input type="checkbox" id="{{ nombre }}" name="{{ nombre }}" value="{{ valor }}"{% if marcada %} checked{% endif %}{% if errores.get(nombre) %} aria-invalid="true" aria-describedby="{{ nombre }}-error"{% endif %}><label for="{{ nombre }}">{{ etiqueta }}</label></div>
+  {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+</div>
+{% endmacro %}

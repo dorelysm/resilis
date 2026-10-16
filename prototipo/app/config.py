@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://resilis:resilis@localhost:5440/resilis"
     secret_key: str = "cambiar-en-produccion"
     entorno: str = "desarrollo"
+    # Para crear el primer administrador al arrancar (solo si todavía no existe uno). Después conviene quitarlas.
+    admin_nombre: str = "Administrador"
+    admin_telefono: str = ""
+    admin_password: str = ""
 
 
 @lru_cache

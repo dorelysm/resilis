@@ -1,0 +1,58 @@
+/* Estilos de Resilis. Contrastes de al menos 4,5:1 (WCAG AA). Diseñado primero para el celular. */
+:root {
+  --texto: #1b1b1b; --fondo: #ffffff; --suave: #f1f5f8; --borde: #6b7b88;
+  --primario: #1f5f8b; --primario-oscuro: #174a6e; --error: #9b1c1c; --aviso: #fff3cd; --aviso-texto: #5c4400;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 1rem/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--texto); background: var(--fondo); }
+a { color: var(--primario); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 3px solid #b35c00; outline-offset: 2px;
+}
+.salto { position: absolute; left: -999px; top: 0; background: var(--primario); color: #fff; padding: .6rem 1rem; z-index: 10; }
+.salto:focus { left: 0; }
+header { background: var(--primario); color: #fff; }
+header .barra { max-width: 60rem; margin: 0 auto; padding: .6rem 1rem; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+header .marca { font-weight: 700; font-size: 1.25rem; color: #fff; text-decoration: none; margin-right: auto; }
+header nav { display: flex; flex-wrap: wrap; gap: .25rem .75rem; align-items: center; }
+header nav a { color: #fff; padding: .35rem .25rem; }
+header button { background: transparent; color: #fff; border: 1px solid #fff; padding: .35rem .8rem; border-radius: .35rem; font: inherit; cursor: pointer; }
+.aviso-prototipo { background: var(--aviso); color: var(--aviso-texto); padding: .5rem 1rem; text-align: center; font-size: .95rem; }
+main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+main:focus { outline: none; }
+h1 { font-size: 1.6rem; line-height: 1.25; margin: .5rem 0 1rem; }
+h2 { font-size: 1.25rem; margin-top: 2rem; }
+.mensaje { background: #e3f1e6; color: #14451f; border-left: 5px solid #1f7a3a; padding: .7rem 1rem; margin: 0 0 1rem; }
+.campo { margin: 0 0 1.1rem; }
+label, legend { display: block; font-weight: 600; margin-bottom: .25rem; }
+.opcional { font-weight: 400; color: #4a4a4a; }
+.ayuda { margin: 0 0 .35rem; color: #3d3d3d; font-size: .95rem; }
+input[type=text], input[type=tel], input[type=password], input[type=number], input[type=date], input[type=datetime-local], select, textarea {
+  width: 100%; font: inherit; padding: .6rem .7rem; border: 2px solid var(--borde); border-radius: .35rem; background: #fff; color: var(--texto);
+}
+textarea { min-height: 6rem; }
+fieldset { border: 2px solid var(--borde); border-radius: .35rem; margin: 0 0 1.1rem; padding: .6rem .9rem .9rem; }
+.opcion { display: flex; gap: .6rem; align-items: flex-start; margin: .35rem 0; }
+.opcion input { width: 1.25rem; height: 1.25rem; margin-top: .2rem; flex: none; }
+.opcion label { font-weight: 400; margin: 0; }
+input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true] { border-color: var(--error); }
+.error { color: var(--error); font-weight: 600; margin: .3rem 0 0; }
+.resumen-errores { border: 3px solid var(--error); padding: .7rem 1rem; margin-bottom: 1.2rem; background: #fff; }
+.resumen-errores h2 { margin: 0 0 .4rem; font-size: 1.1rem; color: var(--error); }
+button.principal, a.boton { display: inline-block; background: var(--primario); color: #fff; border: 0; border-radius: .4rem; padding: .75rem 1.3rem; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+button.principal:hover, a.boton:hover { background: var(--primario-oscuro); }
+.acciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+details { border: 2px solid var(--borde); border-radius: .35rem; padding: .6rem .9rem; margin: 0 0 1.1rem; }
+summary { font-weight: 600; cursor: pointer; }
+table { width: 100%; border-collapse: collapse; margin: .5rem 0 1.5rem; font-size: .95rem; }
+th, td { text-align: left; padding: .5rem .4rem; border-bottom: 1px solid #c3ccd3; vertical-align: top; }
+th { background: var(--suave); }
+.tabla-scroll { overflow-x: auto; }
+.estado { display: inline-block; padding: .1rem .55rem; border-radius: 1rem; background: var(--suave); border: 1px solid var(--borde); font-size: .9rem; }
+footer { max-width: 40rem; margin: 2rem auto 1rem; padding: 0 1rem; color: #3d3d3d; font-size: .9rem; }
+.tarjetas { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.tarjeta { border: 2px solid var(--borde); border-radius: .5rem; padding: 1rem; }
+.tarjeta h2 { margin: 0 0 .3rem; font-size: 1.1rem; }
+@media (min-width: 48rem) { main { padding: 1.5rem; } }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

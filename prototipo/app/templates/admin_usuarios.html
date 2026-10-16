@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_campos.html" import campo, selector, casilla, resumen_errores %}
+{% block titulo %}Cuentas{% endblock %}
+{% block contenido %}
+<h1>Cuentas</h1>
+<h2>Crear una cuenta</h2>
+<p>Para brigadistas, entidades coordinadoras, equipos de entrega y centros de acopio. La persona deberá cambiar la contraseña temporal.</p>
+{{ resumen_errores(errores) }}
+<form method="post" action="/admin/usuarios" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {{ campo('nombre', 'Nombre', datos, errores) }}
+  {{ campo('telefono', 'Teléfono', datos, errores, tipo='tel', extra='inputmode="numeric"') }}
+  {{ selector('rol', 'Tipo de cuenta', roles, datos, errores) }}
+  {{ selector('sector_id', 'Sector', sectores, datos, errores, requerido=False) }}
+  {{ casilla('es_organizacion', 'Es una organización (necesita aprobación antes de poder entrar)', datos.get('es_organizacion') == 'si', errores) }}
+  {{ campo('password', 'Contraseña temporal', datos, errores, tipo='password', ayuda='Mínimo 8 caracteres.', extra='autocomplete="new-password"') }}
+  <button class="principal" type="submit">Crear cuenta</button>
+</form>
+
+<h2>Cuentas registradas</h2>
+{% if cuentas %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Cuentas reales, de la más reciente a la más antigua. Las cuentas simuladas no aparecen.</caption>
+  <thead><tr><th scope="col">Nombre</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>
+  <tbody>
+  {% for c in cuentas %}
+    <tr>
+      <td>{{ c.nombre }}</td><td>{{ etiqueta_rol[c.rol] }}</td>
+      <td>{% if c.aprobado %}Activa{% else %}Falta aprobar{% endif %}</td>
+      <td>{% if not c.aprobado %}
+        <form method="post" action="/admin/usuarios/{{ c.id }}/aprobar"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="principal" type="submit">Aprobar<span class="visually-hidden"> a {{ c.nombre }}</span></button></form>
+      {% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<p>Todavía no hay cuentas registradas.</p>{% endif %}
+{% endblock %}

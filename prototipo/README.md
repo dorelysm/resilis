@@ -23,6 +23,15 @@ uv run python -m app.cargas     # cuando se decida cargar los datos
 
 Comprobación: <http://127.0.0.1:8000/salud>.
 
+## Cuentas y formularios (bloque 3)
+
+Páginas: `/registro`, `/entrar`, `/reportes/nuevo`, `/solicitudes/nueva`, `/donaciones/nueva` y `/admin/usuarios`.
+
+- **Registro público:** personas que necesitan ayuda y donantes. Exige autorización de datos. Las cuentas de brigadistas, entidades, equipos de entrega y centros de acopio las crea el administrador.
+- **Primer administrador:** defina `ADMIN_TELEFONO` y `ADMIN_PASSWORD` (y opcionalmente `ADMIN_NOMBRE`) antes de arrancar. Si no hay un administrador real, se crea al iniciar. Después conviene quitar las variables. También se puede crear por línea de comandos con `uv run python -m app.usuarios --rol administrador --nombre "..." --telefono ...` (pide la contraseña sin mostrarla).
+- **Seguridad:** contraseñas con scrypt y sal, sesión firmada, token CSRF en cada formulario, límite de 20 envíos por hora y usuario, y acceso por rol.
+- Las cuentas simuladas no pueden entrar.
+
 ## Datos simulados
 
 Genera un escenario completo y reproducible (sectores anclados en las viviendas reales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_campos.html" import campo %}
+{% block titulo %}Entrar{% endblock %}
+{% block contenido %}
+<h1>Entrar</h1>
+{% if error %}<div class="resumen-errores" role="alert"><h2>No pudimos entrar</h2><p>{{ error }}</p></div>{% endif %}
+<form method="post" action="/entrar" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {{ campo('telefono', 'Teléfono', datos, {}, tipo='tel', extra='autocomplete="tel" inputmode="numeric"') }}
+  {{ campo('password', 'Contraseña', datos, {}, tipo='password', extra='autocomplete="current-password"') }}
+  <button class="principal" type="submit">Entrar</button>
+</form>
+<p>¿Todavía no tiene cuenta? <a href="/registro">Crear cuenta</a></p>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Mis solicitudes{% endblock %}
+{% block contenido %}
+<h1>Mis solicitudes</h1>
+{% if filas %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Estado de cada cosa que usted pidió.</caption>
+  <thead><tr><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Estado</th><th scope="col">Registrada</th></tr></thead>
+  <tbody>
+  {% for s in filas %}
+    <tr><td>{{ necesidades[s.necesidad] }} para {{ s.personas_hogar }} persona(s)</td><td>{{ urgencias[s.urgencia] }}</td>
+        <td><span class="estado">{{ estados[s.estado] }}</span></td><td>{{ s.creado_en.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<p>Todavía no ha pedido ayuda.</p>{% endif %}
+<a class="boton" href="/solicitudes/nueva">Pedir ayuda</a>
+{% endblock %}

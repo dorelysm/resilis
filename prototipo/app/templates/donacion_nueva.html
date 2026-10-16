@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_campos.html" import campo, selector, opciones_radio, resumen_errores %}
+{% block titulo %}Registrar donación{% endblock %}
+{% block contenido %}
+<h1>Registrar donación</h1>
+<p>Gracias por ayudar. Su donación se registra como ofrecida y el centro de acopio la confirma cuando la recibe.</p>
+{{ resumen_errores(errores) }}
+<form method="post" action="/donaciones/nueva" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {{ opciones_radio('forma', 'Qué quiere donar', [('especie', 'Productos (alimentos, agua, medicamentos u otros)'), ('monetaria', 'Dinero')], datos if datos.get('forma') else {'forma': 'especie'}, errores) }}
+  <fieldset>
+    <legend>Si dona productos</legend>
+    {{ selector('tipo_bien', 'Tipo de producto', tipos, datos, errores, requerido=False) }}
+    {{ campo('cantidad', 'Cantidad', datos, errores, tipo='number', requerido=False, extra='min="1" inputmode="numeric"') }}
+    {{ selector('estado_producto', 'Estado del producto', estados_producto, datos, errores, requerido=False) }}
+    {{ campo('vencimiento', 'Fecha de vencimiento', datos, errores, tipo='date', requerido=False, ayuda='Solo si el producto vence.') }}
+  </fieldset>
+  <fieldset>
+    <legend>Si dona dinero</legend>
+    {{ campo('monto', 'Valor en pesos', datos, errores, tipo='number', requerido=False, ayuda='Solo queda como constancia. Esta página no recibe pagos.', extra='min="1" inputmode="numeric"') }}
+  </fieldset>
+  {{ selector('centro_id', 'Centro de acopio', centros, datos, errores, vacio='Aún no lo sé', requerido=False) }}
+  {{ opciones_radio('destino', 'A quién quiere dirigir su donación', [('ninguno', 'Que la entidad decida'), ('tipo', 'A quienes necesiten este tipo de producto'), ('sector', 'A un sector en particular')], datos, errores) }}
+  {{ selector('destino_sector_id', 'Sector', sectores, datos, errores, requerido=False, ayuda='Solo si eligió un sector.') }}
+  <button class="principal" type="submit">Registrar donación</button>
+</form>
+{% endblock %}
