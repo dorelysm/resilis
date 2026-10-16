@@ -50,6 +50,19 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Service worker (`/sw.js`):** guarda la última copia de `/entregas` para poder abrirla sin red. Al salir de la sesión se borran esa copia y los datos locales. **No se pudo comprobar en el navegador integrado de la herramienta de desarrollo; probar en un Chrome o Android real.**
 - **Cadena de eventos:** cada cambio de estado de una solicitud se encadena por hash con el anterior, sin datos personales.
 
+## Prioridad y confianza (bloque 5)
+
+`app/motor.py` tiene las fórmulas (funciones puras, sin base de datos) y `app/puntaje.py` las aplica a los datos y guarda el resultado en `puntaje_sector` y en cada solicitud. Se recalcula solo después de cada reporte, solicitud, verificación, recepción, asignación y entrega (unos 0,15 s con 153 sectores y 1.000 solicitudes).
+
+- **Confianza de un dato:** `c = 0,35 F + 0,30 V + 0,15 A + 0,20 K` (fuente, verificación, vigencia, corroboración). Un dato desmentido vale 0.
+- **Confianza de un sector:** `C = [1 - prod(1 - c)] (1 - 0,5 D)`; sin reportes vale 0 y el sector se ordena solo con la línea base ("hora cero") y con aviso.
+- **Prioridad:** TOPSIS con cinco dimensiones para sectores y cinco criterios para solicitudes. Los pesos se ajustan en `/pesos` (entidad y administrador) y se normalizan a 100 %.
+- **Accesibilidad:** no penaliza; un sector aislado sube un poco, nunca baja.
+- **Avisos:** sin reportes, desactualizado (más de 24 h), baja confianza (menos de 0,4) y reportes que se contradicen.
+- **Hora de referencia:** la actual; en un evento simulado, la del último reporte, para que la demostración no "envejezca".
+- **Páginas:** `/prioridades` (listas), `/prioridades/sectores/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
+- `motor.ahp_pesos` (AHP: devuelve los pesos y la razón de consistencia CR, que debe ser menor que 0,1) existe y tiene pruebas, pero todavía no hay una pantalla de comparación por pares: `/pesos` recibe los pesos directamente.
+
 ## Datos simulados
 
 Genera un escenario completo y reproducible (sectores anclados en las viviendas reales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):

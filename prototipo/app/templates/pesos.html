@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_campos.html" import resumen_errores %}
+{% block titulo %}Pesos{% endblock %}
+{% block contenido %}
+<h1>Pesos de la prioridad</h1>
+<p>El peso dice cuánto cuenta cada dimensión al ordenar. Escriba números de 0 a 100: no hace falta que sumen 100, el sistema los ajusta solos para que sumen 100 %. Al guardar, las prioridades se recalculan.</p>
+<p class="ayuda">Estos valores iniciales son provisionales: conviene validarlos con una persona experta en gestión del riesgo.</p>
+{{ resumen_errores(errores) }}
+
+{% for ambito, titulo, criterios, vigentes in grupos %}
+<form method="post" action="/pesos/{{ ambito }}" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <fieldset>
+    <legend>{{ titulo }}</legend>
+    {% for c in criterios %}
+    {% set nombre = ambito ~ '_' ~ c %}
+    <div class="campo">
+      <label for="{{ nombre }}">{{ etiquetas[c] }} <span class="opcional">(hoy: {{ (vigentes[c] * 100)|round|int }} %)</span></label>
+      <input type="number" id="{{ nombre }}" name="{{ nombre }}" min="0" max="100" step="any" inputmode="decimal" required
+             value="{{ datos.get(nombre, (vigentes[c] * 100)|round(1)) }}"{% if errores.get(nombre) %} aria-invalid="true" aria-describedby="{{ nombre }}-error"{% endif %}>
+      {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <button class="principal" type="submit">Guardar estos pesos</button>
+  </fieldset>
+</form>
+{% endfor %}
+<p><a href="/prioridades">Volver a las prioridades</a></p>
+{% endblock %}

@@ -15,7 +15,7 @@ from app.config import get_settings
 from app.cargas import cargar_viviendas
 from app.db import SessionLocal, crear_tablas, get_db
 from app.models import Municipio, Rol, Sector, Usuario, ahora
-from app.rutas import admin, auth, formularios, operacion
+from app.rutas import admin, auth, formularios, operacion, prioridades
 from app.seguridad import hash_password
 from app.simulacion import generar
 from app.web import render, solo_digitos
@@ -67,6 +67,7 @@ app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")
 app.include_router(auth.router)
 app.include_router(formularios.router)
 app.include_router(operacion.router)
+app.include_router(prioridades.router)
 app.include_router(admin.router)
 
 

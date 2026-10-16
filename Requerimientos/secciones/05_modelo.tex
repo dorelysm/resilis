@@ -53,7 +53,7 @@ Los pesos iniciales se definieron con apoyo de la literatura de priorización po
   \begin{itemize}
     \item $F$ es el peso de la fuente según el rol (tabla del capítulo~2), o 0,85 si el dato es oficial;
     \item $V$ es la verificación: 1 si fue verificado, 0,4 si no ha sido verificado y 0 si fue desmentido (en ese caso $c_r=0$);
-    \item $A=e^{-\Delta t/\tau}$ es la vigencia, con $\Delta t$ el tiempo desde el evento y $\tau$ un parámetro por tipo de evento (propuesta: 12 horas);
+    \item $A=e^{-\Delta t/\tau}$ es la vigencia, con $\Delta t$ el tiempo desde que se recibió el reporte y $\tau$ un parámetro por tipo de evento (propuesta: 12 horas). Se mide desde la recepción y no desde el evento: un reporte hecho hace una hora sobre algo ocurrido ayer es información fresca;
     \item $K$ es la corroboración: $K=1-e^{-n/2}$, con $n$ el número de reportes independientes del mismo sector que coinciden en el daño.
   \end{itemize}
   \item[RM-10 (\Must).] La confianza de un sector combina sus reportes: $C_s=\bigl[1-\prod_r (1-c_r)\bigr]\,(1-0{,}5\,D_s)$, con $D_s$ entre 0 y 1 la dispersión (contradicción) entre los reportes. Si no hay reportes, $C_s=0$.

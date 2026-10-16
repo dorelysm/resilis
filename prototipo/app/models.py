@@ -425,6 +425,28 @@ class EventoAuditoria(Base):
     hash: Mapped[str] = mapped_column(String(64))
 
 
+# ----------------------------------------------------------------------------- puntajes calculados
+class PuntajeSector(Base):
+    """Resultado del cálculo de prioridad y confianza de cada sector (bloque 5). Se recalcula completo."""
+
+    __tablename__ = "puntaje_sector"
+
+    sector_id: Mapped[int] = mapped_column(ForeignKey("sector.id"), primary_key=True)
+    evento_id: Mapped[int | None] = mapped_column(ForeignKey("evento.id"), nullable=True)
+    prioridad: Mapped[float] = mapped_column(Float, default=0.0)  # P (TOPSIS), de 0 a 1
+    posicion: Mapped[int] = mapped_column(Integer, default=0)  # 1 = el que se debe atender primero
+    confianza: Mapped[float] = mapped_column(Float, default=0.0)  # C, de 0 a 1
+    dispersion: Mapped[float] = mapped_column(Float, default=0.0)  # D: contradicción entre reportes
+    n_reportes: Mapped[int] = mapped_column(Integer, default=0)
+    n_solicitudes: Mapped[int] = mapped_column(Integer, default=0)
+    horas_ultimo_reporte: Mapped[float | None] = mapped_column(Float, nullable=True)
+    base_previa: Mapped[bool] = mapped_column(Boolean, default=False)  # True: sin reportes, se usó solo la línea base
+    indicadores: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # valores de cada dimensión (0 a 1)
+    aportes: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # parte de cada dimensión en el puntaje
+    alertas: Mapped[list | None] = mapped_column(JSON, nullable=True)  # códigos de alerta de información faltante
+    calculado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=ahora)
+
+
 # ----------------------------------------------------------------------------- parámetros y bitácora
 class Peso(Base):
     __tablename__ = "peso"

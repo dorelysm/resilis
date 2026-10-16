@@ -8,7 +8,8 @@
 {% if filas %}
   {% for s, sector, disponible in filas %}
   <section class="fila-accion" aria-label="Solicitud en {{ sector }}">
-    <p><strong>{{ necesidad[s.necesidad] }}</strong>: {{ s.cantidad }} para {{ s.personas_hogar }} persona(s) en {{ sector }}. {{ urgencia[s.urgencia] }}.</p>
+    <p><strong>{{ necesidad[s.necesidad] }}</strong>: {{ s.cantidad }} para {{ s.personas_hogar }} persona(s) en {{ sector }}. {{ urgencia[s.urgencia] }}.
+      {% if s.prioridad is not none %}<br>Prioridad {{ (s.prioridad * 100)|round|int }} %{% if s.confianza is not none %} · confianza {{ (s.confianza * 100)|round|int }} %{% endif %}.{% endif %}</p>
     <p>Inventario disponible para esta solicitud: <strong>{{ disponible }}</strong>{% if disponible < s.cantidad %} <span class="error">(no alcanza)</span>{% endif %}.</p>
     {% if equipos %}
     <form method="post" action="/asignacion/{{ s.id }}">

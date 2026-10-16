@@ -236,7 +236,7 @@ def crear_reportes(db, rng, evento, sectores, dano, usuarios, brigadistas, entid
                 sector_id=s.id, evento_id=evento.id, autor_id=autor.id,
                 fuente=m.FuenteReporte.PAPEL if (rol == m.Rol.BRIGADISTA and rng.random() < 0.08) else m.FuenteReporte.APP,
                 hora_evento=evento.fecha,
-                hora_captura=evento.fecha + timedelta(hours=float(rng.exponential(4))),
+                hora_captura=evento.fecha + timedelta(hours=min(12.0, float(rng.exponential(4)))),  # primeras 12 h
                 nivel_dano=nivel,
                 personas_afectadas=int(d * s.personas * rng.uniform(0.2, 0.6)),
                 acceso=round(acceso, 3),
@@ -272,7 +272,7 @@ def crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, ve
                 urgencia=urgencia, direccion=f"Calle {rng.integers(1, 99)} # {rng.integers(1, 99)}-{rng.integers(1, 99)}",
                 lat=la, lon=lo,
                 fuente=m.FuenteReporte.PAPEL if creador is not solicitante and rng.random() < 0.5 else m.FuenteReporte.APP,
-                creado_en=evento.fecha + timedelta(hours=float(rng.exponential(6))),
+                creado_en=evento.fecha + timedelta(hours=min(18.0, float(rng.exponential(6)))),
             )
             db.add(sol)
             db.flush()
@@ -364,7 +364,7 @@ def crear_apoyo(db, rng, evento, sectores, usuarios, verdad) -> dict:
                 unidad=UNIDADES[tipo], vencimiento=venc, destino_sector_id=destino_sector,
                 destino_tipo_necesidad=destino_tipo,
                 estado=m.EstadoDonacion.EN_INVENTARIO if recibida else m.EstadoDonacion.OFRECIDA,
-                creado_en=evento.fecha + timedelta(hours=float(rng.exponential(10))),
+                creado_en=evento.fecha + timedelta(hours=min(24.0, float(rng.exponential(10)))),
             )
             db.add(don)
             db.flush()

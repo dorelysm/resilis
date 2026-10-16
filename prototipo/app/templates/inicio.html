@@ -26,6 +26,9 @@
   {% if usuario.rol == 'administrador' %}
     <section class="tarjeta"><h2>Cuentas</h2><p>Cree cuentas de brigadistas, entidades y equipos de entrega.</p><a class="boton" href="/admin/usuarios">Administrar cuentas</a></section>
   {% endif %}
+  {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}
+    <section class="tarjeta"><h2>Prioridades</h2><p>Qué sectores y personas atender primero, y qué tan confiable es la información.</p><a class="boton" href="/prioridades">Ver prioridades</a></section>
+  {% endif %}
   {% if usuario.rol in ('brigadista', 'entidad') %}
     <section class="tarjeta"><h2>Verificar</h2><p>Revise solicitudes y reportes pendientes.</p><a class="boton" href="/verificacion">Ir a verificar</a></section>
   {% endif %}

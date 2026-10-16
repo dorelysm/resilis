@@ -11,6 +11,7 @@ from app import models as m
 from app import servicios as sv
 from app.config import get_settings
 from app.db import get_db
+from app.rutas.prioridades import refrescar
 from app.web import chequear_csrf, entero, mensaje, mensaje_error, render, requiere_rol
 
 router = APIRouter()
@@ -97,6 +98,7 @@ def verificar_solicitud(sol_id: int, request: Request, db: Db, usuario: Verifica
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
         return _redir(f"/verificacion/solicitudes/{sol_id}")
+    refrescar(db)
     mensaje(request, "Solicitud verificada." if resultado == "verificado" else "Solicitud desmentida.")
     return _redir("/verificacion")
 
@@ -114,6 +116,7 @@ def verificar_reporte(rep_id: int, request: Request, db: Db, usuario: Verificado
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
     else:
+        refrescar(db)
         mensaje(request, "Reporte revisado.")
     return _redir("/verificacion")
 
@@ -156,6 +159,7 @@ def recibir(don_id: int, request: Request, db: Db, usuario: Acopio, cantidad: An
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
     else:
+        refrescar(db)
         mensaje(request, "La donación quedó recibida en su inventario.")
     return _redir("/recepcion")
 
@@ -184,8 +188,9 @@ def inventario(request: Request, db: Db, usuario: VeInventario):
 def asignacion(request: Request, db: Db, usuario: Entidad):
     verificadas = db.execute(
         select(m.Solicitud, m.Sector.nombre).join(m.Sector, m.Sector.id == m.Solicitud.sector_id)
-        .where(m.Solicitud.estado == m.EstadoSolicitud.VERIFICADA)
-        .order_by(m.Solicitud.urgencia.desc(), m.Solicitud.creado_en).limit(100)).all()
+        .where(m.Solicitud.estado == m.EstadoSolicitud.VERIFICADA)  # la prioridad la calcula el bloque 5
+        .order_by(m.Solicitud.prioridad.desc().nulls_last(), m.Solicitud.urgencia.desc(), m.Solicitud.creado_en)
+        .limit(100)).all()
     filas = [(sol, sector, sv.disponible_para(db, sol)) for sol, sector in verificadas]
     equipos = [(u.id, u.nombre) for u in db.scalars(select(m.Usuario).where(
         m.Usuario.rol == m.Rol.EQUIPO_ENTREGA, m.Usuario.aprobado.is_(True), m.Usuario.password_hash.is_not(None)))]
@@ -213,6 +218,7 @@ def asignar(sol_id: int, request: Request, db: Db, usuario: Entidad, equipo_id: 
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
     else:
+        refrescar(db)
         mensaje(request, f"Solicitud asignada a {equipo.nombre}.")
     return _redir("/asignacion")
 
@@ -276,6 +282,7 @@ def entrega_confirmar(entrega_id: int, request: Request, db: Db, usuario: Equipo
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
     else:
+        refrescar(db)
         mensaje(request, "Entrega confirmada. Gracias.")
     return _redir("/entregas")
 
@@ -289,6 +296,7 @@ def entrega_incidencia(entrega_id: int, request: Request, db: Db, usuario: Equip
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
     else:
+        refrescar(db)
         mensaje(request, "Incidencia registrada. La entidad volverá a asignar la solicitud.")
     return _redir("/entregas")
 
@@ -316,6 +324,8 @@ async def entregas_sincronizar(request: Request, db: Db, usuario: Equipo):
             resultados.append({"id": eid, "ok": True, "repetida": repetida})
         except sv.ErrorNegocio as e:
             resultados.append({"id": eid, "ok": False, "mensaje": str(e)})
+    if any(r["ok"] and not r.get("repetida") for r in resultados):
+        refrescar(db)
     return JSONResponse({"resultados": resultados}, headers={"Cache-Control": "no-store"})
 
 

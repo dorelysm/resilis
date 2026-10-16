@@ -13,6 +13,7 @@ from app.models import (
     TipoNecesidad, Usuario, Vulnerabilidad, ahora,
 )
 from app.simulacion import UNIDAD_POR_PERSONA, UNIDADES
+from app.rutas.prioridades import refrescar
 from app.web import chequear_csrf, entero, mensaje, opciones_sectores, render, requiere_rol
 
 router = APIRouter()
@@ -94,6 +95,7 @@ def reporte(
         personas_afectadas=personas, acceso=float(acceso),
     ))
     db.commit()
+    refrescar(db)
     mensaje(request, "Su reporte fue enviado. Gracias por avisar.")
     return RedirectResponse("/reportes", status_code=303)
 
@@ -174,6 +176,7 @@ def solicitud(
                               necesidad_especifica=vuln_necesidad.strip(), consentimiento=True,
                               consentimiento_fecha=ahora()))
     db.commit()
+    refrescar(db)
     mensaje(request, "Su solicitud fue registrada. Aquí puede ver cómo avanza.")
     return RedirectResponse("/solicitudes", status_code=303)
 
