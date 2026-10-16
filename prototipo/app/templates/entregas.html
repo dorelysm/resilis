@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Mis entregas{% endblock %}
+{% block contenido %}
+<h1>Mis entregas</h1>
+<p>Cuando llegue donde la persona, pídale su código de entrega. Puede validarlo aunque no haya conexión: se enviará cuando vuelva la señal.</p>
+<p id="estado-sync" class="mensaje" role="status" aria-live="polite" hidden></p>
+
+{% if filas %}
+  {% for e, sol, persona, sector, vuln in filas %}
+  <section class="fila-accion" id="entrega-{{ e.id }}" aria-labelledby="titulo-{{ e.id }}">
+    <h2 id="titulo-{{ e.id }}">{{ persona.nombre }}</h2>
+    <p>{{ sector.nombre }}. {{ sol.direccion }}<br>
+       Teléfono: {{ persona.telefono }}<br>
+       Lleva: {{ necesidad[sol.necesidad] }}, {{ sol.cantidad }} para {{ sol.personas_hogar }} persona(s).</p>
+    {% if vuln %}<p><strong>Atención:</strong> {{ tipo_vuln[vuln.tipo] }}.{% if vuln.necesidad_especifica %} Necesita en especial: {{ vuln.necesidad_especifica }}.{% endif %}</p>{% endif %}
+    <p>Estado: <span class="estado">{{ 'En camino' if e.estado == 'en_camino' else 'Por salir' }}</span></p>
+
+    {% if e.estado == 'asignada' %}
+    <form method="post" action="/entregas/{{ e.id }}/en-camino">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="principal" type="submit">Voy en camino<span class="visually-hidden"> a la casa de {{ persona.nombre }}</span></button>
+    </form>
+    {% endif %}
+
+    <form method="post" action="/entregas/{{ e.id }}/confirmar" class="js-confirmar" data-entrega="{{ e.id }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="campo">
+        <label for="codigo-{{ e.id }}">Código de entrega que le da la persona</label>
+        <p class="ayuda" id="codigo-ayuda-{{ e.id }}">Son 8 letras y números, por ejemplo K7M2-9PQX.</p>
+        <input type="text" id="codigo-{{ e.id }}" name="codigo" required autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="codigo-ayuda-{{ e.id }}">
+      </div>
+      <button class="principal" type="submit">Confirmar entrega<span class="visually-hidden"> a {{ persona.nombre }}</span></button>
+    </form>
+
+    <details>
+      <summary>No se pudo entregar</summary>
+      <form method="post" action="/entregas/{{ e.id }}/incidencia">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div class="campo"><label for="tipo-{{ e.id }}">Qué pasó</label>
+          <select id="tipo-{{ e.id }}" name="tipo" required>
+            <option value="">Elija una opción</option>
+            <option value="no_encontrada">No encontré a la persona</option>
+            <option value="rechazo">La persona no quiso recibirla</option>
+            <option value="no_llego">No pude llegar</option>
+          </select></div>
+        <div class="campo"><label for="nota-{{ e.id }}">Nota <span class="opcional">(opcional)</span></label>
+          <input type="text" id="nota-{{ e.id }}" name="nota"></div>
+        <button class="principal" type="submit">Registrar incidencia</button>
+      </form>
+    </details>
+  </section>
+  {% endfor %}
+{% else %}
+  <p>No tiene entregas pendientes.</p>
+{% endif %}
+<script src="/static/entregas.js" defer></script>
+{% endblock %}

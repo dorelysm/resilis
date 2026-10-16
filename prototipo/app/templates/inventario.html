@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario{% endblock %}
+{% block contenido %}
+<h1>Inventario</h1>
+{% if usuario.rol == 'centro_acopio' and not centro %}
+  <p>Su cuenta todavía no tiene un centro de acopio asignado.</p>
+{% else %}
+<h2>Resumen por producto</h2>
+{% if totales %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Disponible: se puede asignar. Reservada: ya prometida a una solicitud. Entregada: ya llegó.</caption>
+  <thead><tr><th scope="col">Producto</th><th scope="col">Disponible</th><th scope="col">Reservada</th><th scope="col">Entregada</th></tr></thead>
+  <tbody>{% for tipo, t in totales.items() %}<tr><th scope="row">{{ tipos[tipo] }}</th><td>{{ t.disponible }}</td><td>{{ t.reservada }}</td><td>{{ t.entregada }}</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+
+<h2>Lotes</h2>
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Los que vencen primero salen primero.</caption>
+  <thead><tr><th scope="col">Producto</th><th scope="col">Centro</th><th scope="col">Disponible</th><th scope="col">Reservada</th><th scope="col">Entregada</th><th scope="col">Vence</th><th scope="col">Destino</th></tr></thead>
+  <tbody>
+  {% for l, centro_nombre in filas %}
+    <tr>
+      <td>{{ tipos[l.tipo_bien] }} ({{ l.unidad }})</td><td>{{ centro_nombre }}</td>
+      <td>{{ l.cantidad_disponible }}</td><td>{{ l.cantidad_reservada }}</td><td>{{ l.cantidad_entregada }}</td>
+      <td>{% if l.vencimiento %}{{ l.vencimiento.strftime('%d/%m/%Y') }}{% if l.vencimiento.replace(tzinfo=None) < hoy.replace(tzinfo=None) %} <strong>(vencido)</strong>{% elif (l.vencimiento.replace(tzinfo=None) - hoy.replace(tzinfo=None)).days < 7 %} <strong>(vence pronto)</strong>{% endif %}{% else %}No vence{% endif %}</td>
+      <td>{% if l.destino_solicitud_id %}Una solicitud{% elif l.destino_sector_id %}Un sector{% elif l.destino_tipo_necesidad %}Un tipo de necesidad{% else %}General{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<p>Todavía no hay productos en el inventario.</p>{% endif %}
+{% endif %}
+{% endblock %}

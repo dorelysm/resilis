@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Recibir donaciones{% endblock %}
+{% block contenido %}
+<h1>Recibir donaciones</h1>
+{% if not centro %}
+  <p>Su cuenta todavía no tiene un centro de acopio asignado. Pida al administrador que lo configure.</p>
+{% elif pendientes %}
+  <p>Centro: <strong>{{ centro.nombre }}</strong>. Cuando llegue una donación, anote lo que realmente recibió.</p>
+  {% for d, donante in pendientes %}
+  <section class="fila-accion" aria-label="Donación de {{ donante.nombre if donante.nombre_publico else 'una persona que prefiere no dar su nombre' }}">
+    <p><strong>{{ donante.nombre if donante.nombre_publico else 'Donante anónimo' }}</strong> ofrece
+      {% if d.monetaria %}dinero (${{ '{:,}'.format(d.monto or 0).replace(',', '.') }}){% else %}{{ d.cantidad }} {{ d.unidad }} de {{ tipos[d.tipo_bien]|lower }}{% endif %}.</p>
+    <form method="post" action="/recepcion/{{ d.id }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      {% if not d.monetaria %}
+      <div class="campo"><label for="cantidad-{{ d.id }}">Cantidad que recibió</label>
+        <input type="number" id="cantidad-{{ d.id }}" name="cantidad" min="1" value="{{ d.cantidad }}" required inputmode="numeric"></div>
+      <div class="campo"><label for="estado-{{ d.id }}">Estado del producto</label>
+        <select id="estado-{{ d.id }}" name="estado_producto"><option value="nuevo">Nuevo</option><option value="usado">Usado en buen estado</option></select></div>
+      <div class="campo"><label for="venc-{{ d.id }}">Vencimiento <span class="opcional">(opcional)</span></label>
+        <input type="date" id="venc-{{ d.id }}" name="vencimiento" value="{{ d.vencimiento.strftime('%Y-%m-%d') if d.vencimiento else '' }}"></div>
+      {% endif %}
+      <button class="principal" type="submit">Confirmar que llegó<span class="visually-hidden"> la donación de {{ donante.nombre if donante.nombre_publico else 'un donante' }}</span></button>
+    </form>
+  </section>
+  {% endfor %}
+{% else %}
+  <p>No hay donaciones por recibir en este momento.</p>
+{% endif %}
+{% endblock %}

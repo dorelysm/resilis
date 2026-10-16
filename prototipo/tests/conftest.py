@@ -26,3 +26,12 @@ def engine():
 def db(engine):
     with sessionmaker(bind=engine, expire_on_commit=False)() as sesion:
         yield sesion
+
+
+@pytest.fixture(autouse=True)
+def scrypt_barato(monkeypatch):
+    """Las pruebas usan un costo de scrypt bajo para correr rápido. El formato del resumen guarda el costo,
+    así que la verificación sigue siendo la real."""
+    from app import seguridad
+
+    monkeypatch.setattr(seguridad, "_N", 2**10)

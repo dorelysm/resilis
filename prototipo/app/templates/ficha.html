@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Ficha de entrega{% endblock %}
+{% block contenido %}
+<h1>Ficha de entrega</h1>
+{% if codigo %}
+  <p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar }} persona(s).</p>
+  <p>Entregue este código al equipo cuando llegue:</p>
+  <p class="codigo">{{ codigo }}</p>
+  <p>No lo comparta con nadie más. Sin este código no se puede entregar la ayuda.</p>
+  <p class="no-imprimir"><button class="principal" type="button" onclick="window.print()">Imprimir</button>
+     <a href="/solicitudes/{{ sol.id }}">Volver</a></p>
+{% else %}
+  <p>Esta solicitud no tiene un código activo. Puede ver su estado en la página de seguimiento.</p>
+  <p><a href="/solicitudes/{{ sol.id }}">Volver</a></p>
+{% endif %}
+{% endblock %}

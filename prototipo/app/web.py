@@ -48,6 +48,11 @@ def mensaje(request: Request, texto: str) -> None:
     request.session.setdefault("mensajes", []).append(texto)
 
 
+def mensaje_error(request: Request, texto: str) -> None:
+    """Un aviso de algo que salió mal; la plantilla lo muestra como alerta."""
+    request.session.setdefault("mensajes", []).append("!" + texto)
+
+
 def render(request: Request, nombre: str, usuario: Usuario | None = None, estado: int = 200, **contexto):
     mensajes = request.session.pop("mensajes", [])
     contexto.update(usuario=usuario, csrf=token_csrf(request.session), mensajes=mensajes,

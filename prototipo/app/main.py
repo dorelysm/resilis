@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
@@ -14,7 +15,7 @@ from app.config import get_settings
 from app.cargas import cargar_viviendas
 from app.db import SessionLocal, crear_tablas, get_db
 from app.models import Municipio, Rol, Sector, Usuario, ahora
-from app.rutas import admin, auth, formularios
+from app.rutas import admin, auth, formularios, operacion
 from app.seguridad import hash_password
 from app.simulacion import generar
 from app.web import render, solo_digitos
@@ -65,7 +66,15 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 app.include_router(auth.router)
 app.include_router(formularios.router)
+app.include_router(operacion.router)
 app.include_router(admin.router)
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    """El service worker se sirve desde la raíz para poder cubrir /entregas (uso sin conexión)."""
+    return FileResponse(Path(__file__).parent / "static" / "sw.js", media_type="text/javascript",
+                        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
 
 
 @app.exception_handler(StarletteHTTPException)

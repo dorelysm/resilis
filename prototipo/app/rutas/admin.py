@@ -3,11 +3,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Bitacora, Rol, Sector, Usuario, ahora
+from app import servicios
+from app.models import Bitacora, CentroAcopio, EventoAuditoria, Rol, Sector, Usuario, ahora
 from app.seguridad import hash_password
 from app.web import ETIQUETA_ROL, chequear_csrf, entero, mensaje, opciones_sectores, render, requiere_rol, solo_digitos
 
@@ -67,10 +68,21 @@ def crear_usuario(
     )
     db.add(nuevo)
     db.flush()
+    if rol == Rol.CENTRO_ACOPIO:  # un centro de acopio necesita su sitio de inventario
+        db.add(CentroAcopio(nombre=f"Centro de acopio de {nuevo.nombre}", sector_id=sid, responsable_id=nuevo.id))
     db.add(Bitacora(usuario_id=admin.id, accion="crear_usuario", objeto=f"usuario:{nuevo.id}", detalle={"rol": rol}))
     db.commit()
     mensaje(request, "La cuenta fue creada." + (" Falta aprobarla." if organizacion else ""))
     return RedirectResponse("/admin/usuarios", status_code=303)
+
+
+@router.get("/auditoria")
+def auditoria(request: Request, db: Db, admin: Admin):
+    """Revisa la cadena de eventos: si alguien alteró uno, se muestra cuál."""
+    integra, roto = servicios.verificar_cadena(db)
+    total = db.scalar(select(func.count()).select_from(EventoAuditoria))
+    ultimos = db.scalars(select(EventoAuditoria).order_by(EventoAuditoria.id.desc()).limit(30)).all()
+    return render(request, "admin_auditoria.html", admin, integra=integra, roto=roto, total=total, ultimos=ultimos)
 
 
 @router.post("/usuarios/{usuario_id}/aprobar")

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Verificar solicitud{% endblock %}
+{% block contenido %}
+<h1>Verificar solicitud</h1>
+<dl>
+  <dt>Persona</dt><dd>{{ persona.nombre }}{% if persona.documento %} (documento {{ persona.documento }}){% endif %}</dd>
+  <dt>Teléfono</dt><dd>{{ persona.telefono }}</dd>
+  <dt>Sector y dirección</dt><dd>{{ sector.nombre }}. {{ sol.direccion }}</dd>
+  <dt>Necesita</dt><dd>{{ necesidad[sol.necesidad] }}: {{ sol.cantidad }} para {{ sol.personas_hogar }} persona(s)</dd>
+  <dt>Urgencia declarada</dt><dd>{{ urgencia[sol.urgencia] }}</dd>
+  <dt>Situación</dt><dd>{{ sol.descripcion }}</dd>
+  {% if vuln %}
+  <dt>Vulnerabilidad</dt><dd>{{ tipo_vuln[vuln.tipo] }}. {{ vuln.descripcion_situacion }}{% if vuln.necesidad_especifica %} Necesita en especial: {{ vuln.necesidad_especifica }}.{% endif %}</dd>
+  {% endif %}
+</dl>
+<p class="ayuda">Estos datos son para verificar la solicitud. No los comparta fuera de su trabajo.</p>
+<form method="post" action="/verificacion/solicitudes/{{ sol.id }}">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="campo"><label for="nota">Nota <span class="opcional">(obligatoria si la desmiente)</span></label>
+    <p class="ayuda" id="nota-ayuda">Cuente qué comprobó, o por qué no se pudo comprobar.</p>
+    <textarea id="nota" name="nota" aria-describedby="nota-ayuda"></textarea></div>
+  <div class="acciones">
+    <button class="principal" type="submit" name="resultado" value="verificado">Verificada</button>
+    <button class="principal" type="submit" name="resultado" value="desmentido">No se pudo verificar</button>
+    <a class="boton" href="/verificacion">Volver</a>
+  </div>
+</form>
+{% endblock %}

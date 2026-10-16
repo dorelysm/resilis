@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Mi solicitud{% endblock %}
+{% block contenido %}
+<h1>Mi solicitud</h1>
+<p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar }} persona(s). Estado:
+  <span class="estado">{{ nombres_estado[sol.estado] }}</span></p>
+
+{% if sol.estado == 'anulada' %}
+  <p>Esta solicitud no pudo continuar. Si cree que es un error, comuníquese con la entidad que atiende su caso.</p>
+{% endif %}
+
+{% if codigo %}
+<section aria-labelledby="titulo-codigo">
+  <h2 id="titulo-codigo">Su código de entrega</h2>
+  <p>Cuando llegue el equipo{% if equipo %} ({{ equipo.nombre }}){% endif %}, dígale este código. Sin él no pueden entregarle la ayuda. No lo comparta con nadie más.</p>
+  <p class="codigo" aria-label="Código de entrega: {{ codigo }}">{{ codigo }}</p>
+  <p><a href="/solicitudes/{{ sol.id }}/ficha">Ver ficha para imprimir</a> (para quien no tiene celular a mano).</p>
+</section>
+{% endif %}
+
+<h2>Cómo va</h2>
+<ol class="linea-tiempo">
+  {% for hora, texto in hitos %}<li>{{ texto }}<time datetime="{{ hora.strftime('%Y-%m-%dT%H:%M') }}">{{ hora.strftime('%d/%m/%Y %H:%M') }}</time></li>{% endfor %}
+</ol>
+
+{% if sol.estado == 'entregada' %}
+<form method="post" action="/solicitudes/{{ sol.id }}/confirmar">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p>El equipo registró que le entregó la ayuda. ¿Ya la recibió?</p>
+  <button class="principal" type="submit">Sí, ya la recibí</button>
+</form>
+{% endif %}
+<p><a href="/solicitudes">Volver a mis solicitudes</a></p>
+{% endblock %}

@@ -26,8 +26,20 @@
   {% if usuario.rol == 'administrador' %}
     <section class="tarjeta"><h2>Cuentas</h2><p>Cree cuentas de brigadistas, entidades y equipos de entrega.</p><a class="boton" href="/admin/usuarios">Administrar cuentas</a></section>
   {% endif %}
-  {% if usuario.rol in ('equipo_entrega', 'centro_acopio') %}
-    <section class="tarjeta"><h2>Próximamente</h2><p>Sus entregas y su inventario estarán disponibles en la siguiente versión.</p></section>
+  {% if usuario.rol in ('brigadista', 'entidad') %}
+    <section class="tarjeta"><h2>Verificar</h2><p>Revise solicitudes y reportes pendientes.</p><a class="boton" href="/verificacion">Ir a verificar</a></section>
+  {% endif %}
+  {% if usuario.rol == 'entidad' %}
+    <section class="tarjeta"><h2>Asignar entregas</h2><p>Elija qué equipo entrega cada solicitud verificada.</p><a class="boton" href="/asignacion">Asignar</a></section>
+  {% endif %}
+  {% if usuario.rol in ('centro_acopio', 'entidad') %}
+    <section class="tarjeta"><h2>Inventario</h2><p>Lo que hay disponible, reservado y entregado.</p><a class="boton" href="/inventario">Ver inventario</a></section>
+  {% endif %}
+  {% if usuario.rol == 'centro_acopio' %}
+    <section class="tarjeta"><h2>Recibir donaciones</h2><p>Confirme lo que llega a su centro.</p><a class="boton" href="/recepcion">Recibir</a></section>
+  {% endif %}
+  {% if usuario.rol == 'equipo_entrega' %}
+    <section class="tarjeta"><h2>Mis entregas</h2><p>Las entregas que le asignaron.</p><a class="boton" href="/entregas">Ver entregas</a></section>
   {% endif %}
   </div>
 {% endif %}

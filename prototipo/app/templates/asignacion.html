@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Asignar entregas{% endblock %}
+{% block contenido %}
+<h1>Asignar entregas</h1>
+<p>Elija qué equipo entrega cada solicitud verificada. Al asignar se reserva el inventario y se genera el código de entrega.</p>
+
+<h2>Solicitudes por asignar</h2>
+{% if filas %}
+  {% for s, sector, disponible in filas %}
+  <section class="fila-accion" aria-label="Solicitud en {{ sector }}">
+    <p><strong>{{ necesidad[s.necesidad] }}</strong>: {{ s.cantidad }} para {{ s.personas_hogar }} persona(s) en {{ sector }}. {{ urgencia[s.urgencia] }}.</p>
+    <p>Inventario disponible para esta solicitud: <strong>{{ disponible }}</strong>{% if disponible < s.cantidad %} <span class="error">(no alcanza)</span>{% endif %}.</p>
+    {% if equipos %}
+    <form method="post" action="/asignacion/{{ s.id }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="campo"><label for="equipo-{{ s.id }}">Equipo de entrega</label>
+        <select id="equipo-{{ s.id }}" name="equipo_id" required>
+          <option value="">Elija un equipo</option>
+          {% for id, nombre in equipos %}<option value="{{ id }}">{{ nombre }}</option>{% endfor %}
+        </select></div>
+      <button class="principal" type="submit"{% if disponible < s.cantidad %} disabled aria-disabled="true"{% endif %}>Asignar<span class="visually-hidden"> solicitud en {{ sector }}</span></button>
+    </form>
+    {% else %}<p>No hay equipos de entrega aprobados. Pida al administrador que cree uno.</p>{% endif %}
+  </section>
+  {% endfor %}
+{% else %}<p>No hay solicitudes verificadas esperando asignación.</p>{% endif %}
+
+<h2>Entregas en curso</h2>
+{% if en_curso %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Entregas asignadas que todavía no terminan.</caption>
+  <thead><tr><th scope="col">Equipo</th><th scope="col">Estado</th><th scope="col">Asignada</th></tr></thead>
+  <tbody>{% for e, equipo in en_curso %}<tr><td>{{ equipo }}</td><td><span class="estado">{{ 'En camino' if e.estado == 'en_camino' else 'Asignada' }}</span></td><td>{{ e.creado_en.strftime('%d/%m/%Y %H:%M') }}</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+{% else %}<p>No hay entregas en curso.</p>{% endif %}
+{% endblock %}

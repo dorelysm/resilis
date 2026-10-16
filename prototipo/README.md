@@ -32,6 +32,24 @@ Páginas: `/registro`, `/entrar`, `/reportes/nuevo`, `/solicitudes/nueva`, `/don
 - **Seguridad:** contraseñas con scrypt y sal, sesión firmada, token CSRF en cada formulario, límite de 20 envíos por hora y usuario, y acceso por rol.
 - Las cuentas simuladas no pueden entrar.
 
+## Operación de la respuesta (bloque 4)
+
+Flujo: donación → recepción en el centro de acopio → solicitud → verificación → asignación → código → entrega → cierre.
+
+| Página | Quién | Para qué |
+|---|---|---|
+| `/recepcion`, `/inventario` | centro de acopio (inventario también la entidad) | confirmar lo recibido y ver lotes disponibles, reservados y entregados |
+| `/verificacion` | brigadista, entidad | verificar o desmentir solicitudes y reportes |
+| `/asignacion` | entidad | reservar inventario y asignar a un equipo de entrega (primero en vencer, primero en salir) |
+| `/entregas` | equipo de entrega | ver sus entregas, marcar "en camino", validar el código, registrar incidencias |
+| `/solicitudes/{id}` y `/ficha` | solicitante | seguimiento, su código de entrega y ficha para imprimir |
+| `/admin/auditoria` | administrador | comprobar la cadena de eventos |
+
+- **Código de entrega:** 8 caracteres calculados con la clave del servidor (HMAC). La base de datos solo guarda la sal y la huella (sha256). La persona lo ve en su seguimiento; el equipo nunca lo recibe, solo la huella. Sirve una vez, para el equipo asignado, vence a las 72 h y tras 5 intentos fallidos se invalida.
+- **Sin conexión:** `/entregas` descarga la sal y la huella de las entregas del equipo (`/entregas/datos.json`). Sin red, el navegador valida el código comparando huellas y guarda la entrega como pendiente; al volver la señal la envía y el servidor la valida de nuevo. Reenviar una entrega ya confirmada no la duplica.
+- **Service worker (`/sw.js`):** guarda la última copia de `/entregas` para poder abrirla sin red. Al salir de la sesión se borran esa copia y los datos locales. **No se pudo comprobar en el navegador integrado de la herramienta de desarrollo; probar en un Chrome o Android real.**
+- **Cadena de eventos:** cada cambio de estado de una solicitud se encadena por hash con el anterior, sin datos personales.
+
 ## Datos simulados
 
 Genera un escenario completo y reproducible (sectores anclados en las viviendas reales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):

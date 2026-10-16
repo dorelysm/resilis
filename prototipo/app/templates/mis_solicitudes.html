@@ -9,7 +9,7 @@
   <thead><tr><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Estado</th><th scope="col">Registrada</th></tr></thead>
   <tbody>
   {% for s in filas %}
-    <tr><td>{{ necesidades[s.necesidad] }} para {{ s.personas_hogar }} persona(s)</td><td>{{ urgencias[s.urgencia] }}</td>
+    <tr><td><a href="/solicitudes/{{ s.id }}">{{ necesidades[s.necesidad] }} para {{ s.personas_hogar }} persona(s)</a></td><td>{{ urgencias[s.urgencia] }}</td>
         <td><span class="estado">{{ estados[s.estado] }}</span></td><td>{{ s.creado_en.strftime('%d/%m/%Y %H:%M') }}</td></tr>
   {% endfor %}
   </tbody>

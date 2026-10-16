@@ -56,3 +56,11 @@ footer { max-width: 40rem; margin: 2rem auto 1rem; padding: 0 1rem; color: #3d3d
 @media (min-width: 48rem) { main { padding: 1.5rem; } }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mensaje-error { background: #fbe9e9; color: #6e1212; border-left-color: #9b1c1c; }
+.codigo { font: 700 2rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: .15em; background: var(--suave); border: 2px dashed var(--borde); padding: .8rem 1rem; display: inline-block; margin: .3rem 0 .8rem; }
+.linea-tiempo { list-style: none; padding: 0; margin: .5rem 0 1.5rem; border-left: 4px solid var(--primario); }
+.linea-tiempo li { padding: .3rem 0 .6rem 1rem; }
+.linea-tiempo time { display: block; font-size: .9rem; color: #3d3d3d; }
+.fila-accion { border-top: 1px solid #c3ccd3; padding: 1rem 0; }
+.fila-accion form { margin: .5rem 0; }
+@media print { header, .aviso-prototipo, footer, .no-imprimir, .salto { display: none !important; } main { max-width: none; } }
