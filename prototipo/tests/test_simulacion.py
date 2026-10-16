@@ -1,0 +1,122 @@
+import numpy as np
+import pytest
+from sqlalchemy import func, select
+
+from app import models as m
+from app.cargas import cargar_viviendas
+from app.simulacion import MUNICIPIOS, generar
+
+
+@pytest.fixture()
+def base(db):
+    cargar_viviendas(db)
+    return db
+
+
+def _huella(db):
+    """Resumen comparable de lo generado, para verificar que se repite con la misma semilla."""
+    return (
+        [(s.nombre, s.viviendas, s.personas, s.vulnerabilidad_base) for s in db.scalars(select(m.Sector).order_by(m.Sector.id))],
+        [(r.sector_id, r.nivel_dano, r.personas_afectadas) for r in db.scalars(select(m.ReporteDanos).order_by(m.ReporteDanos.id))],
+        [(s.necesidad, s.cantidad, s.urgencia) for s in db.scalars(select(m.Solicitud).order_by(m.Solicitud.id))],
+        [(lote.tipo_bien, lote.cantidad_recibida) for lote in db.scalars(select(m.Lote).order_by(m.Lote.id))],
+    )
+
+
+def test_misma_semilla_mismos_datos(engine):
+    from sqlalchemy.orm import sessionmaker
+
+    huellas = []
+    for _ in range(2):
+        with sessionmaker(bind=engine, expire_on_commit=False)() as db:
+            cargar_viviendas(db)
+            generar(db, semilla=7, tipo="vendaval")
+            huellas.append(_huella(db))
+    assert huellas[0] == huellas[1]
+
+
+def test_semillas_distintas_dan_datos_distintos(base):
+    generar(base, semilla=1, tipo="inundacion")
+    a = _huella(base)
+    generar(base, semilla=2, tipo="inundacion")
+    assert a != _huella(base)
+
+
+def test_las_viviendas_de_los_sectores_suman_la_cifra_municipal(base):
+    generar(base, semilla=3, tipo="terremoto")
+    for codigo in MUNICIPIOS:
+        real = base.scalar(select(m.ViviendaProyeccion.viviendas).where(
+            m.ViviendaProyeccion.municipio_codigo == codigo, m.ViviendaProyeccion.area == "Cabecera",
+            m.ViviendaProyeccion.anio == 2026))
+        simulado = base.scalar(select(func.sum(m.Sector.viviendas)).where(m.Sector.municipio_codigo == codigo))
+        assert simulado == real, codigo
+
+
+def test_todo_lo_personal_es_ficticio(base):
+    generar(base, semilla=4, tipo="inundacion")
+    usuarios = base.scalars(select(m.Usuario)).all()
+    assert usuarios and all(u.ficticio for u in usuarios)
+    assert all(u.telefono.startswith("999") for u in usuarios)  # no son celulares colombianos válidos
+    assert all(u.documento is None or u.documento.startswith("SIM-") for u in usuarios)
+    assert all(u.consentimiento_datos for u in usuarios)
+
+
+def test_las_vulnerabilidades_tienen_consentimiento(base):
+    generar(base, semilla=5, tipo="deslizamiento")
+    vulnerables = base.scalars(select(m.Vulnerabilidad)).all()
+    assert vulnerables and all(v.consentimiento for v in vulnerables)
+
+
+def test_el_inventario_cuadra_y_deja_movimientos(base):
+    resumen = generar(base, semilla=6, tipo="inundacion")
+    lotes = base.scalars(select(m.Lote)).all()
+    assert len(lotes) == resumen["lotes"] > 0
+    for lote in lotes:
+        assert (lote.cantidad_disponible + lote.cantidad_reservada + lote.cantidad_entregada
+                == lote.cantidad_recibida)
+    movimientos = base.scalar(select(func.count()).select_from(m.MovimientoInventario))
+    assert movimientos == len(lotes)
+
+
+def test_hay_sectores_sin_reportes_y_desordenes_conocidos(base):
+    """La simulación deja información faltante, duplicados y falsos, para que el modelo los detecte."""
+    generar(base, semilla=8, tipo="inundacion")
+    con_reporte = {r for (r,) in base.execute(select(m.ReporteDanos.sector_id).distinct())}
+    todos = {s for (s,) in base.execute(select(m.Sector.id))}
+    assert todos - con_reporte, "debe haber sectores sin ningún reporte"
+    verdad = base.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))
+    assert verdad["duplicadas"] and verdad["reportes_falsos"]
+
+
+def _correlacion(base, tipo, semilla, otra):
+    generar(base, semilla=semilla, tipo=tipo)
+    verdad = base.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))["dano"]
+    ev = base.scalar(select(m.Evento))
+    sectores = base.scalars(select(m.Sector)).all()
+    d = np.array([verdad[str(s.id)] for s in sectores])
+    x = np.array(otra(sectores, ev))
+    return float(np.corrcoef(d, x)[0, 1])
+
+
+def test_cada_tipo_de_evento_tiene_su_patron(base):
+    # Terremoto: el daño baja al alejarse del foco
+    dist = lambda ss, ev: [np.hypot(s.lat - ev.zona["lat"], s.lon - ev.zona["lon"]) for s in ss]
+    assert _correlacion(base, "terremoto", 11, dist) < -0.4
+    # Inundación: el daño sigue a la amenaza de base (zonas bajas)
+    assert _correlacion(base, "inundacion", 12, lambda ss, ev: [s.amenaza_base for s in ss]) > 0.6
+    # Deslizamiento: localizado; muchos sectores casi sin daño
+    generar(base, semilla=13, tipo="deslizamiento")
+    verdad = base.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))["dano"]
+    assert np.median(list(verdad.values())) < 0.1
+
+
+def test_reiniciar_deja_el_sistema_como_al_inicio(base):
+    generar(base, semilla=9, tipo="vendaval")
+    generar(base, semilla=9, tipo="vendaval")  # reinicia por defecto: no se acumulan datos
+    assert base.scalar(select(func.count()).select_from(m.Evento)) == 1
+    assert base.scalar(select(func.count()).select_from(m.Municipio)) == 23  # lo real no se toca
+
+
+def test_sin_viviendas_cargadas_avisa(db):
+    with pytest.raises(RuntimeError, match="app.cargas"):
+        generar(db, semilla=1)

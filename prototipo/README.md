@@ -23,6 +23,17 @@ uv run python -m app.cargas     # cuando se decida cargar los datos
 
 Comprobación: <http://127.0.0.1:8000/salud>.
 
+## Datos simulados
+
+Genera un escenario completo y reproducible (sectores anclados en las viviendas reales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):
+
+```bash
+uv run python -m app.cargas                                  # antes: las viviendas deben estar cargadas
+uv run python -m app.simulacion --seed 42 --tipo inundacion  # terremoto | inundacion | vendaval | deslizamiento
+```
+
+Con la misma semilla se obtienen los mismos datos. Cada ejecución borra la simulación anterior (no toca las viviendas). La "verdad" del escenario (el daño real de cada sector, los reportes falsos y las solicitudes duplicadas) queda en la tabla `bitacora` (acción `simulacion_verdad`) para medir después qué tan bien se detectan.
+
 ## Pruebas
 
 ```bash
