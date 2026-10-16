@@ -26,4 +26,4 @@ def test_salud(engine, monkeypatch):
     finally:
         app.dependency_overrides.clear()
     assert r.status_code == 200
-    assert r.json() == {"estado": "ok", "base_de_datos": "ok", "municipios": 23}
+    assert r.json() == {"estado": "ok", "base_de_datos": "ok", "municipios": 23, "sectores": 0}

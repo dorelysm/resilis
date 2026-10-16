@@ -117,6 +117,15 @@ def test_reiniciar_deja_el_sistema_como_al_inicio(base):
     assert base.scalar(select(func.count()).select_from(m.Municipio)) == 23  # lo real no se toca
 
 
+def test_no_reinicia_si_hay_cuentas_reales(base):
+    generar(base, semilla=10, tipo="inundacion")
+    base.add(m.Usuario(nombre="Persona Real", telefono="3001112233", rol="solicitante", ficticio=False))
+    base.commit()
+    with pytest.raises(RuntimeError, match="cuentas reales"):
+        generar(base, semilla=10, tipo="inundacion")  # reiniciar=True por defecto
+    assert base.scalar(select(func.count()).select_from(m.Usuario).where(m.Usuario.ficticio.is_(False))) == 1
+
+
 def test_sin_viviendas_cargadas_avisa(db):
     with pytest.raises(RuntimeError, match="app.cargas"):
         generar(db, semilla=1)

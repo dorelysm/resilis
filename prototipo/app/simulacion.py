@@ -85,7 +85,12 @@ def _jitter(rng, lat, lon, grados=0.004):
 
 
 def limpiar_simulacion(db: Session) -> None:
-    """Borra todo lo simulado (RF-50), menos los municipios, las proyecciones y los datos oficiales."""
+    """Borra todo lo simulado (RF-50), menos los municipios, las proyecciones y los datos oficiales.
+
+    Por seguridad se niega a actuar si ya hay cuentas reales: borraría sus solicitudes y sus datos."""
+    if db.scalar(select(m.Usuario.id).where(m.Usuario.ficticio.is_(False)).limit(1)) is not None:
+        raise RuntimeError("Hay cuentas reales: reiniciar la simulación borraría datos de personas. "
+                           "Use generar(..., reiniciar=False) o limpie la base de desarrollo.")
     for modelo in (
         m.MovimientoInventario, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega, m.Verificacion,
         m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.CentroAcopio, m.Solicitud, m.ReporteDanos,

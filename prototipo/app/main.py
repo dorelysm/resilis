@@ -11,10 +11,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
+from app.cargas import cargar_viviendas
 from app.db import SessionLocal, crear_tablas, get_db
-from app.models import Municipio, Rol, Usuario, ahora
+from app.models import Municipio, Rol, Sector, Usuario, ahora
 from app.rutas import admin, auth, formularios
 from app.seguridad import hash_password
+from app.simulacion import generar
 from app.web import render, solo_digitos
 
 
@@ -23,8 +25,20 @@ async def lifespan(app: FastAPI):
     """Al arrancar: crea las tablas que falten. No carga datos: la carga de viviendas es explícita
     (`uv run python -m app.cargas`) y todavía no se ha ejecutado."""
     crear_tablas()
+    if get_settings().sembrar_demo:
+        sembrar_demo()
     crear_primer_admin()
     yield
+
+
+def sembrar_demo() -> None:
+    """Carga las viviendas y genera un escenario simulado, solo si la base todavía no tiene sectores.
+    Nunca borra nada: si ya hay datos, no hace nada."""
+    with SessionLocal() as db:
+        if db.scalar(select(Sector.id).limit(1)) is not None:
+            return
+        cargar_viviendas(db)
+        generar(db, semilla=42, tipo="inundacion", reiniciar=False)
 
 
 def crear_primer_admin() -> None:
@@ -71,4 +85,5 @@ def salud(db: Session = Depends(get_db)) -> dict:
     """Comprueba que la aplicación y la base de datos responden."""
     db.execute(text("SELECT 1"))
     municipios = db.scalar(select(func.count()).select_from(Municipio))
-    return {"estado": "ok", "base_de_datos": "ok", "municipios": municipios}
+    sectores = db.scalar(select(func.count()).select_from(Sector))
+    return {"estado": "ok", "base_de_datos": "ok", "municipios": municipios, "sectores": sectores}

@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     secret_key: str = "cambiar-en-produccion"
     entorno: str = "desarrollo"
     # Para crear el primer administrador al arrancar (solo si todavía no existe uno). Después conviene quitarlas.
+    # Si es verdadero y la base no tiene sectores, carga las viviendas y genera un escenario simulado al arrancar.
+    sembrar_demo: bool = False
     admin_nombre: str = "Administrador"
     admin_telefono: str = ""
     admin_password: str = ""

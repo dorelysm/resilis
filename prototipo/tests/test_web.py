@@ -100,6 +100,24 @@ def test_el_primer_administrador_se_crea_una_sola_vez(sesiones, monkeypatch):
         assert len(admins) == 1 and verificar_password("clave-larga-123", admins[0].password_hash)
 
 
+def test_la_siembra_de_demostracion_no_borra_nada_y_no_se_repite(sesiones, monkeypatch):
+    monkeypatch.setattr(main, "SessionLocal", sesiones)
+    with sesiones() as db:  # una cuenta real que ya existía
+        db.add(Usuario(nombre="Persona Real", telefono="3001112233", rol=Rol.SOLICITANTE, ficticio=False,
+                       password_hash=hash_password(CLAVE)))
+        db.commit()
+    main.sembrar_demo()
+    with sesiones() as db:
+        sectores = db.scalar(select(func.count()).select_from(Sector))
+        assert sectores > 100 and db.scalar(select(func.count()).select_from(Municipio)) == 23
+        assert db.scalar(select(Usuario.nombre).where(Usuario.ficticio.is_(False))) == "Persona Real"
+        solicitudes = db.scalar(select(func.count()).select_from(Solicitud))
+    main.sembrar_demo()  # ya hay sectores: no hace nada
+    with sesiones() as db:
+        assert db.scalar(select(func.count()).select_from(Sector)) == sectores
+        assert db.scalar(select(func.count()).select_from(Solicitud)) == solicitudes
+
+
 def test_sin_variables_no_se_crea_administrador(sesiones, monkeypatch):
     from app.config import Settings
 
