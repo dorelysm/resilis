@@ -1,0 +1,19 @@
+% Ciclo de vida de una donación (TikZ). Se incluye desde secciones/07_arquitectura.tex
+\begin{tikzpicture}[
+    node distance=5mm,
+    paso/.style={draw=resilis, fill=resilisclaro, rounded corners=2pt, align=center, minimum height=10mm, text width=2.05cm, font=\small},
+    flecha/.style={-{Stealth[length=2mm]}, thick, resilis}
+  ]
+  \node[paso] (a) {Ofrecida\\(el donante la registra)};
+  \node[paso, right=of a] (b) {Recibida\\(el centro verifica)};
+  \node[paso, right=of b] (c) {En inventario\\(por lote)};
+  \node[paso, below=of c] (d) {Asignada\\(plan aprobado)};
+  \node[paso, left=of d] (e) {Entregada\\(código validado)};
+  \node[paso, below=of e, fill=white] (f) {El donante ve\\su estado y\\destino};
+
+  \draw[flecha] (a) -- (b);
+  \draw[flecha] (b) -- (c);
+  \draw[flecha] (c) -- (d);
+  \draw[flecha] (d) -- (e);
+  \draw[flecha, dashed] (e) -- (f);
+\end{tikzpicture}

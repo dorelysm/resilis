@@ -1,0 +1,33 @@
+\section{Validación y criterios de aceptación}\label{sec:validacion}
+
+\subsection{Criterios de aceptación}
+Se aplican los criterios mínimos de la columna correspondiente en las tablas de requisitos. Un requisito se considera cumplido cuando su criterio se puede comprobar en la demostración. Para la demostración se exige el flujo mínimo de punta a punta del plan de 12 horas (sección~\ref{sec:plan}); el resto de los requisitos \Must{} corresponde a la versión completa.
+
+\subsection{Validación sintética de la metodología}
+La metodología se prueba con datos simulados, anclados en las viviendas proyectadas del Atlántico. Esto permite comprobar el funcionamiento del sistema de punta a punta, pero \textbf{no demuestra el comportamiento en un desastre real}, porque los datos salen de los supuestos del propio diseño. Así debe presentarse en el reporte y el video: como \emph{validación sintética de la metodología}, no como medida de precisión. Hay precedentes de validar modelos de asignación con simulaciones y juegos de simulación~\cite{Hasani201672}.
+
+\begin{table}[H]
+\centering
+\caption{Pruebas planteadas con datos simulados.}
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}Xp{3.3cm}@{}}
+\toprule
+\textbf{Prueba} & \textbf{Qué se hace} & \textbf{Medida} \\
+\midrule
+Recuperación de perfiles & Se siembran grupos de sectores conocidos (por ejemplo, crítico aislado, muchos vulnerables con buen acceso, leve) y se mide si el algoritmo los vuelve a encontrar. & ARI y silueta. \\
+Robustez a datos imperfectos & Se aumentan el ruido, los datos faltantes y las contradicciones, y se mide cuánto cambia el orden de prioridad. & Correlación de Spearman con el orden sin ruido. \\
+Detección de reportes falsos & Se inyectan reportes falsos en proporciones conocidas. & Sensibilidad y precisión de la detección. \\
+Sensibilidad a los pesos & Se varían los pesos en $\pm 20\%$. & Número de sectores que cambian de posición. \\
+Reproducibilidad & Se ejecuta dos veces con la misma semilla. & Resultados idénticos. \\
+Códigos de entrega & Se intenta usar un código dos veces, con otro equipo y vencido, y se valida con el dispositivo sin conexión. & Todos los usos indebidos son rechazados. \\
+Registro encadenado & Se altera un evento antiguo de la cadena. & La alteración se detecta. \\
+Solicitudes duplicadas & Se inyectan solicitudes con el mismo documento, teléfono o dirección. & Sensibilidad de la detección. \\
+Permisos por rol & Cada rol intenta ver datos de otro. & Ningún rol accede a datos fuera de su permiso. \\
+Plan optimizado y voraz & Se generan escenarios simulados de inventario y demanda de distinto tamaño y se resuelven con ambos métodos. & Necesidad cubierta ponderada y diferencia entre métodos. \\
+Conservación del inventario & Se simulan asignaciones y entregas simultáneas y sin conexión. & Los saldos siempre cuadran y nunca son negativos. \\
+Donaciones dirigidas y FEFO & Se cargan lotes dirigidos y lotes próximos a vencer. & Ningún lote dirigido sale de su destino y se usan antes los que vencen primero. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Validación pendiente con actores reales}
+Todavía no se ha acordado una validación con una entidad de gestión del riesgo. Está identificada como el paso siguiente más importante, porque los pesos del modelo y el diseño de la interfaz necesitan la opinión de quienes toman las decisiones.

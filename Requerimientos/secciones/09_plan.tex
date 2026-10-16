@@ -1,0 +1,55 @@
+\section{Prioridades y plan de construcción}\label{sec:plan}
+
+\subsection{Resumen de prioridades}
+\begin{table}[H]
+\centering
+\caption{Requisitos por prioridad MoSCoW.}
+\begin{tabularx}{\textwidth}{@{}p{2.2cm}p{4.2cm}X@{}}
+\toprule
+\textbf{Prioridad} & \textbf{Significado} & \textbf{Qué incluye} \\
+\midrule
+\Must & Imprescindible para la demostración. & Usuarios identificados y roles; reportes de daños y solicitudes de ayuda (con vulnerabilidad); registro de donaciones e inventario con trazabilidad; verificación; priorización con TOPSIS y confianza; plan de asignación optimizado que la entidad aprueba; código de un solo uso validado sin conexión; seguimiento del estado; mapa, listas y alertas; generador de datos simulados. \\
+\Should & Importante si hay tiempo. & Donaciones dirigidas y alertas de inventario, tablero de necesidades no cubiertas, comparación con asignación voraz, recálculo del plan, carga de datos oficiales, detección de duplicados y anomalías, formulario en papel, reportes sin conexión, incidencias, registro encadenado, bitácora. \\
+\Could & Deseable. & Agrupación en perfiles, escenarios ``qué pasaría si'', fotos, exportación, comprobante de donación, estimación de una donación hipotética. \\
+\Wont & No en esta versión. & Procesamiento de pagos, conexión automática con sistemas oficiales, satélites, drones, redes sociales, sensores, aprendizaje supervisado, SMS, verificación de identidad contra bases oficiales. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+En total el documento define 140 requisitos: 68 funcionales, 23 de datos, 31 del modelo y 18 no funcionales. De ellos, 76 son \Must, 52 son \Should y 12 son \Could.
+
+\subsection{Plan de 12 horas}
+El orden va de lo más urgente a lo menos urgente. Si el tiempo no alcanza, se recorta desde el final de la lista, nunca desde el principio.
+
+\begin{table}[H]
+\centering
+\caption{Plan de construcción propuesto.}
+\begin{tabularx}{\textwidth}{@{}clXc@{}}
+\toprule
+\textbf{Bloque} & \textbf{Horas} & \textbf{Trabajo} & \textbf{Prioridad} \\
+\midrule
+1 & 1,5 & Entorno, esquema de la base de datos, carga de las proyecciones de viviendas y esqueleto desplegado en Railway. & \Must \\
+2 & 1,5 & Generador de datos simulados: sectores, eventos, usuarios ficticios, reportes, solicitudes, donantes, donaciones e inventario. & \Must \\
+3 & 2,0 & Autenticación con roles, registro con identificación y consentimiento, y formularios de reporte, de solicitud (con vulnerabilidad) y de donación. & \Must \\
+4 & 1,5 & Verificación, recepción de donaciones e inventario, asignación, código de un solo uso con validación local y estados de seguimiento. & \Must \\
+5 & 1,5 & TOPSIS para sectores y solicitudes, confianza y alertas, con pesos ajustables. & \Must \\
+6 & 1,5 & Optimización: plan de asignación con programación lineal entera, su explicación y la aprobación por la entidad. & \Must \\
+7 & 1,5 & Mapa, listas priorizadas, detalle con explicación, inventario y vista de seguimiento. & \Must \\
+8 & 1,0 & Accesibilidad, pruebas, ajustes y despliegue final. & \Must \\
+\midrule
+ & 12,0 & Total & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Alcance realista.} Los requisitos \Must{} son demasiados para hacerlos todos de forma completa en 12 horas, y este plan no deja tiempo libre. Se construyen en una versión mínima: un solo flujo de punta a punta (donación, inventario, solicitud, verificación, plan de asignación, aprobación, código, entrega) con datos simulados. Si hay que recortar, se sacan primero los \Should{} (por ejemplo, la carga de datos oficiales, que no está en el plan) y luego los detalles de los \Must{} que no afectan a ese flujo. Las 12 horas son solo de desarrollo: el video de 2 minutos y el reporte de la competencia necesitan tiempo adicional.
+
+\subsection{Riesgos principales}
+\begin{description}[leftmargin=0pt]
+  \item[Tiempo.] Una sola persona, 12 horas y un alcance que creció con el seguimiento de entregas, las donaciones y la optimización. Mitigación: construir el flujo mínimo de punta a punta y recortar desde el final.
+  \item[Optimización.] El modelo de asignación es lo más difícil de construir y de explicar. Mitigación: empezar con un modelo pequeño y probado, y tener la asignación voraz como respaldo.
+  \item[Datos.] Los datos de barrios del Atlántico aún se están recopilando, y las fuentes oficiales de eventos y daños están por identificar. Mitigación: sectores simulados cuya suma coincide con las viviendas proyectadas por municipio (RD-01) y un archivo de ejemplo para los datos oficiales.
+  \item[Privacidad.] El sistema maneja datos personales y sensibles. Mitigación: identidades ficticias en el prototipo, acceso por rol y revisión jurídica antes de cualquier uso real.
+  \item[Fraude.] No hay una base oficial con la que verificar la identidad, y alguien puede pedir ayuda con una identidad falsa o registrar una donación que no llega. Mitigación: verificación en campo, recepción verificada en el centro de acopio, detección de duplicados y código de un solo uso atado a un equipo.
+  \item[Validez de los resultados.] Los datos simulados no prueban el rendimiento real. Mitigación: comunicarlo como validación sintética de la metodología.
+\end{description}

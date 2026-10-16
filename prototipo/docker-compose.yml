@@ -1,0 +1,20 @@
+# PostgreSQL local para desarrollo. Uso: docker compose up -d
+# Se publica en el puerto 5440 para no chocar con un PostgreSQL ya instalado en el 5432.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: resilis
+      POSTGRES_PASSWORD: resilis
+      POSTGRES_DB: resilis
+    ports:
+      - "5440:5432"
+    volumes:
+      - resilis_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resilis"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  resilis_pgdata:

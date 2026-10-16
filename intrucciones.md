@@ -1,0 +1,9 @@
+El Rally Latinoamericano de Innovación es una competencia internacional por equipos que tiene como propósito fomentar la innovación abierta en las facultades y escuelas de ingeniería de Latinoamérica y que se desarrolla durante 28 horas consecutivas y en simultáneo en todas las sedes de los países participantes. La competencia se llevará a cabo durante los días 16 y 17 de octubre de 2026.
+
+La competencia propone resolver desafíos que consisten en problemas reales que requieren de una solución creativa, no estando limitados únicamente al ámbito tecnológico, pudiendo ser de varios sectores de actividades o temas sociales, ambientales, organizacionales, artísticos, logísticos o de otro tipo.
+
+Los equipos disponen de 28 horas para seleccionar un desafío, entender el problema, conformar los equipos, plantear una solución, identificar los beneficiarios, validarla, ajustar lo que consideren necesario hasta lograr una propuesta que será presentada mediante un video con una duración de hasta 2 minutos y un reporte pautado que da cuenta de la potencial sustentabilidad e impacto social de la propuesta. Todo el material entregado por los equipos pasará a formar parte del dominio público.
+
+Estamos seguros que a través de este certamen te ayudará a fortalecer competencias como: Desempeñarse de manera efectiva en equipos de trabajo, comunicarse con efectividad, actuar con ética, responsabilidad profesional y compromiso social, considerando el impacto económico, social y ambiental de su actividad en el contexto local y global, aprender en forma continua y autónoma, y actuar con espíritu emprendedor.
+
+Te deseamos suerte en esta aventura y esperamos que sea una experiencia irrepetible y enriquecedora.

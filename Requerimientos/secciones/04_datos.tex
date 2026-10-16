@@ -1,0 +1,93 @@
+\section{Requisitos de datos}
+
+\subsection{Entidades principales}
+\begin{table}[H]
+\centering
+\caption{Entidades de datos del prototipo.}
+\begin{tabularx}{\textwidth}{@{}p{3.2cm}X@{}}
+\toprule
+\textbf{Entidad} & \textbf{Contenido principal} \\
+\midrule
+Usuario & Nombre, teléfono, sector, documento (opcional), rol, autorización de tratamiento de datos. \\
+Municipio & Código DANE, nombre y viviendas proyectadas por año. \\
+Sector & Municipio, nombre, geometría, viviendas y personas estimadas, vulnerabilidad de base, amenaza y acceso de base. \\
+Evento & Tipo, fecha, zona, intensidad y si es simulado u oficial. \\
+Reporte de daños & Sector, evento, autor, fuente (aplicación, papel, Estado), hora del evento, hora de captura, daño, personas afectadas, acceso y estado (activo, anulado). \\
+Solicitud & Solicitante, creador, necesidad, personas en el hogar, descripción de la situación, urgencia, ubicación, indicador de vulnerabilidad, estado y prioridad. \\
+Vulnerabilidad & Tipo, descripción de la situación, necesidad específica y consentimiento. Dato sensible. \\
+Verificación & Reporte o solicitud, verificador, resultado, nota y hora. \\
+Entrega & Solicitud, equipo asignado, huella (hash con sal) del código, estado del código, hora y lugar de entrega, incidencias. \\
+Recurso y asignación & Tipo, cantidad, ubicación base, y a qué solicitud o equipo se asignó. \\
+Evento de auditoría & Tipo de evento, identificador de la solicitud, hora, huella del evento anterior. Sin datos personales. \\
+Donante y donación & Donante (nombre, tipo, contacto), tipo de bien o monetaria, cantidad, unidad, estado, vencimiento, centro de acopio, destino si es dirigida y estado (ofrecida, recibida, en inventario, asignada, entregada). \\
+Centro de acopio e inventario & Centro (nombre, ubicación) y lotes con cantidad disponible, reservada y entregada. \\
+Plan de asignación & Lotes asignados a solicitudes, cantidades, equipo de entrega, razón de cada asignación, necesidad sin cubrir y estado (propuesto, aprobado, rechazado). \\
+Dato oficial & Origen, fecha, tipo (evento, daño, amenaza), y registros cargados desde archivos abiertos. \\
+Pesos y bitácora & Peso de cada dimensión y registro de cambios con usuario y hora. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Datos de base}
+\begin{description}[leftmargin=0pt]
+  \item[RD-01 (\Must).] El sistema carga las proyecciones de viviendas por municipio del Atlántico, a partir del conjunto de datos abiertos, y genera sectores simulados cuyo total de viviendas coincide con la cifra municipal.
+  \item[RD-02 (\Should).] Cuando se consigan datos de barrios del Atlántico, el sistema permite reemplazar los sectores simulados por sectores reales mediante un archivo CSV o GeoJSON.
+  \item[RD-03 (\Could).] El registro de propiedad horizontal de Barranquilla puede usarse como ejemplo del formato de carga, sin ser requisito.
+\end{description}
+
+\subsection{Datos oficiales del Estado}
+El sistema incorpora datos que publican las entidades del Estado sobre eventos y daños en catástrofes. Las fuentes concretas están por identificar y confirmar; los candidatos son la UNGRD, el IDEAM, el Servicio Geológico Colombiano, el DANE, el portal de datos abiertos del Estado y las entidades del departamento y los municipios.
+\begin{description}[leftmargin=0pt]
+  \item[RD-04 (\Should).] Cargar archivos abiertos de eventos y reportes de daños (RF-45) y registrar su origen y fecha.
+  \item[RD-05 (\Should).] Usar los eventos históricos y las amenazas oficiales para completar la línea base de amenaza y vulnerabilidad de cada sector.
+  \item[RD-06 (\Should).] Usar los reportes históricos de daños para calibrar las distribuciones de la simulación, de modo que se parezcan a eventos reales.
+  \item[RD-07 (\Should).] Tratar un reporte oficial como una fuente propia (``Estado''), con peso inicial 0,85 y con su vigencia, porque suele llegar con retraso o con menor detalle. No reemplaza la verificación en campo.
+  \item[RD-08 (\Must).] Todo dato oficial conserva su origen y fecha de publicación, y se identifica como tal en la interfaz.
+\end{description}
+
+\subsection{Datos simulados}
+Los daños, las necesidades y las personas no existen como datos reales y se generan. Para que la simulación sea creíble:
+\begin{description}[leftmargin=0pt]
+  \item[RD-09 (\Must).] La simulación parte de las viviendas y la población reales proyectadas. Solo se simulan daños, necesidades, personas y reportes.
+  \item[RD-10 (\Must).] Las personas y solicitudes del prototipo tienen identidades ficticias. No se almacenan datos reales de personas.
+  \item[RD-11 (\Must).] Cada tipo de evento usa su propia distribución de daños (por ejemplo, terremoto con foco puntual y atenuación con la distancia; inundación asociada a zonas bajas; vendaval con franjas amplias; deslizamiento localizado en pendientes).
+  \item[RD-12 (\Must).] Los reportes y solicitudes sintéticos incluyen ruido, valores faltantes, duplicados y contradicciones, con proporciones configurables.
+  \item[RD-13 (\Must).] Toda simulación usa una semilla aleatoria registrada, para repetir los resultados. Los datos simulados se etiquetan siempre como tales en la interfaz.
+\end{description}
+
+\subsection{Privacidad y protección de datos}
+Al identificar a cada solicitante el sistema maneja datos personales. Se aplica el principio de recoger solo lo necesario para verificar y entregar la ayuda.
+\begin{description}[leftmargin=0pt]
+  \item[RD-14 (\Must).] Todo registro de datos personales exige la autorización expresa del titular, con la finalidad indicada: dar seguimiento a la ayuda.
+  \item[RD-15 (\Must).] Los datos sobre vulnerabilidad, discapacidad o salud se tratan como sensibles: solo se piden con consentimiento expreso y se guardan aparte.
+  \item[RD-16 (\Must).] El acceso a los datos depende del rol, como indica la tabla~\ref{tab:acceso}.
+  \item[RD-17 (\Should).] Los datos sensibles se cifran en la base de datos y las contraseñas se guardan con una función de resumen segura.
+  \item[RD-18 (\Should).] El registro encadenado y los códigos de entrega no contienen datos personales; el código se guarda solo como huella con sal.
+  \item[RD-19 (\Should).] El titular puede consultar, corregir y pedir la supresión de sus datos. El registro encadenado no se modifica, porque no contiene datos personales.
+  \item[RD-20 (\Should).] El prototipo usa solo datos simulados. Antes de un uso real se necesita una revisión jurídica de la Ley 1581 de 2012 y una política de conservación de los datos.
+\end{description}
+
+\begin{table}[H]
+\centering
+\caption{Acceso a los datos por rol.}\label{tab:acceso}
+\begin{tabularx}{\textwidth}{@{}p{3.1cm}X@{}}
+\toprule
+\textbf{Rol} & \textbf{Qué datos ve} \\
+\midrule
+Solicitante & Solo sus propios datos, su solicitud, su estado y su código. \\
+Equipo de entrega & Nombre, dirección, necesidad e indicación de vulnerabilidad de las solicitudes que le asignaron. \\
+Brigadista & Reportes y solicitudes de su zona de trabajo, para verificarlas. \\
+Entidad coordinadora & Todos los reportes y solicitudes, incluidos los datos de vulnerabilidad. \\
+Donante & Solo sus propias donaciones, con su estado y destino agregado (sector y tipo de necesidad), sin datos personales de beneficiarios. \\
+Centro de acopio & Las donaciones que recibe y su inventario. \\
+Administrador & Cuentas, roles y parámetros. No ve los datos de vulnerabilidad. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Donaciones e inventario}
+\begin{description}[leftmargin=0pt]
+  \item[RD-21 (\Must).] Cada lote del inventario guarda su tipo, cantidad recibida, disponible, reservada y entregada, unidad, estado, fecha de vencimiento, centro de acopio y destino (si la donación es dirigida).
+  \item[RD-22 (\Must).] El prototipo simula donantes, donaciones, centros de acopio e inventario con identidades ficticias, de tamaño coherente con la demanda simulada.
+  \item[RD-23 (\Should).] De cada donante se guardan solo el nombre, el tipo (persona, organización o empresa) y un medio de contacto, con su autorización. El donante puede pedir que su nombre no aparezca en las vistas públicas.
+\end{description}

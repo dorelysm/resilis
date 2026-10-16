@@ -1,0 +1,98 @@
+% Documento de requerimientos del prototipo Resilis
+% Compilar con: latexmk -pdf -bibtex- main.tex   (usa biber; ver README.md)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-noshorthands,es-tabla]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc}
+\usepackage{fancyhdr}
+\usepackage{csquotes}
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+\addbibresource{../referencias.bib}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{resilis}{HTML}{1F5F8B}
+\definecolor{resilisclaro}{HTML}{E8F1F7}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Resilis -- Documento de requerimientos}
+\rhead{\small v1.2}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+% Prioridades MoSCoW
+\newcommand{\Must}{\textbf{M}}
+\newcommand{\Should}{\textbf{S}}
+\newcommand{\Could}{\textbf{C}}
+\newcommand{\Wont}{\textbf{W}}
+
+\title{\textbf{Resilis}\\[2pt]\large Documento de requerimientos del prototipo}
+\author{Equipo Resilis -- Corporación Universitaria Americana}
+\date{16 de octubre de 2026 -- versión 1.2}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2.5cm}
+{\Huge\bfseries\color{resilis} Resilis}\\[0.6cm]
+{\large Sistema inteligente de resiliencia y priorización de recursos\\humanitarios en situaciones de post-emergencia}\\[1.2cm]
+{\itshape ``Decisiones inteligentes, recursos optimizados, vidas protegidas''}\\[2cm]
+{\Large Documento de requerimientos del prototipo}\\[0.4cm]
+{\large Versión 1.2 (con donaciones y optimización)}\\[2cm]
+Rally Latinoamericano de Innovación 2026\\
+Reto: Optimización y priorización de recursos y esfuerzos en la post-emergencia\\[1cm]
+Ámbito: departamento del Atlántico, Colombia\\[2cm]
+\textbf{Equipo}\\[4pt]
+Dorelys Esthefany Martínez Suárez (líder)\\
+Evelyn Gómez\\
+Stefania De la Cruz\\
+Katiuska Pino\\
+Maritza Isabel Domínguez Cervantes\\
+Adriana Barrios\\
+Carmela Miranda Gutiérrez\\[8pt]
+\textbf{Mentora:} Abril García\\[8pt]
+\textbf{Institución:} Corporación Universitaria Americana\\
+\textbf{Fecha:} 16 de octubre de 2026
+\vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\input{secciones/01_introduccion}
+\input{secciones/02_descripcion}
+\input{secciones/03_funcionales}
+\input{secciones/04_datos}
+\input{secciones/05_modelo}
+\input{secciones/06_no_funcionales}
+\input{secciones/07_arquitectura}
+\input{secciones/08_validacion}
+\input{secciones/09_plan}
+\input{secciones/10_pendientes}
+
+\printbibliography[title={Referencias}]
+
+\end{document}

@@ -1,0 +1,33 @@
+% Diagrama de arquitectura (TikZ). Se incluye desde secciones/07_arquitectura.tex
+\begin{tikzpicture}[
+    node distance=7mm and 9mm,
+    caja/.style={draw=resilis, fill=resilisclaro, rounded corners=2pt, align=center, minimum height=9mm, text width=3.3cm, font=\small},
+    dato/.style={draw=resilis, fill=white, rounded corners=2pt, align=center, minimum height=9mm, text width=3.3cm, font=\small},
+    flecha/.style={-{Stealth[length=2mm]}, thick, resilis}
+  ]
+  \node[caja] (cel) {Celular\\(solicitante, donante, brigadista, equipo de entrega)};
+  \node[caja, below=of cel] (pc) {Computador o tableta\\(entidad, centro de acopio, administrador)};
+  \node[caja, right=14mm of $(cel)!0.5!(pc)$] (web) {Interfaz web\\plantillas HTML,\\mapa Leaflet,\\validación local};
+  \node[caja, right=of web] (api) {Servicio web\\FastAPI};
+  \node[caja, above right=3mm and 9mm of api] (modelo) {Motor analítico\\TOPSIS, confianza,\\optimización (SciPy)};
+  \node[caja, right=9mm of api, yshift=0mm] (ent) {Solicitudes, donaciones,\\inventario, códigos\\y registro por hash};
+  \node[caja, below right=3mm and 9mm of api] (sim) {Datos simulados\\y datos oficiales\\(archivos abiertos)};
+  \node[dato, right=of ent, xshift=2mm] (bd) {Base de datos\\PostgreSQL};
+  \node[dato, below=of pc] (papel) {Ficha en papel\\(sin electricidad)};
+
+  \draw[flecha] (cel) -- (web);
+  \draw[flecha] (pc) -- (web);
+  \draw[flecha] (web) -- (api);
+  \draw[flecha] (api) -- (modelo);
+  \draw[flecha] (api) -- (ent);
+  \draw[flecha] (api) -- (sim);
+  \draw[flecha] (modelo) -- (bd);
+  \draw[flecha] (ent) -- (bd);
+  \draw[flecha] (sim) -- (bd);
+  \draw[flecha, dashed] (papel) -- node[midway, right, font=\scriptsize, align=left] {digitaliza el\\brigadista} (pc);
+
+  \begin{scope}[on background layer]
+    \node[draw=resilis!60, dashed, rounded corners=4pt, fit=(web)(api)(modelo)(ent)(sim)(bd), inner sep=4mm,
+          label={[font=\scriptsize, text=resilis]above:Despliegue en Railway}] {};
+  \end{scope}
+\end{tikzpicture}

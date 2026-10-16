@@ -1,0 +1,29 @@
+# Entornos y secretos
+.venv/
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# LaTeX (archivos auxiliares)
+*.aux
+*.log
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.out
+*.toc
+*.fdb_latexmk
+*.fls
+*SAVE-ERROR
+~WRL*.tmp
+
+# Datos pesados o de terceros (se descargan de nuevo)
+Datos/scopus_exports/
+
+# Herramientas
+.claude/

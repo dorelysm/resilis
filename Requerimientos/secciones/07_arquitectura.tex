@@ -1,0 +1,76 @@
+\section{Arquitectura y tecnología}
+
+La arquitectura es deliberadamente sencilla, porque una sola persona debe construirla en 12 horas. Se prefiere una aplicación con páginas generadas en el servidor y poco código en el navegador, lo que además reduce el consumo de datos.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{figuras/arquitectura}}
+\caption{Arquitectura propuesta del prototipo.}
+\label{fig:arquitectura}
+\end{figure}
+
+\subsection{Tecnología propuesta}
+\begin{table}[H]
+\centering
+\caption{Tecnología propuesta (todo de código abierto).}
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}X@{}}
+\toprule
+\textbf{Componente} & \textbf{Propuesta} \\
+\midrule
+Lenguaje & Python. \\
+Servicio web & FastAPI, con plantillas HTML en el servidor. \\
+Base de datos & PostgreSQL de Railway (el sistema de archivos de Railway no es persistente, por lo que no se usa SQLite). \\
+Análisis de datos & NumPy, pandas, SciPy y scikit-learn (K-means, GMM, Isolation Forest). TOPSIS y AHP se implementan directamente. \\
+Optimización & Programación lineal entera con \texttt{scipy.optimize.milp} (HiGHS). \\
+Mapa & Leaflet con datos de OpenStreetMap. \\
+Uso sin conexión & Funciones de aplicación web progresiva (service worker) y almacenamiento local del dispositivo para guardar registros pendientes y validar códigos. \\
+Código de entrega & Código aleatorio de un solo uso. El servidor guarda solo su huella con sal (por ejemplo, SHA-256) y el dispositivo del equipo asignado recibe esa huella al asignar la entrega. \\
+Registro de auditoría & Eventos encadenados por hash (SHA-256): cada evento incluye la huella del anterior. \\
+Datos oficiales & Carga de archivos abiertos CSV o GeoJSON. \\
+Despliegue & Railway. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Las librerías de ciencia de datos y la elección de FastAPI con plantillas son propuestas y se pueden cambiar sin alterar los requisitos. La restricción firme es que sea Python y se despliegue en Railway.
+
+\subsection{Código de entrega}
+El código funciona de la siguiente manera:
+\begin{enumerate}
+  \item Al asignar una solicitud, el servidor genera un código aleatorio, se lo muestra al solicitante (pantalla, ficha impresa o QR) y guarda solo su huella con sal.
+  \item El dispositivo del equipo de entrega recibe la huella junto con la entrega asignada, mientras tiene conexión.
+  \item En la entrega, el solicitante dice o muestra su código. El dispositivo calcula la huella del código ingresado y la compara con la guardada, \textbf{sin necesitar conexión}.
+  \item Si coincide, la entrega queda confirmada, el código se marca como usado en el dispositivo y el evento se sincroniza después.
+\end{enumerate}
+El código sirve solo para el equipo asignado y para una única entrega, de modo que no se puede cobrar dos veces. Si la solicitud se reasigna, se genera un código nuevo y el anterior deja de valer.
+
+Con la conexión caída no es posible impedir que dos equipos distintos reclamen el mismo código en lugares diferentes. Por eso el código queda atado a un solo equipo.
+
+\subsection{Registro encadenado por hash}
+Cada evento de una solicitud (registrada, verificada, asignada, entregada, incidencia, cierre) se guarda con la huella del evento anterior. Si alguien altera un evento pasado, la cadena se rompe y se detecta. Es una estructura \emph{estilo cadena de bloques} que no necesita una red distribuida y no contiene datos personales, de modo que no entra en conflicto con el derecho a corregir o suprimir datos de la Ley 1581 de 2012. Se eligió esta solución en lugar de una cadena de bloques pública porque el sistema ya tiene un coordinador de confianza, funciona sin conexión, tiene costo cero y es mucho más sencilla de construir en 12 horas. El equipo confirmó esta decisión (sección~\ref{sec:pendientes}).
+
+\subsection{Ciclo de una solicitud}
+\begin{figure}[H]
+\centering
+\input{figuras/ciclo}
+\caption{Ciclo de vida de una solicitud de ayuda.}
+\label{fig:ciclo}
+\end{figure}
+
+\subsection{Ciclo de una donación}
+\begin{figure}[H]
+\centering
+\input{figuras/donacion}
+\caption{Ciclo de vida de una donación.}
+\label{fig:donacion}
+\end{figure}
+
+\subsection{Flujo de la información}
+\begin{figure}[H]
+\centering
+\input{figuras/flujo}
+\caption{Flujo de un reporte hasta la decisión.}
+\label{fig:flujo}
+\end{figure}
+
+El flujo es circular: cuando una alerta señala que falta información, se solicita una verificación en campo, que genera nuevos reportes y vuelve a actualizar la confianza.

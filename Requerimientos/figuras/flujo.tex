@@ -1,0 +1,23 @@
+% Diagrama de flujo de la información (TikZ). Se incluye desde secciones/07_arquitectura.tex
+\begin{tikzpicture}[
+    node distance=7mm,
+    paso/.style={draw=resilis, fill=resilisclaro, rounded corners=2pt, align=center, minimum height=10mm, text width=2.7cm, font=\small},
+    flecha/.style={-{Stealth[length=2mm]}, thick, resilis}
+  ]
+  \node[paso] (a) {Reporte\\(app o papel)};
+  \node[paso, right=of a] (b) {Confianza\\del reporte $c_r$};
+  \node[paso, right=of b] (c) {Confianza\\del sector $C_s$};
+  \node[paso, below=of b] (e) {Alertas de\\información faltante};
+  \node[paso, below=of c] (d) {Prioridad $P$\\(TOPSIS)};
+  \node[paso, below=of e] (g) {Verificación\\en campo};
+  \node[paso, below=of d] (f) {Mapa y lista\\priorizada};
+
+  \draw[flecha] (a) -- (b);
+  \draw[flecha] (b) -- (c);
+  \draw[flecha] (c) -- (d);
+  \draw[flecha] (c) -- (e);
+  \draw[flecha] (d) -- (f);
+  \draw[flecha] (e) -- (f);
+  \draw[flecha] (e) -- (g);
+  \draw[flecha, dashed] (g.west) -| (a.south);
+\end{tikzpicture}

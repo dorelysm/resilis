@@ -1,0 +1,28 @@
+"""Configuración de la aplicación, leída de variables de entorno o de un archivo .env."""
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # En local se usa el PostgreSQL de docker-compose (puerto 5440).
+    # En Railway la variable DATABASE_URL la entrega el servicio de PostgreSQL.
+    database_url: str = "postgresql+psycopg://resilis:resilis@localhost:5440/resilis"
+    secret_key: str = "cambiar-en-produccion"
+    entorno: str = "desarrollo"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+def normalizar_url(url: str) -> str:
+    """Railway entrega URLs 'postgresql://' o 'postgres://'; SQLAlchemy con psycopg 3 necesita el prefijo del driver."""
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url

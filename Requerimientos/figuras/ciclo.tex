@@ -1,0 +1,22 @@
+% Ciclo de vida de una solicitud de ayuda (TikZ). Se incluye desde secciones/07_arquitectura.tex
+\begin{tikzpicture}[
+    node distance=5mm,
+    paso/.style={draw=resilis, fill=resilisclaro, rounded corners=2pt, align=center, minimum height=10mm, text width=2.05cm, font=\small},
+    flecha/.style={-{Stealth[length=2mm]}, thick, resilis}
+  ]
+  \node[paso] (a) {Registrada};
+  \node[paso, right=of a] (b) {Verificada};
+  \node[paso, right=of b] (c) {Asignada\\(se genera el código)};
+  \node[paso, below=of c] (d) {En camino};
+  \node[paso, left=of d] (e) {Entregada\\(se valida el código)};
+  \node[paso, left=of e] (f) {Cerrada\\(confirma el solicitante)};
+  \node[paso, below=of e, fill=white] (g) {Incidencia\\(no llegó, parcial)};
+
+  \draw[flecha] (a) -- (b);
+  \draw[flecha] (b) -- (c);
+  \draw[flecha] (c) -- (d);
+  \draw[flecha] (d) -- (e);
+  \draw[flecha] (e) -- (f);
+  \draw[flecha, dashed] (e) -- (g);
+  \draw[flecha, dashed] (g.east) -- ++(3.2,0) |- (c.east);
+\end{tikzpicture}
