@@ -154,3 +154,30 @@ def test_prioridades_muestra_por_defecto_solo_los_barrios_con_informacion(app_cl
     assert "El Edén" in nombres[:3]  # el epicentro queda entre los primeros
     todo = app_cliente.get("/prioridades?sin_info=si").text
     assert todo.count("/prioridades/barrios/") == 25 and "Ver solo los 5 con información" in todo
+
+
+def test_al_abrir_un_barrio_se_ve_el_detalle_de_sus_solicitudes(app_cliente, sesiones):
+    from tests.test_operacion import crear_usuario, entrar
+
+    with sesiones() as db:
+        cargar_viviendas(db)
+        crear_barrios(db, np.random.default_rng(1), ["08433"])
+        db.commit()
+        em.cargar(db)
+        medicinas = db.scalar(select(m.Solicitud).where(m.Solicitud.necesidad == "medicamentos"))
+        silla = db.scalar(select(m.Solicitud).where(m.Solicitud.necesidad == "otro"))
+        ids = {"medicinas": (medicinas.barrio_id, medicinas.id), "silla": (silla.barrio_id, silla.id)}
+    crear_usuario(sesiones, "entidad", "3100000004")
+    entrar(app_cliente, "3100000004")
+
+    pagina = app_cliente.get(f"/prioridades/barrios/{ids['silla'][0]}").text
+    assert "Otro: Silla de ruedas estándar" in pagina and "se partió una rueda" in pagina
+    assert f'/recorrido/solicitudes/{ids["silla"][1]}"' in pagina  # y desde ahí se abre su recorrido
+    pagina = app_cliente.get(f"/prioridades/barrios/{ids['medicinas'][0]}").text
+    assert "Medicamentos: Losartán 50 mg y metformina 850 mg" in pagina and "uso diario" in pagina
+    epicentro = app_cliente.get("/prioridades").text  # el epicentro tiene sus 3 solicitudes de reparación
+    barrio_epi = [t for t in epicentro.split('href="/prioridades/barrios/')[1:] if t.split("</a>")[0].endswith("El Edén")][0].split('"')[0]
+    pagina = app_cliente.get(f"/prioridades/barrios/{barrio_epi}").text
+    assert pagina.count("Abrigo vivienda") >= 3 and "láminas" in pagina
+    for sensible in ("Teléfono", "Calle "):
+        assert sensible not in pagina  # sin direcciones ni teléfonos

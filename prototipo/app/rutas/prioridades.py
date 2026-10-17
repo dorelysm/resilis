@@ -127,6 +127,7 @@ def detalle_barrio(barrio_id: int, request: Request, db: Db, usuario: Ve):
     solicitudes = db.scalars(select(m.Solicitud).where(
         m.Solicitud.barrio_id == barrio_id, m.Solicitud.estado.in_(["registrada", "verificada", "asignada", "en_camino"]))
         .order_by(m.Solicitud.prioridad.desc().nulls_last()).limit(30)).all()
+    adjuntar_detalles(db, solicitudes)
     ranking = sorted(((p.aportes or {}).items()), key=lambda kv: -kv[1])
     pesos = pj.leer_pesos(db)["barrio"]
     return render(request, "barrio_detalle.html", usuario, p=p, barrio=barrio, total=total, reportes=reportes,
