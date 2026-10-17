@@ -15,7 +15,7 @@
 
 <h2>Por qué ocupa este lugar</h2>
 <p>La prioridad suma cinco dimensiones. Esta tabla muestra qué parte de su puntaje viene de cada una y cuánto pesa cada dimensión.</p>
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">De la que más aporta a la que menos.</caption>
   <thead><tr><th scope="col">Dimensión</th><th scope="col">Valor</th><th scope="col">Parte del puntaje</th><th scope="col">Peso</th></tr></thead>
@@ -30,7 +30,7 @@
 
 <h2>Reportes de este barrio ({{ p.n_reportes }})</h2>
 {% if reportes %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Los más recientes primero. Cada reporte tiene su propia confianza.</caption>
   <thead><tr><th scope="col">Quién</th><th scope="col">Daño</th><th scope="col">Personas</th><th scope="col">Revisión</th><th scope="col">Confianza</th></tr></thead>
@@ -46,7 +46,7 @@
 
 <h2>Solicitudes abiertas ({{ solicitudes|length }})</h2>
 {% if solicitudes %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <thead><tr><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Estado</th></tr></thead>
   <tbody>{% for s in solicitudes %}<tr><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td><td>{{ pct(s.prioridad) if s.prioridad is not none else '—' }}</td><td>{{ s.estado.replace('_', ' ')|capitalize }}</td></tr>{% endfor %}</tbody>

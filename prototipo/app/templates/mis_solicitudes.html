@@ -3,7 +3,7 @@
 {% block contenido %}
 <h1>Mis solicitudes</h1>
 {% if filas %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Estado de cada cosa que usted pidió.</caption>
   <thead><tr><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Estado</th><th scope="col">Registrada</th></tr></thead>

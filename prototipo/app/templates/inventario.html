@@ -7,7 +7,7 @@
 {% else %}
 <h2>Resumen por producto</h2>
 {% if totales %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Disponible: se puede asignar. Reservada: ya prometida a una solicitud. Entregada: ya llegó.</caption>
   <thead><tr><th scope="col">Producto</th><th scope="col">Disponible</th><th scope="col">Reservada</th><th scope="col">Entregada</th></tr></thead>
@@ -16,7 +16,7 @@
 </div>
 
 <h2>Lotes</h2>
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Los que vencen primero salen primero.</caption>
   <thead><tr><th scope="col">Producto</th><th scope="col">Centro</th><th scope="col">Disponible</th><th scope="col">Reservada</th><th scope="col">Entregada</th><th scope="col">Vence</th><th scope="col">Destino</th></tr></thead>

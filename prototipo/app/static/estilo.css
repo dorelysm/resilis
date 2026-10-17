@@ -79,6 +79,7 @@ table { width: 100%; border-collapse: collapse; margin: .5rem 0 1.5rem; font-siz
 th, td { text-align: left; padding: .5rem .4rem; border-bottom: 1px solid var(--borde-suave); vertical-align: top; }
 th { background: var(--tinte-teal); color: var(--azul-profundo); }
 .tabla-scroll { overflow-x: auto; }
+.tabla-scroll:focus-visible { outline: 3px solid var(--naranja-oscuro); outline-offset: 2px; }
 .estado { display: inline-block; padding: .1rem .55rem; border-radius: 1rem; background: var(--tinte-teal); border: 1px solid var(--teal-oscuro); color: var(--azul-profundo); font-size: .9rem; }
 footer { max-width: 40rem; margin: 2rem auto 1rem; padding: 0 1rem; color: var(--texto-suave); font-size: .9rem; }
 

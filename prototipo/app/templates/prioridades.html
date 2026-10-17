@@ -13,7 +13,7 @@
 <p>{{ con_alerta }} de {{ total_barrios }} barrios tienen alertas de información faltante.</p>
 
 <h2>Municipios</h2>
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">De donde hay un barrio más urgente al que menos. La prioridad de un municipio es la de su barrio más prioritario. Elija uno para ver solo sus barrios y solicitudes.</caption>
   <thead><tr><th scope="col">Municipio</th><th scope="col">Barrios</th><th scope="col">Prioridad más alta</th><th scope="col">Prioridad promedio</th><th scope="col">Con avisos</th><th scope="col">Solicitudes por atender</th></tr></thead>
@@ -30,7 +30,7 @@
 
 <h2>Barrios{% if elegido %} de {{ (municipios|selectattr('codigo', 'equalto', elegido)|first).nombre }}{% endif %}</h2>
 {% if barrios %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Del que más urge al que menos. {% if not todos %}Se muestran los 25 primeros. <a href="/prioridades?todos=si{% if elegido %}&amp;municipio={{ elegido }}{% endif %}">Ver todos</a>.{% else %}Se muestran todos. <a href="/prioridades{% if elegido %}?municipio={{ elegido }}{% endif %}">Ver solo los 25 primeros</a>.{% endif %}</caption>
   <thead><tr><th scope="col">N.º</th><th scope="col">Barrio</th><th scope="col">Municipio</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Avisos</th></tr></thead>
@@ -52,7 +52,7 @@
 
 <h2>Solicitudes por atender</h2>
 {% if solicitudes %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Solicitudes registradas o verificadas, de la más prioritaria a la menos. Las que no están verificadas no se pueden asignar todavía.</caption>
   <thead><tr><th scope="col">Barrio</th><th scope="col">Municipio</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Estado</th></tr></thead>

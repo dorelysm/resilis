@@ -9,7 +9,7 @@
   <p class="mensaje mensaje-error" role="alert">Se detectó una alteración en el evento número {{ roto }}. Revise la base de datos.</p>
 {% endif %}
 {% if ultimos %}
-<div class="tabla-scroll">
+<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Los últimos eventos.</caption>
   <thead><tr><th scope="col">N.º</th><th scope="col">Evento</th><th scope="col">Solicitud</th><th scope="col">Hora</th></tr></thead>

@@ -96,3 +96,13 @@ def test_la_ficha_para_imprimir_lleva_el_emblema():
     """La ficha se imprime: usa el PNG, que no depende de que la impresora o el navegador lean WebP."""
     plantilla = (RAIZ / "app" / "templates" / "ficha.html").read_text(encoding="utf-8")
     assert "emblema-ficha.png" in plantilla and (RAIZ / "app" / "static" / "img" / "emblema-ficha.png").exists()
+
+
+def test_las_tablas_que_se_desplazan_se_pueden_usar_con_teclado():
+    """axe: una región con desplazamiento debe poder enfocarse (tabindex) y tener nombre."""
+    from pathlib import Path
+
+    for ruta in (Path(__file__).resolve().parent.parent / "app" / "templates").glob("*.html"):
+        for linea in ruta.read_text(encoding="utf-8").splitlines():
+            if 'class="tabla-scroll"' in linea:
+                assert 'tabindex="0"' in linea and 'role="region"' in linea and "aria-label=" in linea, ruta.name
