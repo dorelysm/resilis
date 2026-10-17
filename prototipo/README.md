@@ -63,6 +63,20 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Páginas:** `/prioridades` (listas), `/prioridades/sectores/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
 - `motor.ahp_pesos` (AHP: devuelve los pesos y la razón de consistencia CR, que debe ser menor que 0,1) existe y tiene pruebas, pero todavía no hay una pantalla de comparación por pares: `/pesos` recibe los pesos directamente.
 
+## Plan de asignación (bloque 6)
+
+`/plan` (solo la entidad) propone qué lote entregar a cada solicitud verificada. **Hasta que la entidad lo aprueba no se reserva nada.**
+
+- **Modelo (`app/optimizacion.py`):** programación lineal entera con SciPy (`milp`, HiGHS). Maximiza `suma (w/d + κ·u − λ·km) · x` con la cantidad de cada lote entregada a cada solicitud como variable entera. `w` = prioridad × (0,5 + 0,5 × confianza); `u` = urgencia de usar el lote por su vencimiento (primero en vencer, primero en salir); `km` = distancia del centro de acopio a la solicitud. Respeta el inventario, lo pedido, el tipo de recurso, el destino de las donaciones dirigidas y no usa lotes vencidos.
+- **Equidad (θ):** cada solicitud de prioridad alta recibe al menos una fracción θ de lo que pide, sin pasar de su parte igual del inventario. Si no es posible, se calcula sin ella y se avisa.
+- **Costo de la distancia:** se acota para que nunca haga que "no entregar" sea mejor que entregar.
+- **Referencia voraz:** el plan se compara con una asignación sencilla (la más prioritaria primero) y sirve de respaldo si el solucionador falla o se pasa del tiempo (10 s).
+- **Explicación:** cada línea dice la prioridad, la confianza, el vencimiento del lote, el centro y la distancia; el plan lista lo que queda sin cubrir y por qué.
+- **Aprobar:** reserva el inventario y asigna un equipo con su código, por solicitud. La entidad puede cambiar el equipo de cada una o dejarla fuera. Si el inventario cambió desde que se calculó, esa solicitud se omite y se informa. Se muestran las 40 más prioritarias; las demás se aprueban con el equipo propuesto.
+- **Entrega parcial:** si el inventario solo alcanza para una parte, se entrega esa parte y la solicitud vuelve a estar verificada con lo que falta.
+- **Límite conocido:** la compatibilidad entre el tipo de recurso y el acceso del sector (una lancha para un sector aislado) no se modela porque los lotes no tienen ese dato. El plan solo avisa que el sector está aislado.
+- **Datos de ejemplo:** con 1.047 solicitudes verificadas que piden 13.236 unidades y 9.097 disponibles, el plan se resuelve en 0,4 s y cubre un 10,1 % más de necesidad ponderada que la referencia voraz. Con inventario suficiente para todo, la mejora es mínima.
+
 ## Logo y diseño
 
 Los originales están en `../utils/` (`logo_fondo_transparente.png` y `logo_fondo_blanco.jpeg`). `scripts/preparar_logo.py` recorta el emblema y genera las imágenes de `app/static/img/`; `scripts/colores_logo.py` extrae los colores dominantes del logo y su contraste.

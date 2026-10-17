@@ -198,25 +198,50 @@ def _actualizar_donacion(db: Session, lote: m.Lote) -> None:
 # ----------------------------------------------------------------------------- asignación y entrega
 def asignar(db: Session, sol: m.Solicitud, equipo: m.Usuario, por: m.Usuario, secreto: str) -> m.Entrega:
     """Reserva el inventario, crea la entrega y su código. Todo o nada: si falta inventario no cambia nada."""
+    lotes = lotes_para(db, sol)
+    if sum(lote.cantidad_disponible for lote in lotes) < sol.cantidad and sol.estado == m.EstadoSolicitud.VERIFICADA:
+        raise ErrorNegocio(f"No hay inventario suficiente de {sol.necesidad.replace('_', ' ')} "
+                           f"({sum(lote.cantidad_disponible for lote in lotes)} disponibles, se necesitan {sol.cantidad}).")
+    reservas, faltante = [], sol.cantidad
+    for lote in lotes:
+        tomar = min(faltante, lote.cantidad_disponible)
+        if tomar > 0:
+            reservas.append((lote.id, tomar))
+            faltante -= tomar
+        if faltante == 0:
+            break
+    return asignar_con_reservas(db, sol, equipo, por, secreto, reservas)
+
+
+def asignar_con_reservas(db: Session, sol: m.Solicitud, equipo: m.Usuario, por: m.Usuario, secreto: str,
+                         reservas: list[tuple[int, int]], plan_id: int | None = None) -> m.Entrega:
+    """Asigna una solicitud reservando exactamente estos lotes y cantidades (lote, cantidad). La cantidad total
+    puede ser menor que lo pedido: es una entrega parcial y el resto queda pendiente. Todo o nada."""
     if sol.estado != m.EstadoSolicitud.VERIFICADA:
         raise ErrorNegocio("Solo se puede asignar una solicitud verificada.")
     if equipo.rol != m.Rol.EQUIPO_ENTREGA or not equipo.aprobado:
         raise ErrorNegocio("Elija un equipo de entrega aprobado.")
-    lotes = lotes_para(db, sol)
-    if sum(lote.cantidad_disponible for lote in lotes) < sol.cantidad:
-        raise ErrorNegocio(f"No hay inventario suficiente de {sol.necesidad.replace('_', ' ')} "
-                           f"({sum(lote.cantidad_disponible for lote in lotes)} disponibles, se necesitan {sol.cantidad}).")
-    faltante = sol.cantidad
-    for lote in lotes:
-        tomar = min(faltante, lote.cantidad_disponible)
+    if not reservas or any(q <= 0 for _, q in reservas):
+        raise ErrorNegocio("No hay nada que reservar para esta solicitud.")
+    ahora_ = ahora()
+    elegidos = []
+    for lote_id, cantidad in reservas:  # primero se valida todo, para no dejar reservas a medias
+        lote = db.get(m.Lote, lote_id)
+        if lote is None or lote.tipo_bien != sol.necesidad:
+            raise ErrorNegocio("Un lote del plan ya no sirve para esta solicitud.")
+        venc = lote.vencimiento.replace(tzinfo=timezone.utc) if lote.vencimiento and lote.vencimiento.tzinfo is None \
+            else lote.vencimiento
+        if venc is not None and venc <= ahora_:
+            raise ErrorNegocio("Un lote del plan ya venció.")
+        if lote.cantidad_disponible < cantidad:
+            raise ErrorNegocio(f"El lote ya no tiene {cantidad} disponibles (quedan {lote.cantidad_disponible}).")
+        elegidos.append((lote, cantidad))
+    for lote, tomar in elegidos:
         lote.cantidad_disponible -= tomar
         lote.cantidad_reservada += tomar
         db.add(m.MovimientoInventario(lote_id=lote.id, tipo="reserva", cantidad=tomar, solicitud_id=sol.id,
-                                      usuario_id=por.id))
+                                      plan_id=plan_id, usuario_id=por.id))
         _actualizar_donacion(db, lote)
-        faltante -= tomar
-        if faltante == 0:
-            break
 
     sal = secrets.token_hex(8)
     entrega = m.Entrega(solicitud_id=sol.id, equipo_id=equipo.id, codigo_hash="", codigo_sal=sal,
@@ -285,10 +310,12 @@ def confirmar_entrega(db: Session, entrega: m.Entrega, equipo: m.Usuario, codigo
         raise ErrorNegocio("El código no es correcto. Revise que sea el que tiene la persona.")
 
     sol = db.get(m.Solicitud, entrega.solicitud_id)
+    entregado = 0
     for lote_id, cantidad in _reservas_de(db, sol.id).items():
         lote = db.get(m.Lote, lote_id)
         lote.cantidad_reservada -= cantidad
         lote.cantidad_entregada += cantidad
+        entregado += cantidad
         db.add(m.MovimientoInventario(lote_id=lote_id, tipo="entrega", cantidad=cantidad, solicitud_id=sol.id,
                                       usuario_id=equipo.id))
         db.flush()
@@ -297,8 +324,14 @@ def confirmar_entrega(db: Session, entrega: m.Entrega, equipo: m.Usuario, codigo
     entrega.estado_codigo = m.EstadoCodigo.USADO
     entrega.entregada_en = ahora()
     entrega.lat, entrega.lon = lat, lon
-    sol.estado = m.EstadoSolicitud.ENTREGADA
-    registrar_evento(db, "entregada", sol.id)
+    if entregado < sol.cantidad:
+        # Entrega parcial (el plan no alcanzó para todo): lo que falta sigue pendiente y la solicitud se puede asignar de nuevo
+        sol.cantidad -= entregado
+        sol.estado = m.EstadoSolicitud.VERIFICADA
+        registrar_evento(db, "entrega_parcial", sol.id)
+    else:
+        sol.estado = m.EstadoSolicitud.ENTREGADA
+        registrar_evento(db, "entregada", sol.id)
     db.commit()
     return False
 

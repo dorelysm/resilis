@@ -24,7 +24,7 @@
         {% if usuario.rol == 'donante' %}<a href="/donaciones">Mis donaciones</a>{% endif %}
         {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}<a href="/prioridades">Prioridades</a>{% endif %}
         {% if usuario.rol in ('brigadista', 'entidad') %}<a href="/verificacion">Verificar</a>{% endif %}
-        {% if usuario.rol == 'entidad' %}<a href="/asignacion">Asignar</a>{% endif %}
+        {% if usuario.rol == 'entidad' %}<a href="/plan">Plan</a><a href="/asignacion">Asignar</a>{% endif %}
         {% if usuario.rol in ('centro_acopio', 'entidad') %}<a href="/inventario">Inventario</a>{% endif %}
         {% if usuario.rol == 'centro_acopio' %}<a href="/recepcion">Recibir donaciones</a>{% endif %}
         {% if usuario.rol == 'equipo_entrega' %}<a href="/entregas">Mis entregas</a>{% endif %}

@@ -368,6 +368,16 @@ class PlanAsignacion(Base):
     lineas: Mapped[list["PlanLinea"]] = relationship(back_populates="plan", cascade="all, delete-orphan")
 
 
+class PlanResumen(Base):
+    """Datos de un plan de asignación: parámetros, comparación con la asignación voraz, avisos y lo que quedó sin
+    cubrir. Va en una tabla aparte para poder agregarlo sin migrar la tabla plan_asignacion."""
+
+    __tablename__ = "plan_resumen"
+
+    plan_id: Mapped[int] = mapped_column(ForeignKey("plan_asignacion.id"), primary_key=True)
+    datos: Mapped[dict] = mapped_column(JSON)
+
+
 class PlanLinea(Base):
     __tablename__ = "plan_linea"
 

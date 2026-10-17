@@ -92,9 +92,9 @@ def limpiar_simulacion(db: Session) -> None:
         raise RuntimeError("Hay cuentas reales: reiniciar la simulación borraría datos de personas. "
                            "Use generar(..., reiniciar=False) o limpie la base de desarrollo.")
     for modelo in (
-        m.MovimientoInventario, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega, m.Verificacion,
-        m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.CentroAcopio, m.Solicitud, m.ReporteDanos,
-        m.EventoAuditoria, m.Bitacora, m.Peso, m.Usuario, m.Evento, m.Sector,
+        m.MovimientoInventario, m.PlanResumen, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega,
+        m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.CentroAcopio, m.Solicitud,
+        m.ReporteDanos, m.PuntajeSector, m.EventoAuditoria, m.Bitacora, m.Peso, m.Usuario, m.Evento, m.Sector,
     ):
         db.execute(delete(modelo))
     db.flush()
@@ -278,6 +278,12 @@ def crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, ve
             db.flush()
             if falsa:
                 verdad["solicitudes_falsas"].append(sol.id)
+            if rng.random() < (0.1 if falsa else 0.4):  # parte ya la revisó un brigadista en campo
+                revisor = brigadistas[rng.integers(len(brigadistas))]
+                db.add(m.Verificacion(objeto_tipo="solicitud", objeto_id=sol.id, verificador_id=revisor.id,
+                                      resultado="verificado", nota="Verificación simulada",
+                                      hora=sol.creado_en + timedelta(hours=2)))
+                sol.estado = m.EstadoSolicitud.VERIFICADA
 
             if rng.random() < 0.15 + 0.2 * s.vulnerabilidad_base:  # persona vulnerable, con consentimiento
                 tipos = [v[0] for v in VULNERABILIDADES]

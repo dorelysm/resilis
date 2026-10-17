@@ -37,6 +37,7 @@
     <section class="tarjeta"><h2>Verificar</h2><p>Revise solicitudes y reportes pendientes.</p><a class="boton" href="/verificacion">Ir a verificar</a></section>
   {% endif %}
   {% if usuario.rol == 'entidad' %}
+    <section class="tarjeta"><h2>Plan de asignación</h2><p>Qué lote entregar a cada solicitud para cubrir la mayor necesidad.</p><a class="boton" href="/plan">Ver el plan</a></section>
     <section class="tarjeta"><h2>Asignar entregas</h2><p>Elija qué equipo entrega cada solicitud verificada.</p><a class="boton" href="/asignacion">Asignar</a></section>
   {% endif %}
   {% if usuario.rol in ('centro_acopio', 'entidad') %}

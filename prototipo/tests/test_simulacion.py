@@ -129,3 +129,18 @@ def test_no_reinicia_si_hay_cuentas_reales(base):
 def test_sin_viviendas_cargadas_avisa(db):
     with pytest.raises(RuntimeError, match="app.cargas"):
         generar(db, semilla=1)
+
+
+def test_reiniciar_borra_tambien_lo_calculado(base):
+    """Los puntajes y los planes dependen de los sectores y las solicitudes: al reiniciar deben borrarse con ellos."""
+    from app import plan as pl
+    from app import puntaje as pj
+
+    generar(base, semilla=21, tipo="inundacion")
+    pj.recalcular(base)
+    entidad = base.scalar(select(m.Usuario).where(m.Usuario.rol == "entidad"))
+    assert pl.calcular_plan(base, entidad) is not None
+    assert base.scalar(select(func.count()).select_from(m.PuntajeSector)) > 0
+    generar(base, semilla=22, tipo="vendaval")  # reinicia por defecto: no debe chocar con las claves foráneas
+    assert base.scalar(select(func.count()).select_from(m.PlanAsignacion)) == 0
+    assert base.scalar(select(func.count()).select_from(m.PuntajeSector)) == 0

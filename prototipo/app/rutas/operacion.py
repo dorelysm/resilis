@@ -34,6 +34,7 @@ ESTADO = {"registrada": "Registrada", "verificada": "Verificada", "asignada": "A
 HITOS = {"verificada": "Verificaron su solicitud", "desmentida": "No se pudo verificar su solicitud",
          "asignada": "Se asignó un equipo para entregarle la ayuda", "en_camino": "El equipo va en camino",
          "entregada": "El equipo registró la entrega", "cerrada": "Usted confirmó que recibió la ayuda",
+         "entrega_parcial": "Recibió una parte de la ayuda; el resto se entregará cuando haya inventario",
          "incidencia": "La entrega no se pudo hacer; se asignará de nuevo"}
 
 
