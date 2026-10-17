@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # Si es verdadero, al arrancar BORRA todos los datos (reportes, solicitudes, donaciones, inventario, planes...) y deja
     # solo las cuentas reales. Es de un solo uso: hay que quitarla después, o cada arranque volvería a borrar.
     limpiar_datos: bool = False
+    # Si es verdadero, al arrancar carga el escenario guionado del vendaval en Malambo (evento, reportes, 10 solicitudes e
+    # inventario). Se niega si ya hay algún evento. Es de un solo uso: conviene quitarla después.
+    cargar_escenario_malambo: bool = False
     # Si es verdadero, al arrancar imprime en los registros las cuentas reales (sin contraseñas ni teléfonos completos).
     # Es de un solo uso: conviene quitarla después.
     listar_cuentas: bool = False

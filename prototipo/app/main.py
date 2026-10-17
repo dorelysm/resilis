@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
+from app import escenario_malambo
 from app.cargas import cargar_viviendas
 from app.db import SessionLocal, crear_tablas, engine, get_db
 from app.migracion import migrar_sectores_a_barrios
@@ -43,6 +44,8 @@ async def lifespan(app: FastAPI):
     crear_primer_admin()
     if get_settings().limpiar_datos:
         limpiar_datos()
+    if get_settings().cargar_escenario_malambo:
+        cargar_escenario_malambo()
     if get_settings().listar_cuentas:
         listar_cuentas()
     yield
@@ -69,6 +72,16 @@ def reiniciar_demo() -> None:
               f"{r['lotes']} lotes", flush=True)
     except RuntimeError as e:
         print(f"DEMO no renovada: {e}", flush=True)
+
+
+def cargar_escenario_malambo() -> None:
+    """Carga el vendaval de Malambo (app/escenario_malambo.py). Si algo falla, no queda nada a medias ni cae la app."""
+    try:
+        with SessionLocal() as db:
+            r = escenario_malambo.cargar(db)
+        print(f"ESCENARIO MALAMBO CARGADO: {r}", flush=True)
+    except Exception as e:
+        print(f"ESCENARIO MALAMBO NO CARGADO: {e}", flush=True)
 
 
 def limpiar_datos() -> None:
