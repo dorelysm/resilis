@@ -103,7 +103,7 @@
       {% for f in lista %}
       <li class="fundador">
         {% if f.foto %}<img src="/static/img/{{ f.foto }}" alt="" width="96" height="96" loading="lazy">{% else %}<span class="iniciales" aria-hidden="true">{{ iniciales(f.nombre) }}</span>{% endif %}
-        <div><h4>{{ f.nombre }}</h4><p class="rol">{{ f.rol }}</p>{% if f.texto %}<p>{{ f.texto }}</p>{% endif %}</div>
+        <div><h4>{{ f.nombre }}</h4>{% if f.rol %}<p class="rol">{{ f.rol }}</p>{% endif %}{% if f.texto %}<p>{{ f.texto }}</p>{% endif %}</div>
       </li>
       {% endfor %}
     </ul>
@@ -112,6 +112,7 @@
     <h2 id="fundadores">Fundadores y Mentoría</h2>
     <p class="equipo-nombre"><strong>{{ NOMBRE_EQUIPO }}</strong></p>
     <p>Resilis lo construye el equipo {{ NOMBRE_EQUIPO }}, de la {{ INSTITUCION }} ({{ PAIS }}), para el Rally Latinoamericano de Innovación 2026.</p>
+    {% if FOTO_EQUIPO %}<figure class="foto-equipo"><img src="/static/img/{{ FOTO_EQUIPO }}" alt="{{ FOTO_EQUIPO_DESCRIPCION }}" width="900" height="690" loading="lazy"></figure>{% endif %}
     <h3>Fundadores</h3>
     {{ personas(FUNDADORES) }}
     {% if MENTORES %}

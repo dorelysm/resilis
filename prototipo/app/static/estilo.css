@@ -378,3 +378,6 @@ main:has(.explicacion) { max-width: 52rem; }
 .explicacion .roles h3 { margin: 0 0 .3rem; display: flex; align-items: center; }
 .explicacion .roles p { margin: 0; }
 .explicacion .cierre { text-align: center; margin: 2rem 0 1rem; }
+
+.foto-equipo { margin: 1rem 0; }
+.foto-equipo img { display: block; width: 100%; height: auto; border: 2px solid var(--borde-suave); border-radius: .5rem; }

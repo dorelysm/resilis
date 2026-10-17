@@ -9,7 +9,15 @@ PAIS = "Colombia"
 
 FUNDADORES = [
     {"nombre": "Dorelys Martinez", "rol": "Líder del equipo", "texto": "", "foto": "fundador-dorelys-martinez.webp"},
+    {"nombre": "Adriana Barrios Paez", "rol": "", "texto": "", "foto": "fundador-adriana-barrios-paez.webp"},
+    {"nombre": "Carmela Miranda Gutierrez", "rol": "", "texto": "", "foto": "fundador-carmela-miranda-gutierrez.webp"},
+    {"nombre": "Evelin Gómez Vergara", "rol": "", "texto": "", "foto": "fundador-evelin-gomez-vergara.webp"},
+    {"nombre": "Maritza Domínguez Cervantes", "rol": "", "texto": "", "foto": "fundador-maritza-dominguez-cervantes.webp"},
 ]
+
+# Foto del equipo reunido (archivo en /static/img/) y su descripción para lectores de pantalla.
+FOTO_EQUIPO = "equipo-nexus-innova.webp"
+FOTO_EQUIPO_DESCRIPCION = "Integrantes del equipo NEXUS INNOVA 4.0 sentados juntos en una oficina."
 
 
 MENTORES = [

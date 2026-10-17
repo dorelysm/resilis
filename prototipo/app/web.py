@@ -20,6 +20,7 @@ plantillas.env.globals["UNIDAD_NECESIDAD"] = dict(UNIDADES)
 plantillas.env.globals.update(icono=icono, icono_etapa=icono_etapa, icono_necesidad=icono_necesidad,
                               FUNDADORES=equipo_resilis.FUNDADORES, MENTORES=equipo_resilis.MENTORES, INSTITUCION=equipo_resilis.INSTITUCION,
                               NOMBRE_EQUIPO=equipo_resilis.NOMBRE_EQUIPO, PAIS=equipo_resilis.PAIS,
+                              FOTO_EQUIPO=equipo_resilis.FOTO_EQUIPO, FOTO_EQUIPO_DESCRIPCION=equipo_resilis.FOTO_EQUIPO_DESCRIPCION,
                               iniciales=equipo_resilis.iniciales)
 plantillas.env.filters.update(hora_co=hora_co, iso_utc=iso_utc, plural=plural, nivel_prioridad=nivel_prioridad,
                               nivel_confianza=nivel_confianza)

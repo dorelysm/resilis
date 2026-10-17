@@ -41,7 +41,9 @@ def test_la_seccion_de_fundadores_sale_de_la_lista_del_equipo(app_cliente, monke
     html = app_cliente.get("/").text
     seccion = html.split('id="fundadores"')[1]
     for f in equipo.FUNDADORES:
-        assert f["nombre"] in seccion and f["rol"] in seccion
+        assert f["nombre"] in seccion and f["rol"] in seccion  # un rol en blanco no deja una línea vacía:
+    assert seccion.count('class="rol"') == sum(1 for f in equipo.FUNDADORES + equipo.MENTORES if f["rol"])
+    assert f'src="/static/img/{equipo.FOTO_EQUIPO}" alt="{equipo.FOTO_EQUIPO_DESCRIPCION}"' in seccion
     assert equipo.INSTITUCION in seccion
     assert equipo.NOMBRE_EQUIPO == "NEXUS INNOVA 4.0" and equipo.PAIS == "Colombia" and equipo.INSTITUCION == "Corporación Universitaria Americana"
     assert f"el equipo {equipo.NOMBRE_EQUIPO}, de la {equipo.INSTITUCION} ({equipo.PAIS})" in seccion
@@ -56,6 +58,13 @@ def test_la_seccion_de_fundadores_sale_de_la_lista_del_equipo(app_cliente, monke
     assert seccion.count('class="fundador"') == 2 + len(equipo.MENTORES) and "Armó el modelo de prioridad." in seccion
     assert 'aria-hidden="true">AG<' in seccion  # sin foto: iniciales (primer nombre y último apellido)
     assert 'src="/static/img/luis.webp" alt=""' in seccion  # con foto, decorativa: el nombre ya está escrito al lado
+
+
+def test_el_equipo_completo_aparece_con_sus_nombres():
+    nombres = [f["nombre"] for f in equipo.FUNDADORES]
+    assert nombres == ["Dorelys Martinez", "Adriana Barrios Paez", "Carmela Miranda Gutierrez", "Evelin Gómez Vergara",
+                       "Maritza Domínguez Cervantes"]
+    assert (RAIZ / "app" / "static" / "img" / equipo.FOTO_EQUIPO).stat().st_size < 150_000
 
 
 def test_iniciales():
