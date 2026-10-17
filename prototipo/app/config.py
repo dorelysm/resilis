@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Si es verdadero, renueva el escenario simulado al arrancar, conservando a los administradores. Se niega si hay
     # otras cuentas reales. Es de un solo uso: conviene quitarla después, o cada arranque volvería a renovarlo.
     reiniciar_demo: bool = False
+    # Si es verdadero, al arrancar imprime en los registros las cuentas reales (sin contraseñas ni teléfonos completos).
+    # Es de un solo uso: conviene quitarla después.
+    listar_cuentas: bool = False
     # Para crear el primer administrador al arrancar (solo si todavía no existe uno). Después conviene quitarlas.
     admin_nombre: str = "Administrador"
     admin_telefono: str = ""

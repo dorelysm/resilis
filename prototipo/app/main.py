@@ -16,7 +16,7 @@ from app.config import get_settings
 from app.cargas import cargar_viviendas
 from app.db import SessionLocal, crear_tablas, engine, get_db
 from app.migracion import migrar_sectores_a_barrios
-from app.models import Municipio, Rol, Barrio, Usuario, ahora
+from app.models import Barrio, CentroAcopio, Municipio, Rol, Usuario, ahora
 from app.rutas import admin, auth, formularios, mapa, operacion, plan, prioridades
 from app.seguridad import hash_password
 from app.simulacion import generar
@@ -39,6 +39,8 @@ async def lifespan(app: FastAPI):
     if get_settings().reiniciar_demo:
         reiniciar_demo()
     crear_primer_admin()
+    if get_settings().listar_cuentas:
+        listar_cuentas()
     yield
 
 
@@ -63,6 +65,19 @@ def reiniciar_demo() -> None:
               f"{r['lotes']} lotes", flush=True)
     except RuntimeError as e:
         print(f"DEMO no renovada: {e}", flush=True)
+
+
+def listar_cuentas() -> None:
+    """Imprime las cuentas reales para revisarlas en los registros: sin contraseñas y con el teléfono recortado."""
+    with SessionLocal() as db:
+        filas = db.execute(select(Usuario, Barrio.etiqueta).outerjoin(Barrio, Barrio.id == Usuario.barrio_id)
+                           .where(Usuario.ficticio.is_(False)).order_by(Usuario.id)).all()
+        for u, barrio in filas:
+            print(f"CUENTA id={u.id} rol={u.rol} nombre={u.nombre!r} tel=***{u.telefono[-4:]} aprobada={u.aprobado} "
+                  f"organizacion={u.es_organizacion} con_clave={u.password_hash is not None} barrio={barrio}", flush=True)
+        centros = db.scalars(select(CentroAcopio).join(Usuario, Usuario.id == CentroAcopio.responsable_id)
+                             .where(Usuario.ficticio.is_(False))).all()
+        print(f"CUENTAS: {len(filas)} reales; centros de acopio reales: {[(c.id, c.nombre) for c in centros]}", flush=True)
 
 
 def crear_primer_admin() -> None:

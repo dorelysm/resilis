@@ -27,3 +27,23 @@ def test_salud(engine, monkeypatch):
         app.dependency_overrides.clear()
     assert r.status_code == 200
     assert r.json() == {"estado": "ok", "base_de_datos": "ok", "municipios": 23, "barrios": 0}
+
+
+def test_listar_cuentas_no_imprime_contrasenas_ni_telefonos_completos(db, capsys, monkeypatch):
+    from app import main
+    from app.models import Rol, Usuario
+
+    db.add(Usuario(nombre="Cuenta Real", telefono="3001234567", rol=Rol.ENTIDAD, password_hash="secreto-hash",
+                   ficticio=False))
+    db.add(Usuario(nombre="Simulada", telefono="9990000000", rol=Rol.SOLICITANTE, ficticio=True))
+    db.commit()
+
+    class Sesion:
+        def __enter__(self): return db
+        def __exit__(self, *a): return False
+
+    monkeypatch.setattr(main, "SessionLocal", lambda: Sesion())
+    main.listar_cuentas()
+    salida = capsys.readouterr().out
+    assert "Cuenta Real" in salida and "***4567" in salida and "con_clave=True" in salida
+    assert "3001234567" not in salida and "secreto-hash" not in salida and "Simulada" not in salida
