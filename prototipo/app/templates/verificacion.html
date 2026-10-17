@@ -4,42 +4,33 @@
 {% block contenido %}
 <h1>Verificar</h1>
 
-<h2>Solicitudes por verificar</h2>
+<section class="que-sigue" aria-labelledby="titulo-por-verificar">
+  <h2 id="titulo-por-verificar">Por verificar</h2>
+  <p><strong>{{ total|plural('solicitud', 'solicitudes') }}</strong> y <strong>{{ n_reportes|plural('reporte', 'reportes') }}</strong> de daños.</p>
+  <div class="acciones">
+    {% if total %}<a class="boton grande" href="/verificacion/siguiente{% if solo_mi_zona %}?zona=mia{% endif %}">{{ icono('verificar') }}Verificar la siguiente solicitud</a>{% endif %}
+    {% if n_reportes %}<a class="boton" href="/verificacion/reportes">{{ icono('reportes') }}Revisar los reportes</a>{% endif %}
+  </div>
+</section>
+
 {% if mi_zona %}
 <p>Su zona de trabajo es <strong>{{ mi_zona.nombre }}</strong>.
   {% if solo_mi_zona %}Se muestran solo las de su zona. <a href="/verificacion">Ver las de todos los municipios</a>.
   {% else %}Se muestran las de todos los municipios, con las de su zona primero. <a href="/verificacion?zona=mia">Ver solo las de {{ mi_zona.nombre }}</a>.{% endif %}</p>
 {% endif %}
-{% if solicitudes %}
-<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
-<table>
-  <caption class="ayuda">Las más urgentes primero. Verifique la identidad y la necesidad antes de que se asigne la ayuda.</caption>
-  <thead><tr><th scope="col">Persona</th><th scope="col">Barrio</th><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Acción</th></tr></thead>
-  <tbody>
-  {% for s, persona, barrio in solicitudes %}
-    <tr><td>{{ persona }}</td><td>{{ barrio }}</td><td>{{ que_pidio(s, 120) }}</td><td>{{ urgencia[s.urgencia] }}</td>
-        <td><a href="/verificacion/solicitudes/{{ s.id }}">Revisar<span class="visually-hidden"> la solicitud de {{ persona }}</span></a></td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-</div>
-{% else %}<p>No hay solicitudes pendientes de verificar.</p>{% endif %}
 
-<h2>Reportes de daños sin revisar</h2>
-{% if reportes %}
-  {% for r, barrio in reportes %}
-  <section class="fila-accion" aria-label="Reporte de {{ barrio }}">
-    <p><strong>{{ barrio }}</strong>: {{ dano[r.nivel_dano] }}, {{ r.personas_afectadas|plural('persona afectada', 'personas afectadas') }}.</p>
-    <form method="post" action="/verificacion/reportes/{{ r.id }}">
-      <input type="hidden" name="csrf" value="{{ csrf }}">
-      <div class="campo"><label for="nota-{{ r.id }}">Nota <span class="opcional">(opcional)</span></label>
-        <input type="text" id="nota-{{ r.id }}" name="nota"></div>
-      <div class="acciones">
-        <button class="principal" type="submit" name="resultado" value="verificado">Confirmar<span class="visually-hidden"> reporte de {{ barrio }}</span></button>
-        <button class="principal" type="submit" name="resultado" value="desmentido">No es cierto<span class="visually-hidden"> reporte de {{ barrio }}</span></button>
-      </div>
-    </form>
-  </section>
+<h2>Solicitudes por verificar</h2>
+{% if solicitudes %}
+<p class="ayuda">Las más urgentes primero. Verifique la identidad y la necesidad antes de que se asigne la ayuda.{% if visibles > solicitudes|length %} Se muestran las {{ solicitudes|length }} primeras de {{ visibles }}; al verificar una, sigue la siguiente.{% endif %}</p>
+<ul class="cola">
+  {% for s, persona, barrio in solicitudes %}
+  <li class="cola-item">
+    <p class="cola-que">{{ que_pidio(s, 120) }}</p>
+    <p class="cola-donde">{{ barrio }} · <span class="estado{% if s.urgencia >= 2 %} estado-aviso{% endif %}">{{ urgencia[s.urgencia] }}</span></p>
+    <p class="cola-quien">{{ persona }}</p>
+    <a class="boton" href="/verificacion/solicitudes/{{ s.id }}">{{ icono('verificar') }}Verificar<span class="visually-hidden"> la solicitud de {{ persona }}</span></a>
+  </li>
   {% endfor %}
-{% else %}<p>No hay reportes pendientes.</p>{% endif %}
+</ul>
+{% else %}<p>No hay solicitudes pendientes de verificar.</p>{% endif %}
 {% endblock %}

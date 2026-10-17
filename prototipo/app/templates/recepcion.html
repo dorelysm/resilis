@@ -20,7 +20,7 @@
       <div class="campo"><label for="venc-{{ d.id }}">Vencimiento <span class="opcional">(opcional)</span></label>
         <input type="date" id="venc-{{ d.id }}" name="vencimiento" value="{{ d.vencimiento.strftime('%Y-%m-%d') if d.vencimiento else '' }}"></div>
       {% endif %}
-      <button class="principal" type="submit">Confirmar que llegó<span class="visually-hidden"> la donación de {{ donante.nombre if donante.nombre_publico else 'un donante' }}</span></button>
+      <button class="principal" type="submit">{{ icono('recibir') }}Confirmar que llegó<span class="visually-hidden"> la donación de {{ donante.nombre if donante.nombre_publico else 'un donante' }}</span></button>
     </form>
   </section>
   {% endfor %}

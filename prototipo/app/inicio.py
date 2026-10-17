@@ -17,8 +17,10 @@ def _contar(db: Session, consulta) -> int:
     return db.scalar(select(func.count()).select_from(consulta.subquery())) or 0
 
 
-def _item(texto: str, enlace: str, boton: str, urgente: bool = False) -> dict:
-    return {"texto": texto, "enlace": enlace, "boton": boton, "urgente": urgente}
+def _item(texto: str, enlace: str, boton: str, urgente: bool = False, icono: str | None = None) -> dict:
+    """`icono` por defecto: la alarma si es urgente y el reloj si solo está esperando."""
+    return {"texto": texto, "enlace": enlace, "boton": boton, "urgente": urgente,
+            "icono": icono or ("aviso" if urgente else "reloj")}
 
 
 def que_sigue(db: Session, usuario: m.Usuario) -> list[dict]:
@@ -40,15 +42,15 @@ def que_sigue(db: Session, usuario: m.Usuario) -> list[dict]:
         for s in mias:
             texto, boton, urgente = textos[s.estado]
             ancla = "#titulo-ruta" if s.estado == "en_camino" else ""
-            items.append(_item(texto, f"/solicitudes/{s.id}{ancla}", boton, urgente))
+            items.append(_item(texto, f"/solicitudes/{s.id}{ancla}", boton, urgente, "entregas" if s.estado in ("en_camino", "asignada") else None))
 
     elif rol == m.Rol.DONANTE:
         donante = db.scalar(select(m.Donante).where(m.Donante.usuario_id == usuario.id))
         if donante is None or not db.scalar(select(m.Donacion.id).where(m.Donacion.donante_id == donante.id).limit(1)):
-            items.append(_item("Todavía no ha registrado donaciones.", "/donaciones/nueva", "Registrar una donación"))
+            items.append(_item("Todavía no ha registrado donaciones.", "/donaciones/nueva", "Registrar una donación", icono="donar"))
         else:
             r = rt.ruta_de_donante(db, donante)
-            items.append(_item(r["texto"], "/donaciones", "Ver por dónde va", bool(r["en_camino"])))
+            items.append(_item(r["texto"], "/donaciones", "Ver por dónde va", bool(r["en_camino"]), "donaciones"))
 
     elif rol in (m.Rol.BRIGADISTA, m.Rol.ENTIDAD, m.Rol.ADMINISTRADOR):
         if rol in (m.Rol.BRIGADISTA, m.Rol.ENTIDAD):
@@ -59,27 +61,27 @@ def que_sigue(db: Session, usuario: m.Usuario) -> list[dict]:
                                                  m.Verificacion.objeto_id == m.ReporteDanos.id).exists()))
             if por_verificar:
                 items.append(_item(f"{plural(por_verificar, 'solicitud', 'solicitudes')} por verificar.", "/verificacion",
-                                   "Verificar", True))
+                                   "Verificar", True, "verificar"))
             if sin_revisar:
                 items.append(_item(f"{plural(sin_revisar, 'reporte', 'reportes')} de daños sin revisar.", "/verificacion",
-                                   "Revisar reportes"))
+                                   "Revisar reportes", icono="reportes"))
         if rol == m.Rol.ENTIDAD:
             listas = _contar(db, select(m.Solicitud.id).where(m.Solicitud.estado == m.EstadoSolicitud.VERIFICADA))
             if listas:
                 items.append(_item(f"{plural(listas, 'solicitud verificada', 'solicitudes verificadas')} esperan un plan.",
-                                   "/plan", "Ir al plan", True))
+                                   "/plan", "Ir al plan", True, "plan"))
         if rol in (m.Rol.ENTIDAD, m.Rol.ADMINISTRADOR):
             en_camino = _contar(db, select(m.Entrega.id).where(m.Entrega.estado == "en_camino"))
             por_salir = _contar(db, select(m.Entrega.id).where(m.Entrega.estado == "asignada"))
             if en_camino or por_salir:
                 items.append(_item(f"{plural(en_camino, 'entrega')} en camino y {plural(por_salir, 'por salir', 'por salir')}.",
-                                   "/recorrido", "Ver el control logístico"))
+                                   "/recorrido", "Ver el control logístico", icono="entregas"))
         if rol == m.Rol.ADMINISTRADOR:
             por_aprobar = _contar(db, select(m.Usuario.id).where(m.Usuario.es_organizacion.is_(True),
                                                                    m.Usuario.aprobado.is_(False)))
             if por_aprobar:
                 items.append(_item(f"{plural(por_aprobar, 'organización espera', 'organizaciones esperan')} aprobación.",
-                                   "/admin/usuarios", "Revisar cuentas", True))
+                                   "/admin/usuarios", "Revisar cuentas", True, "cuentas"))
 
     elif rol == m.Rol.CENTRO_ACOPIO:
         centro = db.scalar(select(m.CentroAcopio).where(m.CentroAcopio.responsable_id == usuario.id))
@@ -92,13 +94,13 @@ def que_sigue(db: Session, usuario: m.Usuario) -> list[dict]:
                 (m.Donacion.centro_id == centro.id) | m.Donacion.centro_id.is_(None)))
             if por_recibir:
                 items.append(_item(f"{plural(por_recibir, 'donación espera', 'donaciones esperan')} que la reciba.",
-                                   "/recepcion", "Recibir", True))
+                                   "/recepcion", "Recibir", True, "recibir"))
             vence = _contar(db, select(m.Lote.id).where(
                 m.Lote.centro_id == centro.id, m.Lote.cantidad_disponible > 0, m.Lote.vencimiento.is_not(None),
                 m.Lote.vencimiento < m.ahora() + timedelta(days=7)))
             if vence:
                 items.append(_item(f"{plural(vence, 'entrada', 'entradas')} del inventario vence en menos de 7 días.",
-                                   "/inventario", "Ver inventario"))
+                                   "/inventario", "Ver inventario", icono="inventario"))
 
     elif rol == m.Rol.EQUIPO_ENTREGA:
         en_camino = _contar(db, select(m.Entrega.id).where(m.Entrega.equipo_id == usuario.id, m.Entrega.estado == "en_camino"))
@@ -109,5 +111,5 @@ def que_sigue(db: Session, usuario: m.Usuario) -> list[dict]:
                 partes.append(f"{plural(en_camino, 'entrega')} en camino")
             if por_salir:
                 partes.append(f"{plural(por_salir, 'entrega')} por salir")
-            items.append(_item(" y ".join(partes) + ".", "/entregas", "Ver mis entregas", True))
+            items.append(_item(" y ".join(partes) + ".", "/entregas", "Ver mis entregas", True, "entregas"))
     return items

@@ -23,7 +23,7 @@
     {% if e.estado == 'asignada' %}
     <form method="post" action="/entregas/{{ e.id }}/en-camino">
       <input type="hidden" name="csrf" value="{{ csrf }}">
-      <button class="principal" type="submit">Voy en camino<span class="visually-hidden"> a la casa de {{ persona.nombre }}</span></button>
+      <button class="principal" type="submit">{{ icono('entregas') }}Voy en camino<span class="visually-hidden"> a la casa de {{ persona.nombre }}</span></button>
     </form>
     {% endif %}
 
@@ -34,7 +34,7 @@
         <p class="ayuda" id="codigo-ayuda-{{ e.id }}">Son 8 letras y números, por ejemplo K7M2-9PQX.</p>
         <input type="text" id="codigo-{{ e.id }}" name="codigo" required autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="codigo-ayuda-{{ e.id }}">
       </div>
-      <button class="principal" type="submit">Confirmar entrega<span class="visually-hidden"> a {{ persona.nombre }}</span></button>
+      <button class="principal" type="submit">{{ icono('check') }}Confirmar entrega<span class="visually-hidden"> a {{ persona.nombre }}</span></button>
     </form>
 
     <details>
@@ -50,7 +50,7 @@
           </select></div>
         <div class="campo"><label for="nota-{{ e.id }}">Nota <span class="opcional">(opcional)</span></label>
           <input type="text" id="nota-{{ e.id }}" name="nota"></div>
-        <button class="principal" type="submit">Registrar incidencia</button>
+        <button class="principal" type="submit">{{ icono('aviso') }}Registrar incidencia</button>
       </form>
     </details>
   </section>

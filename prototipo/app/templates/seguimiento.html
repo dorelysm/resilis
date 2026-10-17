@@ -31,7 +31,7 @@
 <form method="post" action="/solicitudes/{{ sol.id }}/confirmar">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <p>El equipo registró que le entregó la ayuda. ¿Ya la recibió?</p>
-  <button class="principal" type="submit">Sí, ya la recibí</button>
+  <button class="principal" type="submit">{{ icono('check') }}Sí, ya la recibí</button>
 </form>
 {% endif %}
 <p><a href="/solicitudes">Volver a mis solicitudes</a></p>

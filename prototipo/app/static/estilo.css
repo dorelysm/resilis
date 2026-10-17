@@ -232,3 +232,55 @@ button.grande { width: 100%; min-height: 3.25rem; font-size: 1.2rem; }
 .nivel-baja { background: #fff; color: var(--texto-suave); }
 .detalle-nivel { color: var(--texto-suave); font-size: .9rem; }
 .conviene { color: var(--texto-error); font-weight: 600; font-size: .9rem; }
+
+/* Cola de verificación: una tarjeta por solicitud, con botones grandes que se alcanzan con el pulgar */
+.cola { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.cola-item { border: 2px solid var(--borde-suave); border-radius: .6rem; padding: .75rem 1rem; display: grid; gap: .25rem; }
+.cola-item p { margin: 0; }
+.cola-que { font-size: 1.05rem; }
+.cola-donde, .cola-quien { color: var(--texto-suave); }
+.cola-item .boton { justify-self: start; margin-top: .4rem; }
+.progreso-cola { margin: 0 0 .5rem; }
+.ficha-verificar { border: 2px solid var(--azul); border-radius: .75rem; padding: .75rem 1rem; background: var(--tinte-azul); }
+.ficha-verificar .que { font-size: 1.15rem; margin: 0 0 .5rem; }
+.ficha-verificar dl { margin: .5rem 0 0; }
+.ficha-verificar dt { font-weight: 700; margin-top: .5rem; }
+.ficha-verificar dd { margin: 0; }
+.botones-verificar { display: grid; gap: .75rem; margin: 1rem 0; }
+.botones-verificar .acciones { margin-top: 0; }
+button.secundario, a.boton.secundario { background: #fff; color: var(--azul); border: 2px solid var(--azul); border-radius: .4rem; padding: .75rem 1.3rem; font: inherit; font-weight: 600; cursor: pointer; }
+button.secundario:hover { background: var(--tinte-azul); }
+button.grande.secundario { width: 100%; min-height: 3.25rem; font-size: 1.1rem; }
+.nota-verificar { margin: 0; }
+.saltar { text-align: center; margin: 0 0 1rem; }
+a.boton.grande { display: block; text-align: center; min-height: 3.25rem; font-size: 1.15rem; padding-top: .9rem; }
+
+/* Iconos: dibujos sencillos que acompañan al texto (nunca lo reemplazan) */
+.icono { width: 1.2em; height: 1.2em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.22em; margin-right: .4em; }
+.icono-redondo { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--tinte-teal); color: var(--teal-oscuro); margin-right: .6rem; vertical-align: middle; }
+.icono-redondo .icono { width: 1.4rem; height: 1.4rem; margin: 0; vertical-align: 0; }
+.tarjeta h2 { display: flex; align-items: center; }
+header nav a .icono { width: 1.1em; height: 1.1em; margin-right: .3em; }
+header button .icono { margin-right: .35em; }
+.que-sigue-texto { display: flex; gap: .5rem; align-items: flex-start; }
+.que-sigue-texto .icono { margin: .2rem 0 0; color: var(--azul); }
+.que-sigue li.urgente .que-sigue-texto .icono { color: var(--naranja-oscuro); }
+.titulo-paso .icono { color: var(--azul); }
+.paso-problema .titulo-paso .icono { color: var(--error); }
+.que-pidio .icono { margin-right: .3em; color: var(--azul); }
+button .icono, a.boton .icono { margin-right: .5em; }
+button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
+
+/* En celular, los botones de verificar quedan siempre a la vista, abajo, mientras se lee la tarjeta */
+.botones-fila { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.botones-fila button.grande { min-height: 3.5rem; padding-left: .5rem; padding-right: .5rem; }
+@media (max-width: 47.99rem) {
+  .botones-verificar { display: contents; }  /* para que la barra pegajosa se mida contra toda la página, no contra su formulario */
+  .botones-fila { position: sticky; bottom: 0; background: var(--fondo); padding: .6rem 0 .5rem; border-top: 2px solid var(--borde-suave); z-index: 5; }
+}
+
+/* Escritorio: el logo y "Salir" arriba, y los enlaces con sus iconos en una fila propia debajo */
+@media (min-width: 48rem) {
+  header .salir { order: 2; }
+  header nav { order: 3; flex: 1 1 100%; gap: .1rem 1.1rem; padding-bottom: .2rem; }
+}

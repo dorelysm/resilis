@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from sqlalchemy import case, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
@@ -73,19 +73,52 @@ def _solicitudes_a_verificar(db: Session, usuario: m.Usuario, solo_mi_zona: bool
     return filas
 
 
-@router.get("/verificacion")
-def verificacion(request: Request, db: Db, usuario: Verificador, zona: str = ""):
-    reportes = db.execute(
+def _reportes_sin_revisar(db: Session, limite: int = 50):
+    return db.execute(
         select(m.ReporteDanos, m.Barrio.etiqueta).join(m.Barrio, m.Barrio.id == m.ReporteDanos.barrio_id)
         .where(~select(m.Verificacion.id).where(m.Verificacion.objeto_tipo == "reporte",
                                                 m.Verificacion.objeto_id == m.ReporteDanos.id).exists(),
                m.ReporteDanos.estado == "activo")
-        .order_by(m.ReporteDanos.hora_captura.desc()).limit(50)).all()
+        .order_by(m.ReporteDanos.hora_captura.desc()).limit(limite)).all()
+
+
+def _total_por_verificar(db: Session) -> int:
+    return db.scalar(select(func.count()).select_from(m.Solicitud)
+                     .where(m.Solicitud.estado == m.EstadoSolicitud.REGISTRADA)) or 0
+
+
+@router.get("/verificacion")
+def verificacion(request: Request, db: Db, usuario: Verificador, zona: str = ""):
+    """Punto de partida de la verificación: cuánto hay por revisar, un botón para empezar y las primeras solicitudes."""
     mi_zona = _zona_de(db, usuario)
     solo_mi_zona = zona == "mia" and mi_zona is not None
-    return render(request, "verificacion.html", usuario,
-                  solicitudes=_solicitudes_a_verificar(db, usuario, solo_mi_zona), mi_zona=mi_zona,
-                  solo_mi_zona=solo_mi_zona, reportes=reportes, necesidad=NECESIDAD, urgencia=URGENCIA, dano=DANO)
+    solicitudes = _solicitudes_a_verificar(db, usuario, solo_mi_zona)
+    return render(request, "verificacion.html", usuario, solicitudes=solicitudes[:10], visibles=len(solicitudes),
+                  total=_total_por_verificar(db), n_reportes=len(_reportes_sin_revisar(db)), mi_zona=mi_zona,
+                  solo_mi_zona=solo_mi_zona, necesidad=NECESIDAD, urgencia=URGENCIA)
+
+
+@router.get("/verificacion/siguiente")
+def siguiente_a_verificar(db: Db, request: Request, usuario: Verificador, despues: int = 0, zona: str = ""):
+    """Lleva a la siguiente solicitud por verificar (las de su zona primero, las más urgentes primero). Con `despues`
+    pasa a la que sigue de esa, para poder saltar una sin verificarla."""
+    solo_mi_zona = zona == "mia" and _zona_de(db, usuario) is not None
+    ids = [f[0].id for f in _solicitudes_a_verificar(db, usuario, solo_mi_zona)]
+    if not ids:
+        mensaje(request, "No quedan solicitudes por verificar. Gracias.")
+        return _redir("/verificacion")
+    if despues in ids:
+        ids = ids[ids.index(despues) + 1:] + ids[:ids.index(despues)]  # da la vuelta al llegar al final
+        if not ids:
+            mensaje(request, "Esta es la única solicitud por verificar.")
+            return _redir(f"/verificacion/solicitudes/{despues}")
+    return _redir(f"/verificacion/solicitudes/{ids[0]}")
+
+
+@router.get("/verificacion/reportes")
+def reportes_por_revisar(request: Request, db: Db, usuario: Verificador):
+    return render(request, "verificacion_reportes.html", usuario, reportes=_reportes_sin_revisar(db, 20),
+                  total=len(_reportes_sin_revisar(db)), dano=DANO)
 
 
 def _detalle_solicitud(db: Session, sol_id: int):
@@ -98,10 +131,14 @@ def _detalle_solicitud(db: Session, sol_id: int):
 
 
 @router.get("/verificacion/solicitudes/{sol_id}")
-def verificar_solicitud_form(sol_id: int, request: Request, db: Db, usuario: Verificador):
+def verificar_solicitud_form(sol_id: int, request: Request, db: Db, usuario: Verificador, motivo: str = ""):
     sol, persona, barrio = _detalle_solicitud(db, sol_id)
     vuln = db.scalar(select(m.Vulnerabilidad).where(m.Vulnerabilidad.solicitud_id == sol.id))
+    adjuntar_detalles(db, [sol])
+    lat, lon = (sol.lat, sol.lon) if sol.lat is not None and sol.lon is not None else (barrio.lat, barrio.lon)
+    mapa = f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=18/{lat}/{lon}" if lat is not None else ""
     return render(request, "verificar_solicitud.html", usuario, sol=sol, persona=persona, barrio=barrio, vuln=vuln,
+                  pendientes=_total_por_verificar(db), mapa=mapa, abrir_nota=motivo == "1",
                   necesidad=NECESIDAD, urgencia=URGENCIA, tipo_vuln=TIPO_VULNERABILIDAD)
 
 
@@ -115,10 +152,10 @@ def verificar_solicitud(sol_id: int, request: Request, db: Db, usuario: Verifica
         sv.verificar_solicitud(db, sol, usuario, resultado, nota)
     except sv.ErrorNegocio as e:
         mensaje_error(request, str(e))
-        return _redir(f"/verificacion/solicitudes/{sol_id}")
+        return _redir(f"/verificacion/solicitudes/{sol_id}?motivo=1")  # abre la nota para que escriba el motivo
     refrescar(db)
     mensaje(request, "Solicitud verificada." if resultado == "verificado" else "Solicitud desmentida.")
-    return _redir("/verificacion")
+    return _redir("/verificacion/siguiente")  # sigue con la que sigue: un toque por solicitud
 
 
 @router.post("/verificacion/reportes/{rep_id}")
@@ -136,7 +173,7 @@ def verificar_reporte(rep_id: int, request: Request, db: Db, usuario: Verificado
     else:
         refrescar(db)
         mensaje(request, "Reporte revisado.")
-    return _redir("/verificacion")
+    return _redir("/verificacion/reportes")
 
 
 # ----------------------------------------------------------------------------- recepción e inventario

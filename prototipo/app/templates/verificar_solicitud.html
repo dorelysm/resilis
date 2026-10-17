@@ -1,28 +1,41 @@
 {% extends "base.html" %}
+{% from "_solicitud.html" import que_pidio %}
 {% block titulo %}Verificar solicitud{% endblock %}
 {% block contenido %}
+<p class="progreso-cola"><a href="/verificacion">{{ icono('volver') }}Volver a la lista</a> · Faltan <strong>{{ pendientes|plural('solicitud', 'solicitudes') }}</strong> por verificar</p>
 <h1>Verificar solicitud</h1>
-<dl>
-  <dt>Persona</dt><dd>{{ persona.nombre }}{% if persona.documento %} (documento {{ persona.documento }}){% endif %}</dd>
-  <dt>Teléfono</dt><dd>{{ persona.telefono }}</dd>
-  <dt>Barrio y dirección</dt><dd>{{ barrio.etiqueta }}. {{ sol.direccion }}</dd>
-  <dt>Necesita</dt><dd>{{ necesidad[sol.necesidad] }}: {{ sol.cantidad }} para {{ sol.personas_hogar|plural('persona', 'personas') }}</dd>
-  <dt>Urgencia declarada</dt><dd>{{ urgencia[sol.urgencia] }}</dd>
-  <dt>Situación</dt><dd>{{ sol.descripcion }}</dd>
-  {% if vuln %}
-  <dt>Vulnerabilidad</dt><dd>{{ tipo_vuln[vuln.tipo] }}. {{ vuln.descripcion_situacion }}{% if vuln.necesidad_especifica %} Necesita en especial: {{ vuln.necesidad_especifica }}.{% endif %}</dd>
-  {% endif %}
-</dl>
+
+<section class="ficha-verificar" aria-label="La solicitud">
+  <p class="que">{{ que_pidio(sol, 600) }}</p>
+  <p><span class="estado{% if sol.urgencia >= 2 %} estado-aviso{% endif %}">{{ urgencia[sol.urgencia] }}</span> · Para {{ sol.personas_hogar|plural('persona', 'personas') }}</p>
+  <dl>
+    <dt>Persona</dt><dd>{{ persona.nombre }}{% if persona.documento %} (documento {{ persona.documento }}){% endif %}</dd>
+    <dt>Teléfono</dt><dd><a href="tel:{{ persona.telefono }}">{{ icono('llamar') }}{{ persona.telefono }}</a> <span class="ayuda">(toque para llamar)</span></dd>
+    <dt>Dónde</dt><dd>{{ barrio.etiqueta }}. {{ sol.direccion }}{% if mapa %}<br><a href="{{ mapa }}" target="_blank" rel="noopener noreferrer">{{ icono('mapa') }}Abrir en el mapa<span class="visually-hidden"> (se abre en otra pestaña)</span></a>{% endif %}</dd>
+    {% if vuln %}
+    <dt>Vulnerabilidad</dt><dd>{{ tipo_vuln[vuln.tipo] }}. {{ vuln.descripcion_situacion }}{% if vuln.necesidad_especifica %} Necesita en especial: {{ vuln.necesidad_especifica }}.{% endif %}</dd>
+    {% endif %}
+  </dl>
+</section>
 <p class="ayuda">Estos datos son para verificar la solicitud. No los comparta fuera de su trabajo.</p>
-<form method="post" action="/verificacion/solicitudes/{{ sol.id }}">
+
+{% if sol.estado != 'registrada' %}
+<p class="mensaje">Esta solicitud ya fue revisada ({{ sol.estado.replace('_', ' ') }}).</p>
+<div class="acciones"><a class="boton grande" href="/verificacion/siguiente">{{ icono('saltar') }}Ir a la siguiente solicitud</a></div>
+{% else %}
+<form method="post" action="/verificacion/solicitudes/{{ sol.id }}" class="botones-verificar">
   <input type="hidden" name="csrf" value="{{ csrf }}">
-  <div class="campo"><label for="nota">Nota <span class="opcional">(obligatoria si la desmiente)</span></label>
-    <p class="ayuda" id="nota-ayuda">Cuente qué comprobó, o por qué no se pudo comprobar.</p>
-    <textarea id="nota" name="nota" aria-describedby="nota-ayuda"></textarea></div>
-  <div class="acciones">
-    <button class="principal" type="submit" name="resultado" value="verificado">Verificada</button>
-    <button class="principal" type="submit" name="resultado" value="desmentido">No se pudo verificar</button>
-    <a class="boton" href="/verificacion">Volver</a>
+  <details class="nota-verificar"{% if abrir_nota %} open{% endif %}>
+    <summary>Agregar una nota, o escribir por qué no se pudo verificar</summary>
+    <div class="campo"><label for="nota">Nota <span class="opcional">(obligatoria si no se pudo verificar)</span></label>
+      <p class="ayuda" id="nota-ayuda">Cuente qué comprobó, o por qué no se pudo comprobar.</p>
+      <textarea id="nota" name="nota" aria-describedby="nota-ayuda"></textarea></div>
+  </details>
+  <div class="botones-fila">
+    <button class="principal grande" type="submit" name="resultado" value="verificado">{{ icono('check') }}Verificada</button>
+    <button class="secundario grande" type="submit" name="resultado" value="desmentido">{{ icono('equis') }}No se pudo verificar</button>
   </div>
 </form>
+<p class="saltar"><a href="/verificacion/siguiente?despues={{ sol.id }}">{{ icono('saltar') }}Saltar esta y ver la siguiente</a></p>
+{% endif %}
 {% endblock %}

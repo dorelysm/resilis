@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Revisar reportes{% endblock %}
+{% block contenido %}
+<p class="progreso-cola"><a href="/verificacion">{{ icono('volver') }}Volver a Verificar</a></p>
+<h1>Revisar reportes de daños</h1>
+{% if reportes %}
+<p class="ayuda">{{ total|plural('reporte', 'reportes') }} sin revisar. Confirme los que comprobó y marque los que no son ciertos.{% if total > reportes|length %} Se muestran los {{ reportes|length }} más recientes.{% endif %}</p>
+<ul class="cola">
+  {% for r, barrio in reportes %}
+  <li class="cola-item">
+    <p class="cola-que"><strong>{{ barrio }}</strong>: {{ dano[r.nivel_dano] }}</p>
+    <p class="cola-donde">{{ r.personas_afectadas|plural('persona afectada', 'personas afectadas') }} · {{ r.hora_captura|hora_co('%d/%m %H:%M') }}</p>
+    <form method="post" action="/verificacion/reportes/{{ r.id }}" class="botones-verificar">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="acciones">
+        <button class="principal" type="submit" name="resultado" value="verificado">{{ icono('check') }}Confirmar<span class="visually-hidden"> el reporte de {{ barrio }}</span></button>
+        <button class="secundario" type="submit" name="resultado" value="desmentido">{{ icono('equis') }}No es cierto<span class="visually-hidden"> el reporte de {{ barrio }}</span></button>
+      </div>
+      <details class="nota-verificar"><summary>Agregar una nota</summary>
+        <div class="campo"><label for="nota-{{ r.id }}">Nota <span class="opcional">(opcional)</span></label>
+          <input type="text" id="nota-{{ r.id }}" name="nota"></div>
+      </details>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<p>No hay reportes pendientes. Gracias.</p>{% endif %}
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Inicio{% endblock %}
-{% macro tarjeta(titulo, texto, enlace, boton) %}
-<section class="tarjeta"><h2>{{ titulo }}</h2><p>{{ texto }}</p><a class="boton" href="{{ enlace }}">{{ boton }}</a></section>
+{% macro tarjeta(titulo, texto, enlace, boton, icono_nombre) %}
+<section class="tarjeta"><h2><span class="icono-redondo">{{ icono(icono_nombre) }}</span>{{ titulo }}</h2><p>{{ texto }}</p><a class="boton" href="{{ enlace }}">{{ boton }}</a></section>
 {% endmacro %}
 {% block contenido %}
 {% if not usuario %}
@@ -23,7 +23,7 @@
     {% if pendientes %}
     <ul>
       {% for p in pendientes %}
-      <li class="{{ 'urgente' if p.urgente }}"><span>{{ p.texto }}</span> <a class="boton" href="{{ p.enlace }}">{{ p.boton }}</a></li>
+      <li class="{{ 'urgente' if p.urgente }}"><span class="que-sigue-texto">{{ icono(p.icono) }}<span>{{ p.texto }}</span></span> <a class="boton" href="{{ p.enlace }}">{{ p.boton }}</a></li>
       {% endfor %}
     </ul>
     {% else %}
@@ -34,40 +34,40 @@
   <div class="tarjetas">
   {# Primero lo que más se usa en cada rol #}
   {% if usuario.rol == 'solicitante' %}
-    {{ tarjeta('Necesito ayuda', 'Cuéntenos qué necesita.', '/solicitudes/nueva', 'Pedir ayuda') }}
-    {{ tarjeta('Mis solicitudes', 'Vea cómo avanza lo que pidió.', '/solicitudes', 'Ver solicitudes') }}
-    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte') }}
-    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes') }}
+    {{ tarjeta('Necesito ayuda', 'Cuéntenos qué necesita.', '/solicitudes/nueva', 'Pedir ayuda', 'ayuda') }}
+    {{ tarjeta('Mis solicitudes', 'Vea cómo avanza lo que pidió.', '/solicitudes', 'Ver solicitudes', 'solicitudes') }}
+    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte', 'aviso') }}
+    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes', 'reportes') }}
   {% elif usuario.rol == 'donante' %}
-    {{ tarjeta('Quiero donar', 'Ofrezca alimentos, agua u otros bienes, o una donación en dinero.', '/donaciones/nueva', 'Registrar donación') }}
-    {{ tarjeta('Mis donaciones', 'Vea en qué estado está cada una y por dónde va.', '/donaciones', 'Ver donaciones') }}
+    {{ tarjeta('Quiero donar', 'Ofrezca alimentos, agua u otros bienes, o una donación en dinero.', '/donaciones/nueva', 'Registrar donación', 'donar') }}
+    {{ tarjeta('Mis donaciones', 'Vea en qué estado está cada una y por dónde va.', '/donaciones', 'Ver donaciones', 'donaciones') }}
   {% elif usuario.rol == 'brigadista' %}
-    {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar') }}
-    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte') }}
-    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa') }}
-    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades') }}
-    {{ tarjeta('Recorrido', 'Dónde va cada solicitud, donación y reporte.', '/recorrido', 'Ver el recorrido') }}
-    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes') }}
+    {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar', 'verificar') }}
+    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte', 'aviso') }}
+    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa', 'mapa') }}
+    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades', 'prioridades') }}
+    {{ tarjeta('Recorrido', 'Dónde va cada solicitud, donación y reporte.', '/recorrido', 'Ver el recorrido', 'recorrido') }}
+    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes', 'reportes') }}
   {% elif usuario.rol == 'entidad' %}
-    {{ tarjeta('Plan de asignación', 'Qué entregar a cada solicitud para cubrir la mayor necesidad, de a un paquete.', '/plan', 'Ver el plan') }}
-    {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar') }}
-    {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido') }}
-    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa') }}
-    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades') }}
-    {{ tarjeta('Asignar entregas', 'Elija a mano qué equipo entrega cada solicitud verificada.', '/asignacion', 'Asignar') }}
-    {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario') }}
-    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte') }}
-    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes') }}
+    {{ tarjeta('Plan de asignación', 'Qué entregar a cada solicitud para cubrir la mayor necesidad, de a un paquete.', '/plan', 'Ver el plan', 'plan') }}
+    {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar', 'verificar') }}
+    {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido', 'recorrido') }}
+    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa', 'mapa') }}
+    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades', 'prioridades') }}
+    {{ tarjeta('Asignar entregas', 'Elija a mano qué equipo entrega cada solicitud verificada.', '/asignacion', 'Asignar', 'equipos') }}
+    {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario', 'inventario') }}
+    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte', 'aviso') }}
+    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes', 'reportes') }}
   {% elif usuario.rol == 'centro_acopio' %}
-    {{ tarjeta('Recibir donaciones', 'Confirme lo que llega a su centro.', '/recepcion', 'Recibir') }}
-    {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario') }}
+    {{ tarjeta('Recibir donaciones', 'Confirme lo que llega a su centro.', '/recepcion', 'Recibir', 'recibir') }}
+    {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario', 'inventario') }}
   {% elif usuario.rol == 'equipo_entrega' %}
-    {{ tarjeta('Mis entregas', 'Las entregas que le asignaron.', '/entregas', 'Ver entregas') }}
+    {{ tarjeta('Mis entregas', 'Las entregas que le asignaron.', '/entregas', 'Ver entregas', 'entregas') }}
   {% elif usuario.rol == 'administrador' %}
-    {{ tarjeta('Cuentas', 'Cree cuentas de brigadistas, entidades, equipos de entrega y centros de acopio.', '/admin/usuarios', 'Administrar cuentas') }}
-    {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido') }}
-    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa') }}
-    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades') }}
+    {{ tarjeta('Cuentas', 'Cree cuentas de brigadistas, entidades, equipos de entrega y centros de acopio.', '/admin/usuarios', 'Administrar cuentas', 'cuentas') }}
+    {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido', 'recorrido') }}
+    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa', 'mapa') }}
+    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades', 'prioridades') }}
   {% endif %}
   </div>
 {% endif %}

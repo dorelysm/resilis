@@ -179,7 +179,9 @@ Los siete puntos de la ola "Ya" están implementados, con pruebas (292 en total)
 | 6 | Mapa primero: una línea de introducción, el mapa y los filtros plegados | El mapa pasa de la posición 1193 a unos 355 |
 | 7 | Textos: "lote", "dimensión" y "huella" sustituidos; plurales sin paréntesis ("1 entrega", "3 entregas") | Una prueba revisa que no queden plurales con paréntesis |
 
-Siguen pendientes los puntos 8 a 18 (la cola de verificación para brigadistas, Mi solicitud al estilo de una app de entregas, tablas como tarjetas, "aprobar los siguientes N paquetes" y el registro mínimo, entre otros).
+También está hecho el punto 9, la **cola de verificación para brigadistas**: la lista son tarjetas (sin tablas), "Verificar la siguiente solicitud" lleva a la más urgente, cada tarjeta trae teléfono, mapa y los botones "Verificada" / "No se pudo verificar" fijos al pie en el celular, y al decidir pasa sola a la siguiente (un toque por solicitud). Los reportes de daños se revisan aparte. Y se añadió un **juego de iconos propios** (SVG en línea, sin conexión) en el menú, las tarjetas de inicio, "Qué sigue", los botones clave, las etapas del recorrido y los tipos de necesidad; son decorativos y siempre van con texto. Con ello hay 310 pruebas y la revisión de accesibilidad sigue sin fallas.
+
+Siguen pendientes los puntos 8 y 10 a 18 (Mi solicitud al estilo de una app de entregas, tablas como tarjetas en Asignar, Prioridades e Inventario, "aprobar los siguientes N paquetes" y el registro mínimo, entre otros).
 
 ## 7. Cómo comprobar que mejoró
 

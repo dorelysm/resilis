@@ -10,7 +10,7 @@
 <form method="post" action="/plan/calcular" class="no-imprimir">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <p class="ayuda">Hay {{ verificadas|plural('solicitud verificada', 'solicitudes verificadas') if verificadas is not none else '—' }} y {{ disponible if disponible is not none else '—' }} unidades disponibles.</p>
-  <button class="principal" type="submit">Calcular un plan nuevo</button>
+  <button class="principal" type="submit">{{ icono('plan') }}Calcular un plan nuevo</button>
 </form>
 
 {% if not vista %}
@@ -49,7 +49,7 @@
             {% for id, nombre in equipos %}<option value="{{ id }}"{% if id == pq.equipo_sugerido %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
             {% if not equipos %}<option value="">No hay equipos</option>{% endif %}
           </select></div>
-        <div class="acciones"><button class="principal grande" type="submit"{% if not equipos %} disabled aria-disabled="true"{% endif %}>Aprobar este paquete</button></div>
+        <div class="acciones"><button class="principal grande" type="submit"{% if not equipos %} disabled aria-disabled="true"{% endif %}>{{ icono('check') }}Aprobar este paquete</button></div>
       </form>
     </section>
     {% else %}

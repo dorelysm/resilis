@@ -20,24 +20,24 @@
   <div class="barra">
     <a class="marca" href="/"><img src="/static/img/emblema-barra.webp" alt="" width="46" height="48"><span>Resilis</span></a>
     {% if usuario %}
-    <button type="button" class="menu-boton" id="menu-boton" aria-expanded="true" aria-controls="menu-principal" hidden>Menú</button>
-    <form method="post" action="/salir" class="salir"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Salir</button></form>
+    <button type="button" class="menu-boton" id="menu-boton" aria-expanded="true" aria-controls="menu-principal" hidden>{{ icono('menu') }}Menú</button>
+    <form method="post" action="/salir" class="salir"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ icono('salir') }}Salir</button></form>
     {% endif %}
     <nav aria-label="Menú principal" id="menu-principal"{% if usuario %} data-plegable{% endif %}>
       {% if usuario %}
-        {% if usuario.rol in ('solicitante',) %}<a href="/solicitudes">Mis solicitudes</a>{% endif %}
-        {% if usuario.rol in ('solicitante', 'brigadista', 'entidad') %}<a href="/reportes">Mis reportes</a>{% endif %}
-        {% if usuario.rol == 'donante' %}<a href="/donaciones">Mis donaciones</a>{% endif %}
-        {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}<a href="/mapa">Mapa</a><a href="/prioridades">Prioridades</a><a href="/recorrido">Recorrido</a>{% endif %}
-        {% if usuario.rol in ('brigadista', 'entidad') %}<a href="/verificacion">Verificar</a>{% endif %}
-        {% if usuario.rol == 'entidad' %}<a href="/plan">Plan</a><a href="/asignacion">Asignar</a>{% endif %}
-        {% if usuario.rol in ('centro_acopio', 'entidad') %}<a href="/inventario">Inventario</a>{% endif %}
-        {% if usuario.rol == 'centro_acopio' %}<a href="/recepcion">Recibir donaciones</a>{% endif %}
-        {% if usuario.rol == 'equipo_entrega' %}<a href="/entregas">Mis entregas</a>{% endif %}
-        {% if usuario.rol == 'administrador' %}<a href="/admin/usuarios">Cuentas</a><a href="/admin/auditoria">Auditoría</a>{% endif %}
+        {% if usuario.rol in ('solicitante',) %}<a href="/solicitudes">{{ icono('solicitudes') }}Mis solicitudes</a>{% endif %}
+        {% if usuario.rol in ('solicitante', 'brigadista', 'entidad') %}<a href="/reportes">{{ icono('reportes') }}Mis reportes</a>{% endif %}
+        {% if usuario.rol == 'donante' %}<a href="/donaciones">{{ icono('donaciones') }}Mis donaciones</a>{% endif %}
+        {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}<a href="/mapa">{{ icono('mapa') }}Mapa</a><a href="/prioridades">{{ icono('prioridades') }}Prioridades</a><a href="/recorrido">{{ icono('recorrido') }}Recorrido</a>{% endif %}
+        {% if usuario.rol in ('brigadista', 'entidad') %}<a href="/verificacion">{{ icono('verificar') }}Verificar</a>{% endif %}
+        {% if usuario.rol == 'entidad' %}<a href="/plan">{{ icono('plan') }}Plan</a><a href="/asignacion">{{ icono('equipos') }}Asignar</a>{% endif %}
+        {% if usuario.rol in ('centro_acopio', 'entidad') %}<a href="/inventario">{{ icono('inventario') }}Inventario</a>{% endif %}
+        {% if usuario.rol == 'centro_acopio' %}<a href="/recepcion">{{ icono('recibir') }}Recibir donaciones</a>{% endif %}
+        {% if usuario.rol == 'equipo_entrega' %}<a href="/entregas">{{ icono('entregas') }}Mis entregas</a>{% endif %}
+        {% if usuario.rol == 'administrador' %}<a href="/admin/usuarios">{{ icono('cuentas') }}Cuentas</a><a href="/admin/auditoria">{{ icono('auditoria') }}Auditoría</a>{% endif %}
       {% else %}
-        <a href="/entrar">Entrar</a>
-        <a href="/registro">Crear cuenta</a>
+        <a href="/entrar">{{ icono('inicio') }}Entrar</a>
+        <a href="/registro">{{ icono('cuentas') }}Crear cuenta</a>
       {% endif %}
     </nav>
   </div>

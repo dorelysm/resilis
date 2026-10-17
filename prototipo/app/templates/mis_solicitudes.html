@@ -11,11 +11,11 @@
   {% for s in filas %}
     <tr><td><a href="/solicitudes/{{ s.id }}">{{ necesidades[s.necesidad] }} para {{ s.personas_hogar|plural('persona', 'personas') }}</a></td><td>{{ urgencias[s.urgencia] }}</td>
         <td><span class="estado">{{ estados[s.estado] }}</span></td>
-        <td>{% if s.estado in ('asignada', 'en_camino') %}<a href="/solicitudes/{{ s.id }}#titulo-ruta">Seguir en el mapa<span class="visually-hidden"> la solicitud {{ s.id }}</span></a>{% else %}<a href="/solicitudes/{{ s.id }}">Ver cómo va</a>{% endif %}</td><td>{{ s.creado_en|hora_co }}</td></tr>
+        <td>{% if s.estado in ('asignada', 'en_camino') %}<a href="/solicitudes/{{ s.id }}#titulo-ruta">{{ icono('mapa') }}Seguir en el mapa<span class="visually-hidden"> la solicitud {{ s.id }}</span></a>{% else %}<a href="/solicitudes/{{ s.id }}">Ver cómo va</a>{% endif %}</td><td>{{ s.creado_en|hora_co }}</td></tr>
   {% endfor %}
   </tbody>
 </table>
 </div>
 {% else %}<p>Todavía no ha pedido ayuda.</p>{% endif %}
-<a class="boton" href="/solicitudes/nueva">Pedir ayuda</a>
+<a class="boton" href="/solicitudes/nueva">{{ icono('ayuda') }}Pedir ayuda</a>
 {% endblock %}
