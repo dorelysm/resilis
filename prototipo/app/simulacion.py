@@ -138,6 +138,41 @@ def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
     return donde
 
 
+ACCIONES_DE_DATOS = ("aprobar_plan", "asignar", "calcular_plan", "rechazar_plan", "simulacion_verdad")
+
+
+def vaciar_datos(db: Session) -> dict[str, int]:
+    """Borra TODO lo que se generó o se registró (reportes, solicitudes, donaciones, inventario, planes, entregas,
+    verificaciones, eventos, puntajes y la cadena de auditoría) y deja solo las cuentas reales. Se conservan también el
+    territorio (municipios y barrios), los pesos, las proyecciones de viviendas, los centros de acopio y los perfiles de
+    donante de las cuentas reales, y la bitácora de administración de cuentas y de parámetros. Las cuentas simuladas
+    (ficticias) se borran con lo demás. Todo ocurre en una transacción: el que llama hace commit o rollback.
+    Devuelve cuántos registros se borraron de cada tabla."""
+    simulados = select(m.Usuario.id).where(m.Usuario.ficticio.is_(True))
+    reales_ids = [u for (u,) in db.execute(select(m.Usuario.id).where(m.Usuario.ficticio.is_(False)))]
+    borrados: dict[str, int] = {}
+
+    def borrar(nombre, consulta):
+        borrados[nombre] = db.execute(consulta).rowcount or 0
+
+    for modelo in (m.MovimientoInventario, m.PlanResumen, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega,
+                   m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Solicitud, m.ReporteDanos, m.PuntajeBarrio,
+                   m.EventoAuditoria, m.DatoOficial):
+        borrar(modelo.__tablename__, delete(modelo))
+    borrar("bitacora", delete(m.Bitacora).where(m.Bitacora.accion.in_(ACCIONES_DE_DATOS)))
+    borrar("evento", delete(m.Evento))
+    # Lo que pertenece a cuentas simuladas se va con ellas; lo de las cuentas reales se conserva.
+    borrar("donante", delete(m.Donante).where(m.Donante.usuario_id.is_(None) | m.Donante.usuario_id.in_(simulados)))
+    borrar("centro_acopio", delete(m.CentroAcopio).where(
+        m.CentroAcopio.responsable_id.is_(None) | m.CentroAcopio.responsable_id.in_(simulados)))
+    db.execute(delete(m.Bitacora).where(m.Bitacora.usuario_id.in_(simulados)))
+    borrar("peso (de cuentas simuladas)", delete(m.Peso).where(m.Peso.actualizado_por.in_(simulados)))
+    borrar("usuario (simulados)", delete(m.Usuario).where(m.Usuario.ficticio.is_(True)))
+    borrados["cuentas reales que se conservan"] = len(reales_ids)
+    db.flush()
+    return {k: v for k, v in borrados.items() if v or k.startswith("cuentas")}
+
+
 def reubicar_cuentas(db: Session, donde: dict, barrios: list[m.Barrio]) -> None:
     """Vuelve a poner cada cuenta real y cada centro conservado en el barrio que tenía, buscándolo por municipio y nombre."""
     por_nombre = {(s.municipio_codigo, s.nombre): s.id for s in barrios}

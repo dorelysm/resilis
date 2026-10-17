@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 
 from app import models as m
 from app.cargas import cargar_viviendas
-from app.simulacion import MUNICIPIOS, generar
+from app.simulacion import MUNICIPIOS, generar, vaciar_datos
 
 
 @pytest.fixture()
@@ -258,3 +258,47 @@ def test_un_perfil_de_donante_real_sin_donaciones_se_conserva_y_con_donaciones_b
     base.commit()
     with pytest.raises(RuntimeError, match="donaciones"):
         generar(base, semilla=45, tipo="inundacion", conservar_cuentas=True)
+
+
+def test_vaciar_datos_deja_solo_las_cuentas_reales(base):
+    generar(base, semilla=50, tipo="inundacion")
+    admin = _admin_real(base)
+    entidad = m.Usuario(nombre="Entidad Real", telefono="3002223344", rol="entidad", ficticio=False, password_hash="x")
+    acopio = m.Usuario(nombre="Acopio Real", telefono="3003334455", rol="centro_acopio", ficticio=False, password_hash="x")
+    donante = m.Usuario(nombre="Donante Real", telefono="3004445566", rol="donante", ficticio=False, password_hash="x")
+    base.add_all([entidad, acopio, donante])
+    base.flush()
+    barrio = base.scalar(select(m.Barrio).limit(1))
+    perfil = m.Donante(usuario_id=donante.id, nombre="Donante Real", tipo="persona")
+    centro = m.CentroAcopio(nombre="Centro real", barrio_id=barrio.id, responsable_id=acopio.id)
+    base.add_all([perfil, centro])
+    base.flush()
+    # datos de las cuentas reales: una solicitud, un reporte, una donación y una acción de cuentas
+    evento = base.scalar(select(m.Evento))
+    sol = m.Solicitud(solicitante_id=entidad.id, creador_id=entidad.id, barrio_id=barrio.id, necesidad="agua", cantidad=6)
+    base.add_all([sol, m.ReporteDanos(barrio_id=barrio.id, evento_id=evento.id, autor_id=entidad.id,
+                                      hora_evento=evento.fecha, nivel_dano=2),
+                  m.Donacion(donante_id=perfil.id, tipo_bien="agua", cantidad=10, unidad="litros"),
+                  m.Bitacora(usuario_id=admin.id, accion="crear_usuario", objeto="usuario:x")])
+    base.commit()
+    reales = {admin.id, entidad.id, acopio.id, donante.id}
+    barrios = base.scalar(select(func.count()).select_from(m.Barrio))
+    pesos = base.scalar(select(func.count()).select_from(m.Peso))
+
+    resumen = vaciar_datos(base)
+    base.commit()
+
+    for modelo in (m.Solicitud, m.ReporteDanos, m.Donacion, m.Lote, m.MovimientoInventario, m.PlanAsignacion, m.Entrega,
+                   m.Verificacion, m.Vulnerabilidad, m.PuntajeBarrio, m.EventoAuditoria, m.Evento):
+        assert base.scalar(select(func.count()).select_from(modelo)) == 0, modelo.__name__
+    assert {u.id for u in base.scalars(select(m.Usuario))} == reales  # ninguna cuenta simulada
+    assert base.scalar(select(func.count()).select_from(m.Barrio)) == barrios  # el territorio no se toca
+    assert base.scalar(select(func.count()).select_from(m.Peso)) == pesos
+    assert [c.id for c in base.scalars(select(m.CentroAcopio))] == [centro.id]  # solo el centro de una cuenta real
+    assert [d.id for d in base.scalars(select(m.Donante))] == [perfil.id]
+    assert {b.accion for b in base.scalars(select(m.Bitacora))} == {"crear_usuario"}  # solo queda la bitácora de cuentas
+    assert resumen["cuentas reales que se conservan"] == 4 and resumen["solicitud"] >= 1
+
+
+def test_vaciar_datos_en_una_base_sin_nada_no_falla(base):
+    assert vaciar_datos(base) == {"cuentas reales que se conservan": 0}

@@ -21,7 +21,7 @@ from app.models import (
 )
 from app.rutas import admin, auth, formularios, mapa, operacion, plan, prioridades, recorrido, ruta
 from app.seguridad import hash_password
-from app.simulacion import generar
+from app.simulacion import generar, vaciar_datos
 from app.territorio import corregir_nombres_municipios
 from app.web import render, solo_digitos
 
@@ -41,6 +41,8 @@ async def lifespan(app: FastAPI):
     if get_settings().reiniciar_demo:
         reiniciar_demo()
     crear_primer_admin()
+    if get_settings().limpiar_datos:
+        limpiar_datos()
     if get_settings().listar_cuentas:
         listar_cuentas()
     yield
@@ -67,6 +69,17 @@ def reiniciar_demo() -> None:
               f"{r['lotes']} lotes", flush=True)
     except RuntimeError as e:
         print(f"DEMO no renovada: {e}", flush=True)
+
+
+def limpiar_datos() -> None:
+    """Borra todos los datos y deja solo las cuentas reales (ver simulacion.vaciar_datos). Una transacción."""
+    try:
+        with SessionLocal() as db:
+            borrados = vaciar_datos(db)
+            db.commit()
+        print(f"DATOS BORRADOS: {borrados}", flush=True)
+    except Exception as e:  # nunca tumba la aplicación; si falla no se borra nada
+        print(f"DATOS NO BORRADOS: {e}", flush=True)
 
 
 def listar_cuentas() -> None:
