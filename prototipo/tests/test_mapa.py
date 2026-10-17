@@ -212,3 +212,21 @@ def test_los_circulos_se_achican_al_alejar_y_los_numeros_aparecen_al_acercar():
     assert escalas == sorted(escalas) and len(set(escalas)) == 5
     assert _js("m.mostrarNumero(3, 9)") is True and _js("m.mostrarNumero(40, 9)") is False  # lejos: solo los primeros
     assert _js("m.mostrarNumero(40, 13)") is True and _js("m.mostrarNumero(150, 15)") is False  # cerca, hasta el 99
+
+
+@node
+def test_por_defecto_el_mapa_oculta_los_barrios_sin_reportes_ni_solicitudes():
+    barrios = [
+        {"id": 1, "codigo_municipio": "A", "alertas": [], "n_reportes": 3, "n_solicitudes": 0},
+        {"id": 2, "codigo_municipio": "A", "alertas": ["sin_reportes"], "n_reportes": 0, "n_solicitudes": 2},  # solo pidieron ayuda
+        {"id": 3, "codigo_municipio": "B", "alertas": ["sin_reportes"], "n_reportes": 0, "n_solicitudes": 0},
+    ]
+    base = f"const S = {json.dumps(barrios)};"
+
+    def ids(filtro):
+        guion = f"{base} const m = require(process.argv[1]); console.log(JSON.stringify(m.filtrar(S, {filtro}).map(s => s.id)));"
+        return json.loads(subprocess.run(["node", "-e", guion, str(JS)], capture_output=True, text=True, encoding="utf-8", check=True).stdout)
+
+    assert ids("{municipio: '', aviso: '', sinInfo: false}") == [1, 2]   # con información: reportes o solicitudes
+    assert ids("{municipio: '', aviso: '', sinInfo: true}") == [1, 2, 3]  # con la casilla marcada se ven todos
+    assert ids("{municipio: '', aviso: ''}") == [1, 2, 3]                 # sin la opción, nada cambia

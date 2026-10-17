@@ -2,7 +2,7 @@
 {% block titulo %}Mapa{% endblock %}
 {% block contenido %}
 <h1>Mapa de barrios</h1>
-<p>Cada círculo es un barrio. <strong>El color dice cuánto urge atenderlo o cuánta confianza hay en su información, según lo que elija.</strong> Los barrios sin reportes se dibujan rayados: no es que estén bien, es que no sabemos. Toque o seleccione un círculo para ver los detalles.</p>
+<p>Cada círculo es un barrio. <strong>El color dice cuánto urge atenderlo o cuánta confianza hay en su información, según lo que elija.</strong> Por defecto solo se ven los barrios donde alguien reportó daños o pidió ayuda. Los barrios sin reportes, si los muestra, se dibujan rayados: no es que estén bien, es que no sabemos. Toque o seleccione un círculo para ver los detalles.</p>
 
 <form class="controles-mapa no-imprimir" id="controles" onsubmit="return false">
   <fieldset>
@@ -18,6 +18,7 @@
       <option value="cualquiera">Cualquier aviso</option>
       {% for clave, texto in alertas.items() %}<option value="{{ clave }}">{{ texto }}</option>{% endfor %}
     </select></div>
+  <div class="opcion"><input type="checkbox" id="ver-sin-info" name="ver-sin-info"><label for="ver-sin-info">Mostrar también los barrios sin información (sin reportes ni solicitudes)</label></div>
 </form>
 
 <p id="estado-mapa" class="ayuda" role="status" aria-live="polite">Cargando los barrios…</p>

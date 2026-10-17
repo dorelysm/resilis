@@ -80,8 +80,13 @@
 
   function filtrar(barrios, filtros) {
     return barrios.filter(function (s) {
-      return (!filtros.municipio || s.codigo_municipio === filtros.municipio) && tieneAviso(s, filtros.aviso);
+      return (!filtros.municipio || s.codigo_municipio === filtros.municipio) && tieneAviso(s, filtros.aviso) &&
+        (filtros.sinInfo !== false || conInfo(s));  // con sinInfo === false se ocultan los barrios sin reportes ni solicitudes
     });
+  }
+
+  function conInfo(barrio) {
+    return (barrio.n_reportes || 0) > 0 || (barrio.n_solicitudes || 0) > 0;
   }
 
   function sinDatos(barrio) {
@@ -102,7 +107,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RAMPAS: RAMPAS, CLASES: CLASES, BORDE: BORDE, escapar: escapar, cuantiles: cuantiles,
       claseDe: claseDe, escala: escala, mostrarNumero: mostrarNumero, contraste: contraste, textoSobre: textoSobre, tamano: tamano, filtrar: filtrar,
-      tieneAviso: tieneAviso, sinDatos: sinDatos, resumen: resumen };
+      tieneAviso: tieneAviso, sinDatos: sinDatos, conInfo: conInfo, resumen: resumen };
     return;
   }
 
@@ -113,6 +118,7 @@
   var estado = document.getElementById('estado-mapa');
   var selMunicipio = document.getElementById('filtro-municipio');
   var selAviso = document.getElementById('filtro-aviso');
+  var chkSinInfo = document.getElementById('ver-sin-info');
   var leyenda = document.getElementById('leyenda');
   var datos = null;
   var capa = null;
@@ -142,7 +148,10 @@
     if (!datos) return;
     var zoom = mapa.getZoom();
     var vista = vistaActual();
-    var visibles = filtrar(datos.barrios, { municipio: selMunicipio.value, aviso: selAviso.value });
+    // Por defecto solo los barrios con información; si todavía no hay ninguno, se muestran todos.
+    var hayInfo = datos.barrios.some(conInfo);
+    var sinInfo = chkSinInfo.checked || !hayInfo;
+    var visibles = filtrar(datos.barrios, { municipio: selMunicipio.value, aviso: selAviso.value, sinInfo: sinInfo });
     if (capa) mapa.removeLayer(capa);
     capa = L.layerGroup();
     var conDatos = visibles.filter(function (s) { return !sinDatos(s); });
@@ -181,7 +190,8 @@
     dibujarLeyenda(vista, cortes, visibles.some(sinDatos));
     estado.textContent = visibles.length === 0
       ? 'Ningún barrio cumple con ese filtro.'
-      : 'Se muestran ' + visibles.length + ' de ' + datos.total + ' barrios.';
+      : 'Se muestran ' + visibles.length + ' de ' + datos.total + ' barrios' +
+        (sinInfo ? '.' : ' (los que tienen reportes o solicitudes). Marque la casilla para ver también los barrios sin información.');
   }
 
   function cargar() {

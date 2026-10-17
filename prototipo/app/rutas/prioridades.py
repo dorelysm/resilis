@@ -38,7 +38,12 @@ def _pct(valor: float) -> str:
     return f"{round(valor * 100)} %"
 
 
-def _resumen_municipios(db: Session) -> list[dict]:
+def _con_datos():
+    """Un barrio tiene información si alguien reportó daños o pidió ayuda ahí."""
+    return (m.PuntajeBarrio.n_reportes > 0) | (m.PuntajeBarrio.n_solicitudes > 0)
+
+
+def _resumen_municipios(db: Session, solo_con_datos: bool = False) -> list[dict]:
     """Un renglón por municipio: cuántos barrios tiene, qué tan alta es su prioridad y cuánto falta por atender."""
     pendientes = dict(db.execute(
         select(m.Barrio.municipio_codigo, func.count(m.Solicitud.id)).join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
@@ -47,7 +52,8 @@ def _resumen_municipios(db: Session) -> list[dict]:
     for p, codigo, nombre in db.execute(
             select(m.PuntajeBarrio, m.Barrio.municipio_codigo, m.Municipio.nombre)
             .join(m.Barrio, m.Barrio.id == m.PuntajeBarrio.barrio_id)
-            .join(m.Municipio, m.Municipio.codigo == m.Barrio.municipio_codigo)).all():
+            .join(m.Municipio, m.Municipio.codigo == m.Barrio.municipio_codigo)
+            .where(*([_con_datos()] if solo_con_datos else []))).all():
         r = por_municipio.setdefault(codigo, {"codigo": codigo, "nombre": nombre, "barrios": 0, "suma": 0.0,
                                               "maxima": 0.0, "con_alerta": 0, "pendientes": pendientes.get(codigo, 0)})
         r["barrios"] += 1
@@ -61,20 +67,24 @@ def _resumen_municipios(db: Session) -> list[dict]:
 
 
 @router.get("/prioridades")
-def prioridades(request: Request, db: Db, usuario: Ve, todos: str = "", municipio: str = ""):
+def prioridades(request: Request, db: Db, usuario: Ve, todos: str = "", municipio: str = "", sin_info: str = ""):
     if db.scalar(select(func.count()).select_from(m.PuntajeBarrio)) == 0:
         refrescar(db)
     limite = 1000 if todos == "si" else 25
-    municipios = _resumen_municipios(db)
+    n_con_datos = db.scalar(select(func.count()).select_from(m.PuntajeBarrio).where(_con_datos())) or 0
+    # Por defecto solo los barrios con información; si todavía no hay ninguno, se muestran todos.
+    solo_con_datos = sin_info != "si" and n_con_datos > 0
+    municipios = _resumen_municipios(db, solo_con_datos)
     elegido = municipio if any(r["codigo"] == municipio for r in municipios) else ""
     filtro_b = [m.Barrio.municipio_codigo == elegido] if elegido else []
+    filtro_p = [_con_datos()] if solo_con_datos else []
     barrios = db.execute(
         select(m.PuntajeBarrio, m.Barrio.nombre, m.Municipio.nombre)
         .join(m.Barrio, m.Barrio.id == m.PuntajeBarrio.barrio_id)
-        .join(m.Municipio, m.Municipio.codigo == m.Barrio.municipio_codigo).where(*filtro_b)
+        .join(m.Municipio, m.Municipio.codigo == m.Barrio.municipio_codigo).where(*filtro_b, *filtro_p)
         .order_by(m.PuntajeBarrio.posicion).limit(limite)).all()
     total_barrios = db.scalar(select(func.count()).select_from(m.PuntajeBarrio))
-    con_alerta = sum(1 for a in db.scalars(select(m.PuntajeBarrio.alertas)) if a)
+    con_alerta = sum(1 for a in db.scalars(select(m.PuntajeBarrio.alertas).where(*([_con_datos()] if solo_con_datos else []))) if a)
     solicitudes = db.execute(
         select(m.Solicitud, m.Barrio.nombre, m.Municipio.nombre).join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
         .join(m.Municipio, m.Municipio.codigo == m.Barrio.municipio_codigo)
@@ -82,6 +92,7 @@ def prioridades(request: Request, db: Db, usuario: Ve, todos: str = "", municipi
         .order_by(m.Solicitud.prioridad.desc()).limit(limite)).all()
     return render(request, "prioridades.html", usuario, barrios=barrios, solicitudes=solicitudes,
                   municipios=municipios, elegido=elegido, total_barrios=total_barrios, con_alerta=con_alerta,
+                  n_con_datos=n_con_datos, solo_con_datos=solo_con_datos,
                   alertas=pj.ALERTAS, necesidad=NECESIDAD, urgencia=URGENCIA, pct=_pct, todos=todos == "si",
                   puede_pesos=usuario.rol != m.Rol.BRIGADISTA)
 

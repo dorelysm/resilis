@@ -10,6 +10,7 @@ from app import servicios as sv
 from app.cargas import cargar_viviendas
 from app.config import get_settings
 from app.simulacion import crear_barrios
+from tests.test_web import app_cliente, sesiones  # noqa: F401
 
 
 @pytest.fixture()
@@ -132,3 +133,24 @@ def test_el_ciclo_completo_cubre_9_de_10_y_avisa_de_la_silla(malambo):
     estados = dict(db.execute(select(m.Solicitud.estado, func.count()).group_by(m.Solicitud.estado)).all())
     assert estados == {"cerrada": 9, "verificada": 1}  # la silla sigue esperando
     assert sv.verificar_cadena(db)[0]
+
+
+def test_prioridades_muestra_por_defecto_solo_los_barrios_con_informacion(app_cliente, sesiones):
+    from tests.test_operacion import crear_usuario, entrar
+
+    with sesiones() as db:
+        cargar_viviendas(db)
+        crear_barrios(db, np.random.default_rng(1), ["08433", "08001"])
+        db.commit()
+        em.cargar(db)
+    crear_usuario(sesiones, "entidad", "3100000004")
+    entrar(app_cliente, "3100000004")
+    pagina = app_cliente.get("/prioridades").text
+    assert "5 barrios con información" in pagina and pagina.count("/prioridades/barrios/") == 5
+    assert "Ver también los barrios sin información" in pagina
+    assert "<td>Barranquilla</td>" not in pagina  # el otro municipio no aparece: no tiene reportes ni solicitudes
+    nombres = [t.split("</a>")[0].split(">")[-1] for t in pagina.split("/prioridades/barrios/")[1:]]
+    assert set(nombres) == {"El Edén", "El Edén II", "Villa Campo", "Los Mangos", "Cristo Rey"}  # los 5 afectados, y nada más
+    assert "El Edén" in nombres[:3]  # el epicentro queda entre los primeros
+    todo = app_cliente.get("/prioridades?sin_info=si").text
+    assert todo.count("/prioridades/barrios/") == 25 and "Ver solo los 5 con información" in todo

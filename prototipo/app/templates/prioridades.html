@@ -10,7 +10,11 @@
     {% if puede_pesos %}<a class="boton" href="/pesos">Ajustar los pesos</a>{% endif %}
   </div>
 </form>
-<p>{{ con_alerta }} de {{ total_barrios }} barrios tienen alertas de información faltante.</p>
+{% if solo_con_datos %}
+<p>Se muestran los <strong>{{ n_con_datos }} barrios con información</strong> (alguien reportó daños o pidió ayuda ahí). Los otros {{ total_barrios - n_con_datos }} no tienen reportes: no es que estén bien, es que no sabemos. <a href="/prioridades?sin_info=si{% if elegido %}&amp;municipio={{ elegido }}{% endif %}">Ver también los barrios sin información</a>.</p>
+{% else %}
+<p>{{ con_alerta }} de {{ total_barrios }} barrios tienen alertas de información faltante.{% if n_con_datos %} <a href="/prioridades{% if elegido %}?municipio={{ elegido }}{% endif %}">Ver solo los {{ n_con_datos }} con información</a>.{% endif %}</p>
+{% endif %}
 
 <h2>Municipios</h2>
 <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
@@ -20,7 +24,7 @@
   <tbody>
   {% for r in municipios %}
     <tr>
-      <td>{% if r.codigo == elegido %}<strong>{{ r.nombre }}</strong> <a href="/prioridades">(ver todos)</a>{% else %}<a href="/prioridades?municipio={{ r.codigo }}">{{ r.nombre }}</a>{% endif %}</td>
+      <td>{% if r.codigo == elegido %}<strong>{{ r.nombre }}</strong> <a href="/prioridades{% if not solo_con_datos %}?sin_info=si{% endif %}">(ver todos)</a>{% else %}<a href="/prioridades?municipio={{ r.codigo }}{% if not solo_con_datos %}&amp;sin_info=si{% endif %}">{{ r.nombre }}</a>{% endif %}</td>
       <td>{{ r.barrios }}</td><td>{{ pct(r.maxima) }}</td><td>{{ pct(r.promedio) }}</td><td>{{ r.con_alerta }}</td><td>{{ r.pendientes }}</td>
     </tr>
   {% endfor %}
