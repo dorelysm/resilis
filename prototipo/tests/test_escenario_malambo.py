@@ -20,16 +20,21 @@ def malambo(db):
     return db
 
 
-def test_el_dano_baja_con_la_distancia_desde_el_epicentro(malambo):
+def test_solo_cinco_barrios_muy_cercanos_quedan_afectados_con_el_epicentro_al_centro(malambo):
     db = malambo
     barrios = list(db.scalars(select(m.Barrio)))
     epicentro = next(b for b in barrios if b.nombre == em.EPICENTRO)
     d = em.danos(barrios, epicentro)
+    cerca = em.afectados(barrios, epicentro)
+    assert len(cerca) == 5 and cerca[0].id == epicentro.id
+    assert sum(1 for v in d.values() if v > 0) == 5  # ningún otro barrio de Malambo queda afectado
     assert d[epicentro.id] == max(d.values()) == pytest.approx(em.INTENSIDAD)
-    por_distancia = sorted(barrios, key=lambda b: em._km((epicentro.lat, epicentro.lon), (b.lat, b.lon)))
-    valores = [d[b.id] for b in por_distancia]
-    assert valores == sorted(valores, reverse=True)  # nunca sube al alejarse
-    assert valores[-1] < 0.1 and valores[0] > 0.8  # de casi todo a casi nada
+    distancias = [em._km((epicentro.lat, epicentro.lon), (b.lat, b.lon)) for b in cerca]
+    assert max(distancias) < 0.4  # los cinco están a menos de 400 m del epicentro: bastante cerca
+    valores = [d[b.id] for b in cerca]
+    assert valores == sorted(valores, reverse=True) and valores[0] > valores[1] > 0  # baja desde el centro
+    lejos = [b for b in barrios if d[b.id] == 0]
+    assert len(lejos) == len(barrios) - 5
 
 
 def test_carga_el_evento_los_reportes_y_las_10_solicitudes(malambo):
@@ -37,41 +42,38 @@ def test_carga_el_evento_los_reportes_y_las_10_solicitudes(malambo):
     r = em.cargar(db)
     evento = db.scalar(select(m.Evento))
     assert evento.tipo == "vendaval" and evento.origen == "simulado" and "Malambo" in evento.nombre
-    assert r["epicentro"] == em.EPICENTRO and r["solicitudes"] == 10
+    assert r["epicentro"] == em.EPICENTRO and r["solicitudes"] == 10 and len(r["afectados"]) == 5
+
+    barrios = {b.id: b for b in db.scalars(select(m.Barrio))}
+    afectados = {b.id for b in em.afectados(list(barrios.values()), next(b for b in barrios.values() if b.nombre == em.EPICENTRO))}
+
+    reportes = db.scalars(select(m.ReporteDanos)).all()
+    assert 12 <= len(reportes) <= 30  # pocos: la información cabe en una pantalla
+    assert {x.barrio_id for x in reportes} == afectados  # reportes solo en Malambo y solo en los 5 barrios afectados
+    assert all(barrios[x.barrio_id].municipio_codigo == "08433" for x in reportes)
+    assert all(x.hora_captura >= evento.fecha for x in reportes)
 
     solicitudes = db.scalars(select(m.Solicitud).order_by(m.Solicitud.id)).all()
     assert len(solicitudes) == 10 and all(s.estado == "registrada" for s in solicitudes)
+    assert {s.barrio_id for s in solicitudes} <= afectados  # las solicitudes salen de los barrios afectados
     por_tipo = {t: sum(1 for s in solicitudes if s.necesidad == t) for t in {s.necesidad for s in solicitudes}}
     assert por_tipo == {"abrigo_vivienda": 8, "medicamentos": 1, "otro": 1}
     assert len({s.solicitante_id for s in solicitudes}) == 10  # diez personas distintas
-    assert all(s.barrio_id and s.lat and s.lon for s in solicitudes)
+    epi = next(b.id for b in barrios.values() if b.nombre == em.EPICENTRO)
+    assert sum(1 for s in solicitudes if s.barrio_id == epi) == 3  # el epicentro es donde más piden
+    assert all(s.lat and s.lon for s in solicitudes)
     especiales = db.scalars(select(m.Vulnerabilidad).order_by(m.Vulnerabilidad.id)).all()
     assert [v.tipo for v in especiales] == ["cronica", "discapacidad"] and all(v.consentimiento for v in especiales)
     silla = next(s for s in solicitudes if s.necesidad == "otro")
     assert "silla de ruedas" in silla.descripcion and silla.fuente == "papel" and silla.creador_id != silla.solicitante_id
     assert next(s for s in solicitudes if s.necesidad == "medicamentos").urgencia == 3
 
-    reportes = db.scalars(select(m.ReporteDanos)).all()
-    assert len(reportes) >= 15
-    barrios = {b.id: b for b in db.scalars(select(m.Barrio))}
-    epicentro = next(b for b in barrios.values() if b.nombre == em.EPICENTRO)
-
-    def lejania(rep):
-        b = barrios[rep.barrio_id]
-        return em._km((epicentro.lat, epicentro.lon), (b.lat, b.lon))
-
-    cerca = [x.nivel_dano for x in reportes if lejania(x) < 1.2]
-    lejos = [x.nivel_dano for x in reportes if lejania(x) > 1.8]
-    assert cerca and lejos and np.mean(cerca) > np.mean(lejos) + 1  # lo reportan con menos daño mientras más lejos
-    assert all(x.hora_captura >= evento.fecha for x in reportes)
-
     # todas las personas son ficticias y no tienen contraseña
     usuarios = db.scalars(select(m.Usuario)).all()
     assert usuarios and all(u.ficticio and u.password_hash is None for u in usuarios)
     assert db.scalar(select(func.count()).select_from(m.Verificacion)) == 0  # nada verificado: lo hace la cuenta real
     assert db.scalar(select(func.count()).select_from(m.PlanAsignacion)) == 0
-    assert db.scalar(select(m.PuntajeBarrio.posicion).where(
-        m.PuntajeBarrio.barrio_id == epicentro.id)) <= 3  # el epicentro queda entre los primeros de la lista
+    assert db.scalar(select(m.PuntajeBarrio.posicion).where(m.PuntajeBarrio.barrio_id == epi)) <= 3
 
 
 def test_el_inventario_alcanza_para_casi_todo_menos_la_silla(malambo):

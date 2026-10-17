@@ -23,9 +23,10 @@ from app import servicios as sv
 from app.simulacion import UNIDADES, _documento, _persona, _telefono, sembrar_pesos
 
 CODIGO_MALAMBO = "08433"
-EPICENTRO = "Juan XXIII"      # el barrio de Malambo con más vecinos a menos de 1,5 km
+EPICENTRO = "El Edén"         # el barrio de Malambo con sus 4 vecinos más cercanos todos a menos de 250 m
+N_AFECTADOS = 5               # el epicentro y sus 4 vecinos más cercanos; ningún otro barrio queda afectado
 INTENSIDAD = 0.9
-ESCALA_KM = 1.1               # el daño cae a 1/e cada 1,1 km
+ESCALA_KM = 0.25              # el daño cae a 1/e cada 250 m
 HORAS_ANTES = 6.0             # el vendaval ocurrió hace 6 horas
 
 REPARACIONES = [
@@ -47,10 +48,18 @@ def _km(a: tuple[float, float], b: tuple[float, float]) -> float:
     return 2 * 6371.0 * math.asin(math.sqrt(h))
 
 
-def danos(barrios: list[m.Barrio], epicentro: m.Barrio) -> dict[int, float]:
-    """Daño de cada barrio (0 a 1): máximo en el epicentro y menor mientras más lejos."""
+def afectados(barrios: list[m.Barrio], epicentro: m.Barrio) -> list[m.Barrio]:
+    """El epicentro y sus vecinos más cercanos, de más cerca a más lejos."""
     centro = (epicentro.lat, epicentro.lon)
-    return {b.id: round(INTENSIDAD * math.exp(-_km(centro, (b.lat, b.lon)) / ESCALA_KM), 3) for b in barrios}
+    return sorted(barrios, key=lambda b: (_km(centro, (b.lat, b.lon)), b.nombre))[:N_AFECTADOS]
+
+
+def danos(barrios: list[m.Barrio], epicentro: m.Barrio) -> dict[int, float]:
+    """Daño de cada barrio (0 a 1): máximo en el epicentro y menor en sus 4 vecinos más cercanos; 0 en todos los demás."""
+    centro = (epicentro.lat, epicentro.lon)
+    cerca = {b.id for b in afectados(barrios, epicentro)}
+    return {b.id: round(INTENSIDAD * math.exp(-_km(centro, (b.lat, b.lon)) / ESCALA_KM), 3) if b.id in cerca else 0.0
+            for b in barrios}
 
 
 def _usuario(db: Session, rng, ahora, rol: str, barrio: m.Barrio | None = None) -> m.Usuario:
@@ -86,13 +95,12 @@ def cargar(db: Session, semilla: int = 2026, ahora=None) -> dict:
     entidad = _usuario(db, rng, ahora, m.Rol.ENTIDAD)
     ciudadanos: dict[int, list[m.Usuario]] = {}
 
-    # ---- reportes: reporta más gente donde hay más daño, y cada reporte trae algo de ruido
+    # ---- reportes: solo en los 5 barrios afectados; reportan más donde hay más daño y cada reporte trae algo de ruido
     reportes = 0
-    for b in barrios:
+    cerca = afectados(barrios, epicentro)
+    for b in cerca:
         d = dano[b.id]
-        if d < 0.08 or rng.random() > min(0.95, 0.3 + 0.6 * d):
-            continue
-        for _ in range(1 + int(rng.poisson(1.5 * d))):
+        for _ in range(2 + int(rng.poisson(2 * d))):
             r = rng.random()
             if r < 0.65:
                 pool = ciudadanos.setdefault(b.id, [])
@@ -113,12 +121,11 @@ def cargar(db: Session, semilla: int = 2026, ahora=None) -> dict:
             reportes += 1
     db.flush()
 
-    # ---- 10 solicitudes: 8 para reparar viviendas y 2 casos especiales, en los barrios más golpeados
-    golpeados = [b for b in barrios if dano[b.id] >= 0.25]
-    pesos = np.array([dano[b.id] for b in golpeados])
-    elegidos = [golpeados[i] for i in rng.choice(len(golpeados), size=min(10, len(golpeados)), replace=False, p=pesos / pesos.sum())]
-    while len(elegidos) < 10:  # por si hubiera pocos barrios golpeados
-        elegidos.append(golpeados[int(rng.integers(len(golpeados)))])
+    # ---- 10 solicitudes, todas de los 5 barrios afectados: más donde hay más daño (el epicentro, 3) y los dos casos
+    # especiales en barrios vecinos
+    e0, e1, e2, e3, e4 = cerca  # de más cerca a más lejos del epicentro
+    reparaciones_en = [e0, e0, e0, e1, e1, e2, e3, e4]
+    medicinas_en, silla_en = e1, e2
 
     def nueva(barrio, necesidad, cantidad, hogar, texto, urgencia, creador=None, fuente=m.FuenteReporte.APP):
         solicitante = _usuario(db, rng, ahora, m.Rol.SOLICITANTE, barrio)
@@ -134,17 +141,17 @@ def cargar(db: Session, semilla: int = 2026, ahora=None) -> dict:
         return sol
 
     for i in range(8):
-        b = elegidos[i]
+        b = reparaciones_en[i]
         urgencia = 2 if dano[b.id] >= 0.5 else 1
         nueva(b, m.TipoNecesidad.ABRIGO_VIVIENDA, int(rng.integers(2, 5)), int(rng.integers(3, 7)), REPARACIONES[i], urgencia)
 
-    medicinas = nueva(elegidos[8], m.TipoNecesidad.MEDICAMENTOS, 1, 2,
+    medicinas = nueva(medicinas_en, m.TipoNecesidad.MEDICAMENTOS, 1, 2,
                       "Perdí mis medicinas de uso continuo cuando se cayó el techo. Las necesito para seguir viviendo.", 3)
     db.add(m.Vulnerabilidad(solicitud_id=medicinas.id, tipo="cronica", consentimiento=True,
                             consentimiento_fecha=medicinas.creado_en,
                             descripcion_situacion="Persona con enfermedad crónica que perdió su medicación en el desastre.",
                             necesidad_especifica="Medicamentos de uso continuo"))
-    silla = nueva(elegidos[9], m.TipoNecesidad.OTRO, 1, 1,
+    silla = nueva(silla_en, m.TipoNecesidad.OTRO, 1, 1,
                   "Mi silla de ruedas quedó destruida con el vendaval y ya no sirve. No puedo salir de la casa.", 2,
                   creador=brigadistas[0], fuente=m.FuenteReporte.PAPEL)
     db.add(m.Vulnerabilidad(solicitud_id=silla.id, tipo="discapacidad", consentimiento=True,
@@ -194,8 +201,7 @@ def cargar(db: Session, semilla: int = 2026, ahora=None) -> dict:
     sembrar_pesos(db)
     db.commit()
     resumen = pj.recalcular(db, evento)
-    top = sorted(((v, k) for k, v in dano.items()), reverse=True)[:5]
     nombre = {b.id: b.nombre for b in barrios}
     return {"evento_id": evento.id, "epicentro": epicentro.nombre, "barrios_malambo": len(barrios), "reportes": reportes,
             "solicitudes": 10, "donaciones": len(donaciones), "centro": centro.nombre,
-            "mas_danados": [(nombre[k], v) for v, k in top], "prioridades": resumen}
+            "afectados": [(b.nombre, dano[b.id]) for b in cerca], "prioridades": resumen}

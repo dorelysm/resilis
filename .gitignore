@@ -27,3 +27,8 @@ Datos/scopus_exports/
 
 # Herramientas
 .claude/
+
+# Descargas grandes en utils/ (no son parte del proyecto)
+utils/*.gz
+utils/*.zip
+utils/*.txt
