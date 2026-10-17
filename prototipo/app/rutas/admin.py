@@ -57,6 +57,8 @@ def crear_usuario(
     sid = entero(barrio_id, 1, 10**9) if barrio_id else None
     if barrio_id and (sid is None or db.get(Barrio, sid) is None):
         errores["barrio_id"] = "Elija un barrio de la lista."
+    elif rol == Rol.CENTRO_ACOPIO and not barrio_id:  # sin ubicación no se puede dibujar de dónde sale la ayuda
+        errores["barrio_id"] = "Elija el barrio donde queda el centro de acopio."
     if errores:
         return render(request, "admin_usuarios.html", admin, estado=422, **_contexto(db, datos, errores))
 
@@ -69,7 +71,9 @@ def crear_usuario(
     db.add(nuevo)
     db.flush()
     if rol == Rol.CENTRO_ACOPIO:  # un centro de acopio necesita su sitio de inventario
-        db.add(CentroAcopio(nombre=f"Centro de acopio de {nuevo.nombre}", barrio_id=sid, responsable_id=nuevo.id))
+        sitio = db.get(Barrio, sid)
+        db.add(CentroAcopio(nombre=f"Centro de acopio de {nuevo.nombre}", barrio_id=sid, responsable_id=nuevo.id,
+                            lat=sitio.lat, lon=sitio.lon))
     db.add(Bitacora(usuario_id=admin.id, accion="crear_usuario", objeto=f"usuario:{nuevo.id}", detalle={"rol": rol}))
     db.commit()
     mensaje(request, "La cuenta fue creada." + (" Falta aprobarla." if organizacion else ""))

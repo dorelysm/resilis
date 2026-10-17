@@ -11,6 +11,10 @@
   <p>Esta solicitud no pudo continuar. Si cree que es un error, comuníquese con la entidad que atiende su caso.</p>
 {% endif %}
 
+{% if sol.estado in ('asignada', 'en_camino', 'entregada', 'cerrada') %}
+{{ mapa_ruta('/solicitudes/' ~ sol.id ~ '/ruta.json', 'solicitud', 'Por dónde va su ayuda') }}
+{% endif %}
+
 {% if codigo %}
 <section aria-labelledby="titulo-codigo">
   <h2 id="titulo-codigo">Su código de entrega</h2>
@@ -22,10 +26,6 @@
 
 <h2>Cómo va</h2>
 {{ recorrido(pasos, 'Recorrido de mi solicitud') }}
-
-{% if sol.estado in ('asignada', 'en_camino', 'entregada', 'cerrada') %}
-{{ mapa_ruta('/solicitudes/' ~ sol.id ~ '/ruta.json', 'solicitud', 'Por dónde va su ayuda') }}
-{% endif %}
 
 {% if sol.estado == 'entregada' %}
 <form method="post" action="/solicitudes/{{ sol.id }}/confirmar">

@@ -74,7 +74,11 @@ La persona que recibe (en "Mi solicitud"), quien dona (en "Mis donaciones") y el
 
 - **La posición del equipo es SIMULADA** (`app/ruta.py`): sobre la línea recta entre el centro y el destino, desde la hora en que el equipo marcó "en camino", y con el tiempo acelerado (unas 20 veces; entre 40 s y 4 min) para que se vea en una demostración. Las pantallas lo avisan. No hay GPS real; para usar posiciones reales bastaría con reemplazar `_posicion_simulada`.
 - **Privacidad:** quien recibe ve el destino exacto de su solicitud y recibe un aviso en pantalla (con vibración si el teléfono lo permite) cuando el equipo está a menos de 500 m. Quien dona ve solo el barrio, con un círculo aproximado de 300 m, sin direcciones, nombres ni teléfonos. El personal ve el centro del barrio.
-- **Datos:** `/solicitudes/{id}/ruta.json` (solo su dueño), `/donaciones/ruta.json` (donante) y `/recorrido/solicitudes/{id}/ruta.json` (personal), sin caché.
+- **Quien pidió la ayuda** ve el seguimiento como en una app de entregas: el mapa va primero (centro, destino, el equipo con su nombre acercándose, tiempo estimado y aviso de cercanía), luego su código y el recorrido. "Mis solicitudes" trae el enlace "Seguir en el mapa".
+- **Quien dona** ve su ayuda como una **zona aproximada** (cuadrícula de unos 440 m, círculo de 500 m, con el avance en pasos de 10 %), nunca la ruta ni el punto exacto.
+- **Control logístico:** la entidad y el administrador ven en `/recorrido` todas las entregas en marcha en un mapa, con su equipo, y una lista escrita (de dónde a dónde, cuánto falta). Cada equipo de entrega ve el mapa de sus entregas en "Mis entregas" (plegado; sin internet no se dibuja, pero el resto de la página sigue funcionando).
+- **Centros de acopio:** al crear la cuenta hay que elegir el barrio donde queda, y de ahí sale su ubicación. Si un centro quedó sin ubicación, el mapa inventa el punto de salida y lo avisa.
+- **Datos:** `/solicitudes/{id}/ruta.json` (solo su dueño), `/donaciones/ruta.json` (donante), `/recorrido/solicitudes/{id}/ruta.json` (personal), `/recorrido/entregas/ruta.json` (entidad y administrador) y `/entregas/ruta.json` (equipo de entrega), sin caché.
 
 ## Mapa (bloque 7)
 

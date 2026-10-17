@@ -6,11 +6,12 @@
 <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Estado de cada cosa que usted pidió.</caption>
-  <thead><tr><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Estado</th><th scope="col">Registrada</th></tr></thead>
+  <thead><tr><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Estado</th><th scope="col">Seguimiento</th><th scope="col">Registrada</th></tr></thead>
   <tbody>
   {% for s in filas %}
     <tr><td><a href="/solicitudes/{{ s.id }}">{{ necesidades[s.necesidad] }} para {{ s.personas_hogar }} persona(s)</a></td><td>{{ urgencias[s.urgencia] }}</td>
-        <td><span class="estado">{{ estados[s.estado] }}</span></td><td>{{ s.creado_en.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+        <td><span class="estado">{{ estados[s.estado] }}</span></td>
+        <td>{% if s.estado in ('asignada', 'en_camino') %}<a href="/solicitudes/{{ s.id }}#titulo-ruta">Seguir en el mapa<span class="visually-hidden"> la solicitud {{ s.id }}</span></a>{% else %}<a href="/solicitudes/{{ s.id }}">Ver cómo va</a>{% endif %}</td><td>{{ s.creado_en.strftime('%d/%m/%Y %H:%M') }}</td></tr>
   {% endfor %}
   </tbody>
 </table>

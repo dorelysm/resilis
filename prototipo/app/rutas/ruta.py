@@ -16,6 +16,8 @@ Db = Annotated[Session, Depends(get_db)]
 Solicitante = Annotated[m.Usuario, Depends(requiere_rol(m.Rol.SOLICITANTE))]
 Donante = Annotated[m.Usuario, Depends(requiere_rol(m.Rol.DONANTE))]
 Personal = Annotated[m.Usuario, Depends(requiere_rol(m.Rol.ENTIDAD, m.Rol.BRIGADISTA, m.Rol.ADMINISTRADOR))]
+Logistica = Annotated[m.Usuario, Depends(requiere_rol(m.Rol.ENTIDAD, m.Rol.ADMINISTRADOR))]
+Equipo = Annotated[m.Usuario, Depends(requiere_rol(m.Rol.EQUIPO_ENTREGA))]
 SIN_CACHE = {"Cache-Control": "no-store"}
 
 
@@ -33,6 +35,18 @@ def ruta_del_personal(sol_id: int, db: Db, usuario: Personal):
     if sol is None:
         raise HTTPException(status_code=404)
     return JSONResponse(rt.ruta_de_solicitud(db, sol, exacta=False), headers=SIN_CACHE)
+
+
+@router.get("/recorrido/entregas/ruta.json")
+def ruta_logistica(db: Db, usuario: Logistica):
+    """Todas las entregas en marcha, para llevar el control logístico."""
+    return JSONResponse(rt.ruta_logistica(db), headers=SIN_CACHE)
+
+
+@router.get("/entregas/ruta.json")
+def ruta_de_mis_entregas(db: Db, usuario: Equipo):
+    """Las entregas en marcha de un equipo de entrega."""
+    return JSONResponse(rt.ruta_logistica(db, equipo_id=usuario.id), headers=SIN_CACHE)
 
 
 @router.get("/donaciones/ruta.json")

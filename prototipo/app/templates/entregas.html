@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_solicitud.html" import que_pidio %}
+{% from "_ruta.html" import mapa_ruta %}
 {% block titulo %}Mis entregas{% endblock %}
 {% block contenido %}
 <h1>Mis entregas</h1>
@@ -7,6 +8,9 @@
 <p id="estado-sync" class="mensaje" role="status" aria-live="polite" hidden></p>
 
 {% if filas %}
+  <details class="no-imprimir"><summary>Ver el mapa de mis entregas</summary>
+    {{ mapa_ruta('/entregas/ruta.json', 'logistica', 'Mis entregas en el mapa') }}
+  </details>
   {% for e, sol, persona, barrio, vuln in filas %}
   <section class="fila-accion" id="entrega-{{ e.id }}" aria-labelledby="titulo-{{ e.id }}">
     <h2 id="titulo-{{ e.id }}">{{ persona.nombre }}</h2>

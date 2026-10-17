@@ -28,6 +28,17 @@
     return d.barrio + ': ' + partes.join(', ') + '.';
   }
 
+  // Una línea por entrega para el control logístico: lo mismo que dice el mapa, en texto.
+  function lineaEntrega(e) {
+    var quien = e.equipo || 'Equipo';
+    var desde = e.origen ? e.origen.nombre : 'el centro';
+    var hacia = e.destino ? e.destino.nombre : 'el destino';
+    var estado = e.etapa === 'en_camino'
+      ? 'en camino, faltan ' + (e.restante_km != null ? String(e.restante_km).replace('.', ',') : '?') + ' km' + (e.cerca ? ' (ya está cerca)' : '')
+      : 'por salir';
+    return quien + ': de ' + desde + ' a ' + hacia + ', ' + estado + '.';
+  }
+
   function textoActualizado(iso) {
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '';
@@ -36,7 +47,7 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { escapar: escapar, lineaDestino: lineaDestino, textoActualizado: textoActualizado };
+    module.exports = { escapar: escapar, lineaDestino: lineaDestino, lineaEntrega: lineaEntrega, textoActualizado: textoActualizado };
     return;
   }
 
@@ -44,6 +55,7 @@
   if (!contenedor || !window.L) return;
 
   var modo = contenedor.getAttribute('data-modo');
+  var listaEntregas = document.getElementById('lista-entregas');
   var url = contenedor.getAttribute('data-url');
   var estado = document.getElementById('estado-ruta');
   var aviso = document.getElementById('aviso-cerca');
@@ -108,7 +120,9 @@
       puntos.push([b.lat, b.lon]);
     });
     d.en_camino.forEach(function (e) {
-      marcador(e.lat, e.lon, 'pin-equipo', 'En camino', 'Entrega en camino hacia ' + e.hacia + ' (posición simulada)').addTo(capa);
+      // Una zona aproximada que se va moviendo, no un punto: quien dona no necesita ver la ruta exacta.
+      L.circle([e.lat, e.lon], { radius: e.radio_m, color: '#0d4c66', weight: 2, dashArray: '6 6', fillColor: '#055c81', fillOpacity: 0.25 })
+        .bindTooltip(escapar('Entrega en camino hacia ' + e.hacia + ': zona aproximada, ' + e.avance + ' % del trayecto (simulado)')).addTo(capa);
     });
     if (!ajustado && puntos.length) {
       mapa.fitBounds(L.latLngBounds(puntos).pad(0.2), { maxZoom: 14 });
@@ -121,9 +135,29 @@
     }
   }
 
+  // Control logístico: todas las entregas en marcha, cada una con su equipo, su ruta y dónde va.
+  function dibujarLogistica(d) {
+    capa.clearLayers();
+    var puntos = [];
+    d.entregas.forEach(function (e) {
+      if (e.origen) { marcador(e.origen.lat, e.origen.lon, 'pin-origen', 'Centro', 'Centro de acopio: ' + e.origen.nombre).addTo(capa); puntos.push([e.origen.lat, e.origen.lon]); }
+      if (e.destino) { marcador(e.destino.lat, e.destino.lon, 'pin-destino', e.destino.nombre, 'Destino: ' + e.destino.nombre).addTo(capa); puntos.push([e.destino.lat, e.destino.lon]); }
+      if (e.origen && e.destino) L.polyline([[e.origen.lat, e.origen.lon], [e.destino.lat, e.destino.lon]], { color: '#055c81', weight: 2, dashArray: '8 8' }).addTo(capa);
+      if (e.posicion && e.etapa === 'en_camino') {
+        marcador(e.posicion.lat, e.posicion.lon, 'pin-equipo', e.equipo || 'Equipo', (e.equipo || 'Equipo') + ' (posición simulada)').addTo(capa);
+      }
+    });
+    if (!ajustado && puntos.length) { mapa.fitBounds(L.latLngBounds(puntos).pad(0.2), { maxZoom: 16 }); ajustado = true; }
+    if (listaEntregas) {
+      listaEntregas.innerHTML = d.entregas.length
+        ? d.entregas.map(function (e) { return '<li>' + escapar(lineaEntrega(e)) + '</li>'; }).join('')
+        : '<li>No hay entregas en marcha.</li>';
+    }
+  }
+
   function aplicar(d) {
-    if (modo === 'donante') dibujarDonante(d); else dibujarSolicitud(d);
-    estado.textContent = d.texto + ' ' + textoActualizado(d.actualizado);
+    if (modo === 'donante') dibujarDonante(d); else if (modo === 'logistica') dibujarLogistica(d); else dibujarSolicitud(d);
+    estado.textContent = (modo === 'logistica' ? d.texto : d.texto) + ' ' + textoActualizado(d.actualizado);
     if (modo === 'solicitud' && d.cerca && !yaAvisoCerca && aviso) {
       yaAvisoCerca = true;
       aviso.hidden = false;

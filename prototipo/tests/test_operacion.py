@@ -249,14 +249,22 @@ def test_el_service_worker_se_sirve_desde_la_raiz(app_cliente):
 
 
 # ----------------------------------------------------------------------------- administración y accesibilidad
-def test_el_administrador_crea_un_centro_de_acopio_con_su_inventario(app_cliente, sesiones, equipo_completo):
+def test_el_administrador_crea_un_centro_de_acopio_con_su_inventario(app_cliente, sesiones, equipo_completo, mundo):
     c = app_cliente
     entrar(c, "3100000008")
+    with sesiones() as db:
+        barrio = db.get(m.Barrio, mundo["barrio_id"])
+        barrio.lat, barrio.lon = 10.96, -74.80
+        db.commit()
+    sin_barrio = c.post("/admin/usuarios", data={"nombre": "Parroquia Central", "telefono": "3155550000", "rol": "centro_acopio",
+                                                 "password": CLAVE, "csrf": csrf(c, "/admin/usuarios")})
+    assert sin_barrio.status_code == 422 and "barrio donde queda el centro de acopio" in sin_barrio.text  # necesita ubicación
     c.post("/admin/usuarios", data={"nombre": "Parroquia Central", "telefono": "3155550000", "rol": "centro_acopio",
-                                    "password": CLAVE, "csrf": csrf(c, "/admin/usuarios")})
+                                    "barrio_id": str(mundo["barrio_id"]), "password": CLAVE, "csrf": csrf(c, "/admin/usuarios")})
     with sesiones() as db:
         resp = db.scalar(select(m.Usuario).where(m.Usuario.telefono == "3155550000"))
-        assert db.scalar(select(m.CentroAcopio).where(m.CentroAcopio.responsable_id == resp.id)) is not None
+        centro = db.scalar(select(m.CentroAcopio).where(m.CentroAcopio.responsable_id == resp.id))
+        assert centro is not None and (centro.lat, centro.lon) == (10.96, -74.80)  # hereda la ubicación del barrio
 
 
 @pytest.mark.parametrize("ruta,telefono", [

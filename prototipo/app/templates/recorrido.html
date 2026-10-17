@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_ruta.html" import mapa_ruta %}
 {% block titulo %}Recorrido{% endblock %}
 {% block contenido %}
 <h1>Recorrido de la ayuda</h1>
@@ -21,6 +22,10 @@
   {% for a in r.aparte %}<p class="ayuda">{{ a.titulo }}: {{ a.cantidad }}.</p>{% endfor %}
 </section>
 {% endfor %}
+
+{% if puede_logistica %}
+{{ mapa_ruta('/recorrido/entregas/ruta.json', 'logistica', 'Control logístico: entregas en marcha') }}
+{% endif %}
 
 <section id="lista" aria-labelledby="titulo-lista" tabindex="-1">
   {% if elegida %}

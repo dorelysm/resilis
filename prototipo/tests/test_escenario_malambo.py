@@ -181,3 +181,21 @@ def test_al_abrir_un_barrio_se_ve_el_detalle_de_sus_solicitudes(app_cliente, ses
     assert pagina.count("Abrigo vivienda") >= 3 and "láminas" in pagina
     for sensible in ("Teléfono", "Calle "):
         assert sensible not in pagina  # sin direcciones ni teléfonos
+
+
+def test_un_centro_real_sin_ubicacion_queda_en_malambo_para_que_se_vea_la_ruta(malambo):
+    db = malambo
+    acopio = m.Usuario(nombre="Acopio real", telefono="3004445566", rol="centro_acopio", ficticio=False, password_hash="x")
+    db.add(acopio)
+    db.flush()
+    centro = m.CentroAcopio(nombre="Centro real sin barrio", responsable_id=acopio.id)
+    db.add(centro)
+    db.commit()
+    em.cargar(db)
+    db.refresh(centro)
+    assert centro.barrio_id and centro.lat and centro.lon
+    barrios = {b.id: b for b in db.scalars(select(m.Barrio))}
+    epicentro = next(b for b in barrios.values() if b.nombre == em.EPICENTRO)
+    km = em._km((epicentro.lat, epicentro.lon), (centro.lat, centro.lon))
+    assert 0.8 < km < 2.5 and barrios[centro.barrio_id].municipio_codigo == "08433"
+    assert centro.barrio_id not in {b.id for b in em.afectados(list(barrios.values()), epicentro)}

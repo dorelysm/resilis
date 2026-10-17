@@ -9,8 +9,11 @@
   <noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. El estado de la entrega está escrito arriba y en el recorrido.</p></noscript>
   {% if modo == 'donante' %}
   <h3>Dónde llegó su ayuda</h3>
-  <p class="ayuda">Se muestra el barrio con un círculo aproximado, sin direcciones ni nombres.</p>
+  <p class="ayuda">Se muestra el barrio con un círculo aproximado, sin direcciones ni nombres. Lo que va en camino se ve como una zona aproximada, no como un punto exacto.</p>
   <ul id="lista-destinos"><li>Cargando…</li></ul>
+  {% elif modo == 'logistica' %}
+  <h3>Entregas en marcha</h3>
+  <ul id="lista-entregas"><li>Cargando…</li></ul>
   {% endif %}
   <p class="no-imprimir"><button type="button" id="actualizar-ruta" class="principal">Actualizar ahora</button>
     <span class="ayuda">Se actualiza solo cada 15 segundos mientras esta pantalla está abierta.</span></p>

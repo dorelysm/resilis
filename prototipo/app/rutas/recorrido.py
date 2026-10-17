@@ -26,7 +26,8 @@ def ver_recorrido(request: Request, db: Db, usuario: Ve, tipo: str = "", etapa: 
                 todos = rc.elementos_de_etapa(db, tipo, etapa, limite=10_000)
                 total_etapa, elementos = len(todos), todos[:25]
     return render(request, "recorrido.html", usuario, recorridos=rc.panel(db), tipo=tipo if elegida else "",
-                  etapa=etapa if elegida else "", elegida=elegida, elementos=elementos, total_etapa=total_etapa)
+                  etapa=etapa if elegida else "", elegida=elegida, elementos=elementos, total_etapa=total_etapa,
+                  puede_logistica=usuario.rol in (m.Rol.ENTIDAD, m.Rol.ADMINISTRADOR))
 
 
 @router.get("/recorrido/solicitudes/{sol_id}")

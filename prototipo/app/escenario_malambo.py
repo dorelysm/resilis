@@ -169,6 +169,12 @@ def cargar(db: Session, semilla: int = 2026, ahora=None) -> dict:
                                 lon=epicentro.lon, responsable_id=resp.id)
         db.add(centro)
         db.flush()
+    if centro.lat is None or centro.barrio_id is None:
+        # Un centro creado sin barrio no tendría de dónde salir la ayuda en el mapa: se ubica en un barrio de Malambo no
+        # afectado, a poco más de 1 km del epicentro, para que el recorrido de las entregas se vea.
+        cercanos = [b for b in barrios if b.id not in {x.id for x in cerca}]
+        sitio = min(cercanos, key=lambda b: abs(_km((epicentro.lat, epicentro.lon), (b.lat, b.lon)) - 1.5))
+        centro.barrio_id, centro.lat, centro.lon = sitio.id, sitio.lat, sitio.lon
     responsable = db.get(m.Usuario, centro.responsable_id)
     donantes = []
     for tipo in ("persona", "empresa", "organizacion", "persona"):
