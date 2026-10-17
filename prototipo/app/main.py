@@ -16,7 +16,9 @@ from app.config import get_settings
 from app.cargas import cargar_viviendas
 from app.db import SessionLocal, crear_tablas, engine, get_db
 from app.migracion import migrar_sectores_a_barrios
-from app.models import Barrio, CentroAcopio, Municipio, Rol, Usuario, ahora
+from app.models import (
+    Barrio, CentroAcopio, Entrega, Lote, Municipio, PlanAsignacion, Rol, Solicitud, Usuario, Verificacion, ahora,
+)
 from app.rutas import admin, auth, formularios, mapa, operacion, plan, prioridades
 from app.seguridad import hash_password
 from app.simulacion import generar
@@ -77,6 +79,17 @@ def listar_cuentas() -> None:
                   f"organizacion={u.es_organizacion} con_clave={u.password_hash is not None} barrio={barrio}", flush=True)
         centros = db.scalars(select(CentroAcopio).join(Usuario, Usuario.id == CentroAcopio.responsable_id)
                              .where(Usuario.ficticio.is_(False))).all()
+        estados = dict(db.execute(select(Solicitud.estado, func.count()).group_by(Solicitud.estado)).all())
+        verificadas_reales = db.scalar(select(func.count()).select_from(Verificacion).where(
+            Verificacion.objeto_tipo == "solicitud", Verificacion.nota != "Verificación simulada")) or 0
+        inventario = db.execute(select(Lote.tipo_bien, func.sum(Lote.cantidad_disponible), func.sum(Lote.cantidad_reservada),
+                                       func.sum(Lote.cantidad_entregada)).group_by(Lote.tipo_bien)).all()
+        planes = db.execute(select(PlanAsignacion.id, PlanAsignacion.estado, PlanAsignacion.metodo,
+                                   PlanAsignacion.necesidad_cubierta, PlanAsignacion.necesidad_total)).all()
+        entregas = dict(db.execute(select(Entrega.estado, func.count()).group_by(Entrega.estado)).all())
+        print(f"RESUMEN solicitudes={estados} verificaciones_no_simuladas={verificadas_reales} "
+              f"inventario(disp,res,entr)={[(t, int(a or 0), int(b or 0), int(c or 0)) for t, a, b, c in inventario]} "
+              f"planes={[tuple(p) for p in planes]} entregas={entregas}", flush=True)
         print(f"CUENTAS: {len(filas)} reales; centros de acopio reales: {[(c.id, c.nombre) for c in centros]}", flush=True)
 
 
