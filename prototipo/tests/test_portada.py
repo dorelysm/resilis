@@ -10,10 +10,10 @@ RAIZ = Path(__file__).resolve().parent.parent
 
 def test_la_portada_describe_el_proyecto_en_secciones_con_indice(app_cliente):
     html = app_cliente.get("/").text
-    for ancla, titulo in (("que-es", "¿Qué es Resilis?"), ("como-funciona", "Cómo funciona"), ("para-quien", "Para quién es"),
+    for ancla, titulo in (("reto", "El reto"), ("que-es", "¿Qué es Resilis?"), ("como-funciona", "Cómo funciona"), ("para-quien", "Para quién es"),
                           ("distinto", "Lo que lo distingue"), ("logo", "Qué significa nuestro logo"), ("fundadores", "Fundadores y Mentoría")):
         assert f'<h2 id="{ancla}">{titulo}</h2>' in html, ancla
-    for ancla in ("que-es", "como-funciona", "para-quien", "logo", "fundadores"):
+    for ancla in ("reto", "que-es", "como-funciona", "para-quien", "logo", "fundadores"):
         assert f'href="#{ancla}"' in html  # el índice lleva a cada sección
     assert html.count("<h1") == 1 and "Después de un desastre, la ayuda llega primero a quien más la necesita" in html
     assert "23 municipios y 600 barrios" in html and "datos ficticios" in html
@@ -25,8 +25,8 @@ def test_la_portada_describe_el_proyecto_en_secciones_con_indice(app_cliente):
 
 def test_la_infografia_esta_en_la_portada_con_su_texto_alternativo_y_su_version_en_texto(app_cliente):
     html = app_cliente.get("/").text
-    assert 'src="/static/img/infografia-logo.webp"' in html and 'width="1312" height="1199"' in html and 'loading="lazy"' in html
-    assert re.search(r'<img[^>]*alt="Infografía «Significado del Logo»[^"]+"', html)
+    assert 'src="/static/img/infografia-logo.webp"' in html and 'width="763" height="680"' in html and 'loading="lazy"' in html
+    assert re.search(r'<img[^>]*alt="Infografía «Resilis: significado de cada parte del logo»[^"]+"', html)
     assert "Ver la infografía en tamaño completo" in html
     texto = html.split("Leer el significado como texto")[1].split("</details>")[0]
     for clave in ("Figura humana superior", "Cerebro con circuitos", "Línea del electrocardiograma", "Azul oscuro",
@@ -116,7 +116,7 @@ def test_la_barra_de_secciones_son_pildoras_con_icono_y_texto_que_llevan_a_secci
     html = app_cliente.get("/").text
     barra = html.split('<nav class="indice-portada"')[1].split("</nav>")[0]
     enlaces = re.findall(r'<li><a href="#([a-z-]+)">(<svg.*?</svg>)([^<]+)</a></li>', barra, re.S)
-    assert [t for _, _, t in enlaces] == ["Qué es", "Cómo funciona", "Para quién", "Nuestro logo", "Equipo"]
+    assert [t for _, _, t in enlaces] == ["El reto", "Qué es", "Cómo funciona", "Para quién", "Nuestro logo", "Equipo"]
     assert all(s.count('aria-hidden="true"') == 1 for _, s, _ in enlaces)  # el icono es decorativo y el texto va siempre
     for ancla, _, _ in enlaces:
         assert f'id="{ancla}"' in html, ancla
@@ -207,3 +207,13 @@ def test_la_explicacion_es_accesible(app_cliente):
     for ref in re.findall(r'aria-labelledby="([^"]+)"', r.text):
         assert ref in ids, ref
     assert all('aria-hidden="true"' in s for s in re.findall(r"<svg[^>]*>", r.text))
+
+
+def test_la_portada_explica_el_reto_y_como_responde_el_proyecto(app_cliente):
+    html = app_cliente.get("/").text
+    seccion = html.split('<h2 id="reto">')[1].split("</section>")[0]
+    assert "Optimización y priorización de recursos y esfuerzos en la post-emergencia" in seccion
+    assert "Rally Latinoamericano de Innovación 2026" in seccion and "16 y el 17 de octubre de 2026" in seccion
+    for pregunta in ("¿A quién atender primero?", "¿Dónde concentrar los esfuerzos?", "¿Qué recursos asignar?"):
+        assert pregunta in seccion  # las tres decisiones que plantea el reto, cada una con su respuesta
+    assert html.index('id="reto"') < html.index('id="que-es"')  # el contexto va antes que la descripción
