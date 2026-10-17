@@ -174,3 +174,50 @@ def test_el_js_de_ruta_muestra_la_hora_de_colombia():
     salida = subprocess.run(["node", "-e", guion, str(RAIZ / "app" / "static" / "ruta.js")], capture_output=True, text=True,
                             encoding="utf-8", check=True, timeout=30).stdout
     assert json.loads(salida) == "Actualizado a las 23:38:09 (hora de Colombia)."  # 04:38 UTC son las 23:38 del día anterior
+
+
+# ----------------------------------------------------------------------------- tablas como tarjetas en celular
+import shutil
+import subprocess
+from pathlib import Path as _Path
+
+_TABLAS_JS = _Path(__file__).resolve().parent.parent / "app" / "static" / "tablas.js"
+
+
+def test_todas_las_paginas_cargan_tablas_js_y_la_css_apila_las_filas():
+    base = (_TABLAS_JS.parent.parent / "templates" / "base.html").read_text(encoding="utf-8")
+    assert '/static/tablas.js" defer' in base
+    css = (_TABLAS_JS.parent / "estilo.css").read_text(encoding="utf-8")
+    assert ".tabla-apilada td[data-etiqueta]::before { content: attr(data-etiqueta)" in css
+    assert ".tabla-apilada thead { position: absolute" in css  # los encabezados siguen para lectores de pantalla
+
+
+def test_cada_tabla_tiene_encabezados_de_columna_para_poder_etiquetar_sus_celdas():
+    import re as _re
+    for archivo in (_TABLAS_JS.parent.parent / "templates").glob("*.html"):
+        texto = archivo.read_text(encoding="utf-8")
+        for tabla in _re.findall(r"<table.*?</table>", texto, _re.S):
+            assert "<thead>" in tabla and 'scope="col"' in tabla, archivo.name
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node no está instalado")
+def test_el_js_etiqueta_las_celdas_con_el_nombre_de_su_columna():
+    guion = r"""
+    const r = require(process.argv[1]);
+    const cel = (tag, txt) => ({tagName: tag, textContent: txt, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }});
+    const th = (t, span) => ({textContent: t, getAttribute: k => (k === 'colspan' ? span : null)});
+    const filaEnc = {children: [th('Producto'), th(' Disponible '), th('Fecha', '2')]};
+    const filas = [{children: [cel('TH', 'Agua'), cel('TD', '5'), cel('TD', 'a'), cel('TD', 'b')]}];
+    const tabla = {classes: [], classList: {add(c) { tabla.classes.push(c); }},
+      querySelector: s => (s === 'thead tr' ? filaEnc : null), querySelectorAll: s => (s === 'tbody tr' ? filas : [])};
+    const ok = r.apilar(tabla);
+    const sinEnc = r.apilar({querySelector: () => null, querySelectorAll: () => [], classList: {add() {}}});
+    console.log(JSON.stringify([ok, sinEnc, tabla.classes, r.etiquetas(tabla), filas[0].children.map(c => c.attrs['data-etiqueta'] || null)]));
+    """
+    salida = subprocess.run(["node", "-e", guion, str(_TABLAS_JS)], capture_output=True, text=True, encoding="utf-8",
+                            check=True, timeout=30).stdout
+    import json as _json
+    ok, sin_enc, clases, nombres, etiquetas = _json.loads(salida)
+    assert ok is True and sin_enc is False and clases == ["tabla-apilada"]
+    assert nombres == ["Producto", "Disponible", "Fecha", "Fecha"]
+    assert etiquetas == [None, "Disponible", "Fecha", "Fecha"]  # la celda de encabezado de fila no se etiqueta

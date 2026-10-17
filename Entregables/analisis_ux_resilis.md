@@ -183,7 +183,9 @@ También está hecho el punto 9, la **cola de verificación para brigadistas**: 
 
 El punto 8, **Mi solicitud al estilo de una app de entregas**, también está hecho: arriba una tarjeta con el estado en grande, la frase de llegada ("va en camino: faltan X km, llega en unos N min", que se actualiza sola), el código y el equipo; el mapa va después y el recorrido al final. Se quitó la repetición del estado y la alerta roja aparte (solo queda un aviso vivo para lectores de pantalla). Hay 312 pruebas.
 
-Siguen pendientes los puntos 10 a 18 (tablas como tarjetas en Asignar, Prioridades e Inventario, "aprobar los siguientes N paquetes" y el registro mínimo, entre otros).
+El punto 10, **tablas como tarjetas en celular**, también está hecho: un guion pequeño (`tablas.js`) etiqueta cada celda con el nombre de su columna y, en pantallas angostas, cada fila se apila como una tarjeta (Inventario, Prioridades, Asignar, Plan, barrio, cuentas y auditoría). Sin JavaScript queda la tabla con desplazamiento; los encabezados siguen disponibles para lectores de pantalla. Revisado a 390 px: sin desplazamiento lateral y sin fallas de axe en Inventario, Prioridades, Asignar, Plan y Mi solicitud.
+
+Siguen pendientes los puntos 11 a 18 ("aprobar los siguientes N paquetes" y el registro mínimo, entre otros).
 
 ## 7. Cómo comprobar que mejoró
 

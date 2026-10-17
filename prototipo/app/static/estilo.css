@@ -300,3 +300,19 @@ button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
 .estado-codigo { border-top: 1px solid var(--borde-suave); margin-top: .8rem; padding-top: .6rem; }
 .estado-codigo-titulo { font-weight: 700; margin: 0; }
 .estado-ruta-menor { font-size: .95rem; font-weight: 400; }
+
+/* Celular: cada fila de una tabla es una tarjeta, con el nombre de la columna al lado de cada dato.
+ * Solo si tablas.js marcó la tabla (.tabla-apilada); si no, sigue la tabla con desplazamiento. */
+@media (max-width: 47.99rem) {
+  .tabla-apilada, .tabla-apilada tbody, .tabla-apilada tr, .tabla-apilada td, .tabla-apilada th { display: block; width: auto; }
+  .tabla-apilada { font-size: 1rem; }
+  .tabla-apilada thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tabla-apilada caption { display: block; text-align: left; }
+  .tabla-apilada tbody tr { border: 1px solid var(--borde-suave); border-left: 5px solid var(--teal); border-radius: .5rem; background: #fff; margin: 0 0 .75rem; padding: .35rem .75rem; }
+  .tabla-apilada tbody th { background: none; border: 0; padding: .35rem 0; font-size: 1.05rem; }
+  .tabla-apilada td { display: grid; grid-template-columns: minmax(6rem, 38%) 1fr; gap: .5rem; padding: .35rem 0; border-bottom: 1px solid var(--borde-suave); overflow-wrap: anywhere; }
+  .tabla-apilada td:last-child { border-bottom: 0; }
+  .tabla-apilada td[data-etiqueta]::before { content: attr(data-etiqueta); font-weight: 600; color: var(--azul-profundo); }
+  .tabla-apilada td:not([data-etiqueta]) { display: block; }
+}
+@media (max-width: 47.99rem) { .tabla-apilada td > .estado { justify-self: start; } }
