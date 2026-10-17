@@ -17,9 +17,13 @@ FUNDADORES = [
     {"nombre": "Stefania De La Cruz", "rol": "", "texto": "", "foto": "fundador-stefania-de-la-cruz.webp"},
 ]
 
-# Foto del equipo reunido (archivo en /static/img/) y su descripción para lectores de pantalla.
-FOTO_EQUIPO = "equipo-nexus-innova.webp"
-FOTO_EQUIPO_DESCRIPCION = "Las siete personas fundadoras del equipo NEXUS INNOVA 4.0, de pie junto al logo de Resilis."
+# Fotos del equipo reunido: archivo en /static/img/, tamaño y descripción para lectores de pantalla.
+FOTOS_EQUIPO = [
+    {"archivo": "equipo-nexus-innova.webp", "ancho": 1000, "alto": 500,
+     "descripcion": "Las siete personas fundadoras del equipo NEXUS INNOVA 4.0, de pie junto al logo de Resilis."},
+    {"archivo": "equipo-nexus-oficina.webp", "ancho": 900, "alto": 690,
+     "descripcion": "Integrantes del equipo NEXUS INNOVA 4.0 sentados juntos en una oficina."},
+]
 
 
 MENTORES = [

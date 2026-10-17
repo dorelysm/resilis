@@ -43,7 +43,9 @@ def test_la_seccion_de_fundadores_sale_de_la_lista_del_equipo(app_cliente, monke
     for f in equipo.FUNDADORES:
         assert f["nombre"] in seccion and f["rol"] in seccion  # un rol en blanco no deja una línea vacía:
     assert seccion.count('class="rol"') == sum(1 for f in equipo.FUNDADORES + equipo.MENTORES if f["rol"])
-    assert f'src="/static/img/{equipo.FOTO_EQUIPO}" alt="{equipo.FOTO_EQUIPO_DESCRIPCION}"' in seccion
+    assert len(equipo.FOTOS_EQUIPO) == 2 and seccion.count('class="foto-equipo"') == 2
+    for foto in equipo.FOTOS_EQUIPO:
+        assert f'src="/static/img/{foto["archivo"]}" alt="{foto["descripcion"]}" width="{foto["ancho"]}" height="{foto["alto"]}"' in seccion
     assert equipo.INSTITUCION in seccion
     assert equipo.NOMBRE_EQUIPO == "NEXUS INNOVA 4.0" and equipo.PAIS == "Colombia" and equipo.INSTITUCION == "Corporación Universitaria Americana"
     assert f"el equipo {equipo.NOMBRE_EQUIPO}, de la {equipo.INSTITUCION} ({equipo.PAIS})" in seccion
@@ -64,7 +66,8 @@ def test_el_equipo_completo_aparece_con_sus_nombres():
     nombres = [f["nombre"] for f in equipo.FUNDADORES]
     assert nombres == ["Dorelys Martinez", "Adriana Barrios Paez", "Carmela Miranda Gutierrez", "Evelin Gómez Vergara",
                        "Maritza Domínguez Cervantes", "Leandro Rodríguez Polo", "Stefania De La Cruz"]
-    assert (RAIZ / "app" / "static" / "img" / equipo.FOTO_EQUIPO).stat().st_size < 150_000
+    for foto in equipo.FOTOS_EQUIPO:
+        assert (RAIZ / "app" / "static" / "img" / foto["archivo"]).stat().st_size < 150_000, foto["archivo"]
 
 
 def test_iniciales():
