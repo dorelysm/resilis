@@ -29,6 +29,12 @@ def inicio(request: Request, db: Db, usuario: UsuarioOpcional):
     return render(request, "inicio.html", usuario, pendientes=que_sigue(db, usuario) if usuario else [])
 
 
+@router.get("/como-funciona")
+def como_funciona(request: Request, usuario: UsuarioOpcional):
+    """Explicación detallada del sistema, abierta a todos (sin cuenta)."""
+    return render(request, "como_funciona.html", usuario)
+
+
 @router.get("/registro")
 def registro_form(request: Request, db: Db, usuario: UsuarioOpcional):
     return render(request, "registro.html", usuario, barrios=_barrios(db), datos={}, errores={})

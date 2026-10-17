@@ -132,3 +132,69 @@ def test_el_js_elige_la_ultima_seccion_que_ya_paso_la_linea_de_lectura():
     salida = subprocess.run(["node", "-e", guion, str(INDICE_JS)], capture_output=True, text=True, encoding="utf-8",
                             check=True, timeout=30).stdout
     assert json.loads(salida) == ["b", None, None, "c"]  # arriba de todo no hay ninguna activa; al final, la última
+
+
+# ----------------------------------------------------------------------------- página «Cómo funciona»
+def test_la_portada_enlaza_a_la_explicacion_detallada(app_cliente):
+    html = app_cliente.get("/").text
+    seccion = html.split('id="como-funciona"')[1].split("</section>")[0]
+    assert 'href="/como-funciona"' in seccion and "Ver más" in seccion
+
+
+def test_la_explicacion_es_publica_y_cubre_todo_el_recorrido(app_cliente, equipo_completo):
+    c = app_cliente
+    r = c.get("/como-funciona")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
+    html = r.text
+    assert html.count("<h1") == 1 and "Cómo funciona Resilis" in html
+    anclas = re.findall(r'<li><a href="#([a-z-]+)">', html.split('aria-label="Contenido de esta página"')[1].split("</nav>")[0])
+    assert len(anclas) == 13
+    for ancla in anclas:  # cada entrada del índice lleva a una sección que existe, con su título
+        assert re.search(rf'<h2 id="{ancla}">\d+\. ', html), ancla
+    for clave in ("TOPSIS", "Gravedad de la afectación: 30 %", "Urgencia: 30 %", "La fuente</strong> (35 %)",
+                  "programación lineal entera", "paquetes pequeños", "código de un solo uso", "sin conexión",
+                  "Ley 1581", "simulada", "Lo que todavía no hace"):
+        assert clave in html, clave
+    for rol in ("Persona que necesita ayuda", "Donante", "Brigadista", "Entidad coordinadora", "Centro de acopio",
+                "Equipo de entrega", "Administrador"):
+        assert rol in html, rol
+    # logueado: lleva a su inicio en vez de pedir crear cuenta
+    entrar(c, "3100000001")
+    dentro = c.get("/como-funciona").text
+    assert "Ir a mi inicio" in dentro and "Crear cuenta" not in dentro.split('class="cierre"')[1]
+    salir(c)
+    fuera = c.get("/como-funciona").text.split('class="cierre"')[1]
+    assert 'href="/registro"' in fuera and 'href="/entrar"' in fuera
+
+
+def test_los_numeros_de_la_explicacion_coinciden_con_los_del_sistema():
+    """Si cambian los pesos iniciales en el código, esta página no puede seguir diciendo lo de antes."""
+    from app.simulacion import PESOS_INICIALES
+
+    html = (RAIZ / "app" / "templates" / "como_funciona.html").read_text(encoding="utf-8")
+    nombres = {"gravedad": "Gravedad de la afectación", "urgencia": "Urgencia de la atención",
+               "expuestas": "Personas expuestas y necesidades especiales", "accesibilidad": "Accesibilidad de las rutas",
+               "recursos": "Recursos disponibles"}
+    for clave, texto in nombres.items():
+        assert f"{texto}: {round(PESOS_INICIALES['barrio'][clave] * 100)} %" in html, clave
+    solicitud = {"urgencia": "Urgencia", "vulnerabilidad": "Vulnerabilidad de quien pide", "personas_hogar": "Personas en el hogar",
+                 "tiempo_espera": "Tiempo de espera", "prioridad_barrio": "Prioridad de su barrio"}
+    for clave, texto in solicitud.items():
+        assert f"{texto}: {round(PESOS_INICIALES['solicitud'][clave] * 100)} %" in html, clave
+    for clave, texto in {"fuente": "La fuente", "verificacion": "La verificación", "corroboracion": "La corroboración", "vigencia": "La vigencia"}.items():
+        assert f"<strong>{texto}</strong> ({round(PESOS_INICIALES['confianza'][clave] * 100)} %)" in html, clave
+    from app.plan import TAMANO_PAQUETE
+
+    assert f"hasta {TAMANO_PAQUETE} entregas del mismo municipio" in html
+
+
+def test_la_explicacion_es_accesible(app_cliente):
+    r = app_cliente.get("/como-funciona")
+    revisor = _Revisor()
+    revisor.feed(r.text)
+    assert revisor.lang == "es" and revisor.ids <= revisor.para
+    ids = re.findall(r'\sid="([^"]+)"', r.text)
+    assert len(ids) == len(set(ids))
+    for ref in re.findall(r'aria-labelledby="([^"]+)"', r.text):
+        assert ref in ids, ref
+    assert all('aria-hidden="true"' in s for s in re.findall(r"<svg[^>]*>", r.text))

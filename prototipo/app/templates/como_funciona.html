@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block titulo %}Cómo funciona{% endblock %}
+{% block contenido %}
+<div class="explicacion">
+  <p class="migas"><a href="/">{{ icono('volver') }}Volver al inicio</a></p>
+  <h1>Cómo funciona Resilis</h1>
+  <p class="resumen">Resilis ayuda a decidir a quién atender primero después de un desastre y comprueba que la ayuda llegó. Esta página explica, paso a paso y sin tecnicismos, qué hace el sistema, con qué datos decide y qué puede ver cada persona.</p>
+
+  <nav class="indice-detalle" aria-label="Contenido de esta página">
+    <p><strong>En esta página</strong></p>
+    <ol>
+      <li><a href="#problema">El problema que resuelve</a></li>
+      <li><a href="#en-una-mirada">El recorrido, en una mirada</a></li>
+      <li><a href="#base">Antes del desastre: la línea base</a></li>
+      <li><a href="#pedir">Pedir ayuda y avisar de daños</a></li>
+      <li><a href="#verificar">Verificar: que la necesidad sea real</a></li>
+      <li><a href="#prioridad">Decidir quién va primero</a></li>
+      <li><a href="#confianza">Qué tan confiable es cada dato</a></li>
+      <li><a href="#inventario">Donaciones e inventario</a></li>
+      <li><a href="#plan">El plan de entregas</a></li>
+      <li><a href="#entrega">Entregar con código y seguimiento</a></li>
+      <li><a href="#privacidad">Privacidad y seguridad</a></li>
+      <li><a href="#roles">Qué ve cada persona</a></li>
+      <li><a href="#limites">Lo que todavía no hace</a></li>
+    </ol>
+  </nav>
+
+  <section aria-labelledby="problema">
+    <h2 id="problema">1. El problema que resuelve</h2>
+    <p>Tras una inundación, un vendaval o un sismo, la demanda de ayuda supera a los equipos de respuesta. Hay rutas bloqueadas, comunicaciones cortadas e información fragmentada. Quienes coordinan tienen que decidir en minutos a quién atender primero, dónde concentrar esfuerzos y qué enviar, con datos incompletos y sin saber cuánto fiarse de ellos. Después, casi nunca hay forma de comprobar que la ayuda llegó a quien la pidió.</p>
+    <p>Resilis ataca esos tres huecos: <strong>priorizar</strong> con un criterio explicable, <strong>repartir</strong> los recursos que hay de la forma que más necesidad cubre, y <strong>dar seguimiento</strong> hasta la entrega.</p>
+  </section>
+
+  <section aria-labelledby="en-una-mirada">
+    <h2 id="en-una-mirada">2. El recorrido, en una mirada</h2>
+    <ol>
+      <li><strong>Se pide ayuda o se avisa de un daño</strong> desde el celular, por una persona con cuenta.</li>
+      <li><strong>Un brigadista o una entidad verifica</strong> que la necesidad es real.</li>
+      <li><strong>El sistema calcula la prioridad</strong> de cada barrio y de cada solicitud, y cuánto confiar en cada dato.</li>
+      <li><strong>Con el inventario disponible arma un plan</strong> de qué entregar a quién, en paquetes pequeños.</li>
+      <li><strong>Una persona de la entidad aprueba</strong> cada paquete. Hasta entonces no se reserva nada.</li>
+      <li><strong>Un equipo de entrega lleva la ayuda</strong> y la entrega contra un código de un solo uso.</li>
+      <li><strong>Quien pidió confirma</strong> que la recibió. Todo queda registrado para poder auditarlo.</li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="base">
+    <h2 id="base">3. Antes del desastre: la línea base</h2>
+    <p>El sistema conoce el territorio antes de que ocurra algo: <strong>23 municipios del Atlántico y 600 barrios y centros poblados</strong> (tomados de OpenStreetMap), con su población y sus viviendas, a partir de proyecciones. Eso permite recomendar desde la hora cero, incluso si todavía no ha llegado ningún reporte.</p>
+    <p class="nota">Los datos de población y daños del prototipo son <strong>simulados</strong>, anclados en las proyecciones reales de viviendas. Sirven para validar el método, no para medir la precisión en un desastre real.</p>
+  </section>
+
+  <section aria-labelledby="pedir">
+    <h2 id="pedir">4. Pedir ayuda y avisar de daños</h2>
+    <h3>Solicitudes de ayuda</h3>
+    <p>Una persona con cuenta indica qué necesita (agua, alimentos, medicamentos, higiene, abrigo o vivienda, u otra cosa), para cuántas personas, qué tan urgente es y su barrio. Si hay alguien vulnerable en el hogar (una persona mayor, un menor, alguien con discapacidad, embarazo o una enfermedad crónica), lo cuenta y describe qué necesita en concreto. La descripción en palabras propias es lo que más ayuda a entender la necesidad.</p>
+    <h3>Reportes de daños</h3>
+    <p>Cualquier persona con cuenta puede informar cómo quedó un barrio: nivel de daño, si hay personas afectadas, si el acceso está bloqueado. Los brigadistas también reportan, y su reporte pesa más que el de una persona del común.</p>
+    <p>No hay reportes anónimos: cada uno queda ligado a una cuenta, lo que ayuda a detectar abusos. Quien no tiene celular puede recibir una ficha en papel, que un brigadista digitaliza después.</p>
+  </section>
+
+  <section aria-labelledby="verificar">
+    <h2 id="verificar">5. Verificar: que la necesidad sea real</h2>
+    <p>Antes de asignar nada, un <strong>brigadista o una entidad</strong> revisa cada solicitud, una a la vez, desde una cola pensada para el celular: ve qué pidió la persona, puede llamarla o abrir su barrio en el mapa, y decide con un toque entre <em>Verificada</em> y <em>No se pudo verificar</em>. Si no la puede verificar, debe dejar el motivo. Los reportes de daños se revisan aparte.</p>
+    <p>Esto frena los reportes falsos o repetidos antes de que gasten recursos escasos. Solo las solicitudes verificadas entran al plan de entregas.</p>
+  </section>
+
+  <section aria-labelledby="prioridad">
+    <h2 id="prioridad">6. Decidir quién va primero</h2>
+    <p>La prioridad se calcula en dos niveles: primero <strong>qué barrios</strong> atender y después <strong>qué solicitudes</strong> dentro de ellos. Se usa un método de decisión con varios criterios (TOPSIS): cada barrio o solicitud se compara con la mejor y la peor situación posibles, y se obtiene un número de 0 a 100 %. En pantalla se muestra en palabras: <em>Alta</em>, <em>Media</em> o <em>Baja</em>, con el porcentaje al lado.</p>
+    <div class="pesos">
+      <div>
+        <h4>Criterios de un barrio (peso inicial)</h4>
+        <ul>
+          <li>Gravedad de la afectación: 30 %</li>
+          <li>Urgencia de la atención: 25 %</li>
+          <li>Personas expuestas y necesidades especiales: 25 %</li>
+          <li>Accesibilidad de las rutas: 10 %</li>
+          <li>Recursos disponibles: 10 %</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Criterios de una solicitud (peso inicial)</h4>
+        <ul>
+          <li>Urgencia: 30 %</li>
+          <li>Vulnerabilidad de quien pide: 25 %</li>
+          <li>Personas en el hogar: 15 %</li>
+          <li>Tiempo de espera: 15 %</li>
+          <li>Prioridad de su barrio: 15 %</li>
+        </ul>
+      </div>
+    </div>
+    <p>Los pesos son valores provisionales y se pueden ajustar; cada cambio queda registrado. Conviene validarlos con una persona experta en gestión del riesgo antes de usarlos en una emergencia real.</p>
+    <p>El sistema <strong>explica</strong> cada resultado: el detalle de un barrio muestra sus criterios, sus reportes y sus solicitudes, para que quien decide entienda por qué está donde está.</p>
+  </section>
+
+  <section aria-labelledby="confianza">
+    <h2 id="confianza">7. Qué tan confiable es cada dato</h2>
+    <p>Una prioridad alta calculada con un solo reporte dudoso no vale lo mismo que una calculada con varios reportes verificados. Por eso, junto a la prioridad, el sistema calcula una <strong>confianza</strong> (Alta, Media o Baja) a partir de:</p>
+    <ul>
+      <li><strong>La fuente</strong> (35 %): un brigadista o una entidad pesa más que una persona del común.</li>
+      <li><strong>La verificación</strong> (30 %): si alguien la comprobó en campo.</li>
+      <li><strong>La corroboración</strong> (20 %): si otros reportes dicen lo mismo.</li>
+      <li><strong>La vigencia</strong> (15 %): qué tan reciente es.</li>
+    </ul>
+    <p>También señala <strong>alertas de información faltante</strong>: un barrio sin reportes, con reportes muy antiguos, de baja confianza o que se contradicen. Con confianza baja, la pantalla sugiere <em>«Conviene verificar»</em>. Así se ve dónde faltan datos en vez de esconderlo.</p>
+    <p>Si el acceso a un barrio está bloqueado, el plan lo marca como <em>«Barrio aislado: confirme la ruta»</em>, para que la persona que aprueba lo tenga presente.</p>
+  </section>
+
+  <section aria-labelledby="inventario">
+    <h2 id="inventario">8. Donaciones e inventario</h2>
+    <p>Los <strong>donantes</strong> registran lo que ofrecen (agua, alimentos, medicamentos, higiene, abrigo) y pueden dirigir su donación a un barrio, a un tipo de necesidad o a una solicitud. Un <strong>centro de acopio</strong> confirma lo que realmente llegó y lo guarda en el inventario por entradas, con su fecha de vencimiento.</p>
+    <p>El inventario distingue lo <strong>disponible</strong> (se puede asignar), lo <strong>reservado</strong> (ya prometido a una solicitud) y lo <strong>entregado</strong>. Las donaciones en dinero solo se registran: el sistema no procesa pagos.</p>
+  </section>
+
+  <section aria-labelledby="plan">
+    <h2 id="plan">9. El plan de entregas</h2>
+    <p>Con las solicitudes verificadas y el inventario, el sistema calcula qué entregar a quién. No es una lista de «lo más urgente primero hasta que se acabe»: usa <strong>optimización matemática</strong> (programación lineal entera) para cubrir la mayor necesidad posible, ponderada por la prioridad y la confianza de cada solicitud. Además:</p>
+    <ul>
+      <li><strong>Gasta primero lo que vence antes</strong>, para no perder alimentos o medicinas.</li>
+      <li><strong>Garantiza una cobertura mínima</strong> a las solicitudes más prioritarias antes de completar otras.</li>
+      <li><strong>Prefiere el centro de acopio más cercano</strong>, para acortar el viaje.</li>
+      <li><strong>Respeta las donaciones dirigidas</strong> a un barrio, tipo de necesidad o solicitud.</li>
+    </ul>
+    <p>El resultado se compara con una asignación sencilla de referencia (la más prioritaria primero, hasta agotar lo que hay), y el sistema dice cuánto más necesidad cubre el plan. También lista lo que queda <strong>sin cubrir</strong> y por qué.</p>
+    <h3>Aprobar sin abrumarse</h3>
+    <p>Un plan puede tener cientos de entregas. Por eso se divide en <strong>paquetes pequeños</strong>: hasta 6 entregas del mismo municipio, que un solo equipo puede recorrer junto. La persona de la entidad revisa un paquete, deja fuera lo que no convenga y lo aprueba con un equipo; también puede aprobar los siguientes 5, 10 o 20 paquetes de una vez, repartidos entre los equipos con menos entregas abiertas. <strong>Hasta que alguien aprueba, no se reserva ni se mueve nada.</strong></p>
+    <p>Si prefiere decidir caso por caso, también puede asignar a mano una solicitud a un equipo.</p>
+  </section>
+
+  <section aria-labelledby="entrega">
+    <h2 id="entrega">10. Entregar con código y seguimiento</h2>
+    <p>Al aprobar una entrega, el sistema genera un <strong>código de un solo uso</strong> que ve quien pidió la ayuda. Cuando el equipo llega, la persona se lo dice y el equipo lo escribe: sin ese código no se puede confirmar la entrega. Así se comprueba que la ayuda llegó a la persona correcta. El código se puede validar <strong>sin conexión</strong>, y las entregas hechas sin señal se envían cuando vuelve la conexión.</p>
+    <p>Mientras tanto, cada quien ve lo que le corresponde, como en una aplicación de pedidos:</p>
+    <ul>
+      <li><strong>Quien pidió</strong> ve el estado de su solicitud, un mapa con el equipo acercándose y un aviso cuando está cerca.</li>
+      <li><strong>Quien dona</strong> ve por dónde va su donación, con una zona aproximada, nunca el punto exacto.</li>
+      <li><strong>La entidad y los equipos</strong> ven todas las entregas en marcha para llevar el control logístico.</li>
+    </ul>
+    <p class="nota">En esta versión de demostración la posición del equipo en el mapa es <strong>simulada</strong> y va acelerada. La pantalla lo avisa siempre.</p>
+  </section>
+
+  <section aria-labelledby="privacidad">
+    <h2 id="privacidad">11. Privacidad y seguridad</h2>
+    <ul>
+      <li><strong>Autorización de datos:</strong> para crear una cuenta hay que autorizar el tratamiento de datos personales, como pide la Ley 1581 de 2012.</li>
+      <li><strong>Cada persona ve lo suyo:</strong> el equipo de entrega solo ve las entregas que le asignaron; quien pide ayuda, solo sus solicitudes.</li>
+      <li><strong>Los donantes no ven datos de quien recibe:</strong> solo el barrio, con un círculo aproximado y sin direcciones ni nombres.</li>
+      <li><strong>Código protegido:</strong> el servidor guarda solo una huella del código de entrega, no el código.</li>
+      <li><strong>Registro auditable:</strong> cada paso de una solicitud (verificada, asignada, en camino, entregada) se anota en un registro encadenado, sin datos personales, donde cualquier alteración posterior se detecta.</li>
+      <li><strong>Cuentas de organizaciones:</strong> las de brigadistas, entidades, equipos y centros de acopio las crea o aprueba un administrador.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="roles">
+    <h2 id="roles">12. Qué ve cada persona</h2>
+    <ul class="roles">
+      <li><h3>{{ icono('solicitudes') }}Persona que necesita ayuda</h3><p>Pide ayuda, avisa de daños, sigue su solicitud en un mapa y recibe con código.</p></li>
+      <li><h3>{{ icono('donar') }}Donante</h3><p>Registra donaciones y ve su estado y por dónde van, sin datos de quienes las reciben.</p></li>
+      <li><h3>{{ icono('verificar') }}Brigadista</h3><p>Verifica solicitudes y reportes, reporta daños y consulta el mapa y las prioridades de cualquier municipio.</p></li>
+      <li><h3>{{ icono('plan') }}Entidad coordinadora</h3><p>Verifica, ve prioridades y mapa, calcula y aprueba el plan, y controla las entregas en marcha.</p></li>
+      <li><h3>{{ icono('inventario') }}Centro de acopio</h3><p>Confirma lo que llega de las donaciones y lleva el inventario.</p></li>
+      <li><h3>{{ icono('entregas') }}Equipo de entrega</h3><p>Ve solo las entregas que le asignaron, las lleva y las confirma con el código.</p></li>
+      <li><h3>{{ icono('cuentas') }}Administrador</h3><p>Crea y aprueba cuentas de organizaciones y revisa el registro de auditoría.</p></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="limites">
+    <h2 id="limites">13. Lo que todavía no hace</h2>
+    <p>Resilis es un prototipo creado para el Rally Latinoamericano de Innovación 2026. Conviene decirlo con claridad:</p>
+    <ul>
+      <li>Los datos son <strong>ficticios y simulados</strong>; no es un sistema de emergencias en producción.</li>
+      <li>La <strong>ruta del equipo es simulada</strong>; no usa la posición real de nadie.</li>
+      <li>Los <strong>pesos de la prioridad son provisionales</strong> y falta validarlos con personas expertas en gestión del riesgo.</li>
+      <li>No hay <strong>base oficial para verificar identidades</strong>; por eso la verificación en campo es la defensa principal contra el fraude.</li>
+      <li>Si dos equipos sin conexión reclaman el mismo código en lugares distintos, no se puede evitar a distancia; por eso cada código queda atado a un equipo.</li>
+      <li>No procesa <strong>pagos</strong>: las donaciones en dinero solo se registran.</li>
+    </ul>
+  </section>
+
+  <p class="cierre">
+    {% if usuario %}<a class="boton" href="/">{{ icono('inicio') }}Ir a mi inicio</a>
+    {% else %}<a class="boton" href="/registro">Crear cuenta</a> <a class="boton" href="/entrar">Entrar</a>{% endif %}
+  </p>
+</div>
+{% endblock %}

@@ -354,3 +354,27 @@ button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
 @media (min-width: 48rem) { .indice-portada ul { justify-content: center; } }
 .bloque > h2 { scroll-margin-top: 4.5rem; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* Página «Cómo funciona» */
+.ver-mas { text-align: center; margin: 1rem 0 0; }
+.ver-mas .boton { display: inline-flex; align-items: center; gap: .5rem; }
+.ver-mas .icono { width: 1.2rem; height: 1.2rem; }
+main:has(.explicacion) { max-width: 52rem; }
+.explicacion h1 { font-size: 1.9rem; line-height: 1.2; }
+.explicacion .resumen { font-size: 1.1rem; }
+.explicacion section { margin: 2.2rem 0; }
+.explicacion section > h2 { border-bottom: 3px solid var(--teal); padding-bottom: .3rem; scroll-margin-top: 1rem; }
+.explicacion h3 { margin: 1.2rem 0 .3rem; font-size: 1.1rem; }
+.explicacion .indice-detalle { border: 2px solid var(--borde-suave); border-radius: .5rem; background: #fff; padding: .6rem 1rem; }
+.explicacion .indice-detalle ol { margin: .3rem 0; padding-left: 1.3rem; columns: 2 16rem; }
+.explicacion .indice-detalle li { margin: .25rem 0; break-inside: avoid; }
+.explicacion .nota { border-left: 5px solid var(--naranja-oscuro, #b34a10); background: #fff; border-radius: .3rem; padding: .6rem .9rem; margin: 1rem 0; }
+.explicacion .pesos { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin: .8rem 0; }
+.explicacion .pesos > div { border: 2px solid var(--borde-suave); border-radius: .5rem; background: #fff; padding: .7rem .9rem; }
+.explicacion .pesos h4 { margin: 0 0 .3rem; font-size: 1rem; color: var(--azul-profundo); }
+.explicacion .pesos ul { margin: 0; padding-left: 1.1rem; }
+.explicacion .roles { list-style: none; padding: 0; margin: .8rem 0; display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.explicacion .roles li { border: 2px solid var(--borde-suave); border-top: 5px solid var(--teal); border-radius: .5rem; background: #fff; padding: .7rem .9rem; }
+.explicacion .roles h3 { margin: 0 0 .3rem; display: flex; align-items: center; }
+.explicacion .roles p { margin: 0; }
+.explicacion .cierre { text-align: center; margin: 2rem 0 1rem; }
