@@ -39,11 +39,11 @@ PRE FACTIBILIDAD ECONÓMICA, SOCIAL Y SUSTENTABILIDAD AMBIENTAL (1500 caracteres
 Describa brevemente las razones que hacen de esta propuesta una propuesta sostenible en el tiempo. Fundamente por qué considera que esta propuesta es presupuestariamente abordable, por qué es viable o aceptable socialmente 
 Viabilidad técnica: el prototipo ya funciona en línea (resilis.dorelys.dev), con 338 pruebas automáticas y accesibilidad WCAG 2.2 AA. Usa software abierto y se adapta a otro territorio cambiando solo los barrios y los pesos.
 
-Económica: el prototipo cuesta menos de COP 50.000 al mes. Un piloto de 6 meses con una entidad, con mantenimiento, capacitación y revisión jurídica, cuesta unos COP 17 millones, y operarlo después, unos COP 8 millones al año (presupuesto adjunto). No requiere licencias ni equipos especializados. Podría financiarse con las oficinas de gestión del riesgo de municipios y departamento, cooperación humanitaria y convocatorias de innovación pública. Al ser abierto, otras ciudades pueden replicarlo sin pagar licencias.
+Económica: el prototipo en línea consume solo US$0,10 de recursos en Railway (unos COP 400) y cuesta menos de COP 50.000 al mes con el plan base. Un piloto de 6 meses con una entidad (mantenimiento, capacitación y revisión jurídica) cuesta unos COP 17 millones, y operarlo después, unos COP 8 millones al año (presupuesto adjunto). Podría financiarse con las oficinas de gestión del riesgo de municipios y departamento, cooperación humanitaria y convocatorias públicas de innovación. Al ser abierto, otras ciudades pueden replicarlo sin pagar licencias.
 
-Social: se usa desde el celular que ya tiene la gente; quien no lo tiene a mano imprime una ficha con su código. Se piden solo los datos necesarios (nombre, teléfono y barrio si pide ayuda; el documento solo en entregas de mayor valor), con consentimiento expreso, y cada rol ve solo lo que necesita, según la Ley 1581 de 2012. La auditoría no contiene datos personales.
+Social: se usa desde el celular que ya tiene la gente; quien no lo tiene a mano imprime una ficha con su código. Se piden solo los datos necesarios (nombre, teléfono y, si pide ayuda, barrio), con consentimiento expreso, y cada rol ve solo lo que necesita, según la Ley 1581 de 2012. La auditoría no contiene datos personales.
 
-Ambiental: bajo consumo de datos y menos desplazamientos y desperdicio: lo que vence antes sale primero y las entregas se agrupan por municipio.
+Ambiental: bajo consumo de datos y menos desplazamientos y desperdicio: lo que vence primero sale primero y se agrupan las entregas.
 
 Próximos pasos: en el piloto se reemplazan los datos simulados por datos oficiales por barrio, se valida la prioridad con una entidad de gestión del riesgo y se completa la revisión jurídica de datos personales.
 
@@ -54,7 +54,7 @@ Estimación de referencia en pesos colombianos (COP). Supuestos: 1 USD = COP 4.0
 1. Prototipo (ya construido en el Rally)
 | Concepto | Detalle | Costo |
 |---|---|---|
-| Hospedaje en la nube (aplicación y base de datos PostgreSQL, Railway) | US$5 a US$10 al mes | COP 20.000 a 40.000 al mes |
+| Hospedaje en la nube (aplicación y base de datos PostgreSQL, Railway) | Uso medido en el periodo actual: US$0,10 (memoria 0,09; procesador 0,01; red y almacenamiento 0). Con el plan base, unos US$5 al mes | COP 400 medidos; hasta COP 20.000 al mes con el plan base |
 | Dominio | subdominio de un dominio ya existente | COP 0 |
 | Software y datos | Python, FastAPI, PostgreSQL, SciPy, Leaflet, OpenStreetMap y datos abiertos | COP 0 |
 | Trabajo del equipo (aporte en especie) | 7 integrantes x 28 horas x COP 20.000 | COP 3.920.000 |
