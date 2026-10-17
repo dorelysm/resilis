@@ -13,6 +13,7 @@ FUNDADORES = [
     {"nombre": "Carmela Miranda Gutierrez", "rol": "", "texto": "", "foto": "fundador-carmela-miranda-gutierrez.webp"},
     {"nombre": "Evelin Gómez Vergara", "rol": "", "texto": "", "foto": "fundador-evelin-gomez-vergara.webp"},
     {"nombre": "Maritza Domínguez Cervantes", "rol": "", "texto": "", "foto": "fundador-maritza-dominguez-cervantes.webp"},
+    {"nombre": "Leandro Rodríguez Polo", "rol": "", "texto": "", "foto": "fundador-leandro-rodriguez-polo.webp"},
 ]
 
 # Foto del equipo reunido (archivo en /static/img/) y su descripción para lectores de pantalla.
