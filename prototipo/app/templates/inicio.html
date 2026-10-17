@@ -18,8 +18,15 @@
   </div>
 
   <nav class="indice-portada" aria-label="En esta página">
-    <a href="#que-es">Qué es</a><a href="#como-funciona">Cómo funciona</a><a href="#para-quien">Para quién</a><a href="#logo">Nuestro logo</a><a href="#fundadores">Fundadores</a>
+    <ul>
+      <li><a href="#que-es">{{ icono('otro') }}Qué es</a></li>
+      <li><a href="#como-funciona">{{ icono('recorrido') }}Cómo funciona</a></li>
+      <li><a href="#para-quien">{{ icono('equipos') }}Para quién</a></li>
+      <li><a href="#logo">{{ icono('ayuda') }}Nuestro logo</a></li>
+      <li><a href="#fundadores">{{ icono('cuentas') }}Equipo</a></li>
+    </ul>
   </nav>
+  <script src="/static/indice.js" defer></script>
 
   <section class="bloque" aria-labelledby="que-es">
     <h2 id="que-es">¿Qué es Resilis?</h2>

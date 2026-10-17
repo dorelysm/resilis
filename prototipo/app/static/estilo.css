@@ -319,8 +319,6 @@ button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
 
 /* Portada pública: descripción del proyecto, infografía y fundadores */
 .portada h1 { font-size: 1.9rem; line-height: 1.2; margin: .2rem 0; }
-.indice-portada { display: flex; flex-wrap: wrap; justify-content: center; gap: .1rem .4rem; margin: .5rem 0 1rem; }
-.indice-portada a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 .6rem; }
 .bloque { margin: 2rem 0; }
 .bloque > h2 { border-bottom: 3px solid var(--teal); padding-bottom: .3rem; }
 .pasos-portada { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .8rem; }
@@ -343,3 +341,16 @@ button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
 .fundador h4 { margin: 0; font-size: 1.1rem; }
 .fundador .rol { margin: .1rem 0 0; color: var(--texto-suave); }
 @media (min-width: 48rem) { main:has(.portada) { max-width: 52rem; } }
+
+/* Barra de secciones de la portada: contenedor propio, píldoras con icono, fija al bajar y deslizable en celular */
+.indice-portada { position: sticky; top: 0; z-index: 20; margin: 1rem -1rem 0; padding: .5rem 1rem; background: rgba(255, 255, 255, .96); border-top: 1px solid var(--borde-suave); border-bottom: 2px solid var(--borde-suave); box-shadow: 0 2px 6px rgba(13, 76, 102, .08); }
+.indice-portada ul { list-style: none; margin: 0; padding: 0; display: flex; gap: .5rem; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.indice-portada ul::-webkit-scrollbar { display: none; }
+.indice-portada li { flex: 0 0 auto; scroll-snap-align: center; }
+.indice-portada a { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.75rem; padding: 0 .9rem; border: 2px solid var(--borde-suave); border-radius: 999px; background: #fff; color: var(--azul-profundo); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.indice-portada a .icono { width: 1.1rem; height: 1.1rem; }
+.indice-portada a:hover { background: var(--tinte-teal); border-color: var(--teal); text-decoration: underline; }
+.indice-portada a[aria-current="location"] { background: var(--azul-profundo); border-color: var(--azul-profundo); color: #fff; }
+@media (min-width: 48rem) { .indice-portada ul { justify-content: center; } }
+.bloque > h2 { scroll-margin-top: 4.5rem; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }

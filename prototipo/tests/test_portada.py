@@ -91,3 +91,44 @@ def test_toda_foto_de_fundador_existe_y_es_liviana():
         if f["foto"]:
             archivo = RAIZ / "app" / "static" / "img" / f["foto"]
             assert archivo.exists() and archivo.stat().st_size < 100_000, f["nombre"]
+
+
+# ----------------------------------------------------------------------------- barra de secciones
+import json
+import shutil
+import subprocess
+
+import pytest
+
+INDICE_JS = RAIZ / "app" / "static" / "indice.js"
+
+
+def test_la_barra_de_secciones_son_pildoras_con_icono_y_texto_que_llevan_a_secciones_que_existen(app_cliente):
+    html = app_cliente.get("/").text
+    barra = html.split('<nav class="indice-portada"')[1].split("</nav>")[0]
+    enlaces = re.findall(r'<li><a href="#([a-z-]+)">(<svg.*?</svg>)([^<]+)</a></li>', barra, re.S)
+    assert [t for _, _, t in enlaces] == ["Qué es", "Cómo funciona", "Para quién", "Nuestro logo", "Equipo"]
+    assert all(s.count('aria-hidden="true"') == 1 for _, s, _ in enlaces)  # el icono es decorativo y el texto va siempre
+    for ancla, _, _ in enlaces:
+        assert f'id="{ancla}"' in html, ancla
+    assert 'src="/static/indice.js" defer' in html and "<ul>" in barra  # lista real, para lectores de pantalla
+    assert app_cliente.get("/static/indice.js").status_code == 200
+
+
+def test_la_css_de_la_barra_la_deja_fija_deslizable_y_con_blancos_tactiles_amplios():
+    css = (RAIZ / "app" / "static" / "estilo.css").read_text(encoding="utf-8")
+    bloque = css[css.index("/* Barra de secciones de la portada"):]
+    assert "position: sticky; top: 0" in bloque and "overflow-x: auto" in bloque
+    assert "min-height: 2.75rem" in bloque  # 44 px: objetivo táctil
+    assert 'a[aria-current="location"]' in bloque and ".bloque > h2 { scroll-margin-top" in bloque  # el ancla no queda tapada
+    assert "prefers-reduced-motion: no-preference" in bloque  # el desplazamiento suave respeta la preferencia
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node no está instalado")
+def test_el_js_elige_la_ultima_seccion_que_ya_paso_la_linea_de_lectura():
+    guion = ("const r=require(process.argv[1]);"
+             "const s=[{id:'a',top:-500},{id:'b',top:-20},{id:'c',top:300}];"
+             "console.log(JSON.stringify([r.activa(s,100), r.activa([{id:'a',top:400}],100), r.activa([],100), r.activa(s,1000)]))")
+    salida = subprocess.run(["node", "-e", guion, str(INDICE_JS)], capture_output=True, text=True, encoding="utf-8",
+                            check=True, timeout=30).stdout
+    assert json.loads(salida) == ["b", None, None, "c"]  # arriba de todo no hay ninguna activa; al final, la última
