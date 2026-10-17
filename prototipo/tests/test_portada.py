@@ -11,7 +11,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 def test_la_portada_describe_el_proyecto_en_secciones_con_indice(app_cliente):
     html = app_cliente.get("/").text
     for ancla, titulo in (("que-es", "¿Qué es Resilis?"), ("como-funciona", "Cómo funciona"), ("para-quien", "Para quién es"),
-                          ("distinto", "Lo que lo distingue"), ("logo", "Qué significa nuestro logo"), ("fundadores", "Fundadores y mentoría")):
+                          ("distinto", "Lo que lo distingue"), ("logo", "Qué significa nuestro logo"), ("fundadores", "Fundadores y Mentoría")):
         assert f'<h2 id="{ancla}">{titulo}</h2>' in html, ancla
     for ancla in ("que-es", "como-funciona", "para-quien", "logo", "fundadores"):
         assert f'href="#{ancla}"' in html  # el índice lleva a cada sección
