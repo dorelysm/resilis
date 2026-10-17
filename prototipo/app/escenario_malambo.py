@@ -29,15 +29,15 @@ INTENSIDAD = 0.9
 ESCALA_KM = 0.25              # el daño cae a 1/e cada 250 m
 HORAS_ANTES = 6.0             # el vendaval ocurrió hace 6 horas
 
-REPARACIONES = [
-    "El vendaval se llevó parte del techo y entra el agua. Necesitamos láminas y clavos para repararlo.",
-    "Se cayó una pared de la cocina con el viento. Necesitamos materiales para levantarla.",
-    "El techo de la casa quedó destruido. Necesitamos láminas, madera y lonas para cubrirlo.",
-    "Una lámina cayó sobre la sala y dañó el techo. Necesitamos materiales para repararlo.",
-    "Perdimos el techo del cuarto de los niños. Necesitamos láminas para repararlo.",
-    "El viento arrancó el techo y la puerta. Necesitamos materiales para reparar la vivienda.",
-    "El techo de zinc se desprendió. Necesitamos láminas nuevas y clavos.",
-    "Una rama grande rompió el techo. Necesitamos materiales para el arreglo.",
+REPARACIONES = [  # qué se dañó y qué materiales necesitan: así se entiende la necesidad
+    "El vendaval se llevó la mitad del techo de zinc y entra el agua a las habitaciones. Necesitamos láminas de zinc y clavos para repararlo.",
+    "Se cayó la pared de la cocina con el viento y quedó abierta. Necesitamos materiales (bloques, cemento) y una lona para taparla mientras tanto.",
+    "El techo de la casa quedó destruido y dormimos mojados. Necesitamos láminas, madera y una lona para cubrirlo.",
+    "Una lámina cayó sobre la sala y rompió parte del techo. Necesitamos láminas nuevas y clavos para repararlo.",
+    "Perdimos el techo del cuarto de los niños. Necesitamos láminas de zinc y una lona para que puedan dormir secos.",
+    "El viento arrancó el techo y la puerta de entrada. Necesitamos láminas, clavos y una puerta o madera para cerrarla.",
+    "El techo de zinc se desprendió por completo. Necesitamos láminas nuevas, clavos y una lona.",
+    "Una rama grande rompió el techo del patio y dañó la cocina. Necesitamos láminas, clavos y madera para el arreglo.",
 ]
 
 
@@ -146,18 +146,18 @@ def cargar(db: Session, semilla: int = 2026, ahora=None) -> dict:
         nueva(b, m.TipoNecesidad.ABRIGO_VIVIENDA, int(rng.integers(2, 5)), int(rng.integers(3, 7)), REPARACIONES[i], urgencia)
 
     medicinas = nueva(medicinas_en, m.TipoNecesidad.MEDICAMENTOS, 1, 2,
-                      "Perdí mis medicinas de uso continuo cuando se cayó el techo. Las necesito para seguir viviendo.", 3)
+                      "Perdí mis medicinas de uso diario cuando se cayó el techo: necesito losartán de 50 mg (para la presión) y metformina de 850 mg (para el azúcar). Las necesito para seguir viviendo.", 3)
     db.add(m.Vulnerabilidad(solicitud_id=medicinas.id, tipo="cronica", consentimiento=True,
                             consentimiento_fecha=medicinas.creado_en,
                             descripcion_situacion="Persona con enfermedad crónica que perdió su medicación en el desastre.",
-                            necesidad_especifica="Medicamentos de uso continuo"))
+                            necesidad_especifica="Losartán 50 mg y metformina 850 mg (uso diario)"))
     silla = nueva(silla_en, m.TipoNecesidad.OTRO, 1, 1,
-                  "Mi silla de ruedas quedó destruida con el vendaval y ya no sirve. No puedo salir de la casa.", 2,
+                  "Mi silla de ruedas quedó destruida con el vendaval (se partió una rueda y el asiento) y ya no sirve. Necesito una silla de ruedas estándar para poder salir de la casa.", 2,
                   creador=brigadistas[0], fuente=m.FuenteReporte.PAPEL)
     db.add(m.Vulnerabilidad(solicitud_id=silla.id, tipo="discapacidad", consentimiento=True,
                             consentimiento_fecha=silla.creado_en,
                             descripcion_situacion="Persona con movilidad reducida cuya silla de ruedas quedó inservible.",
-                            necesidad_especifica="Silla de ruedas"))
+                            necesidad_especifica="Silla de ruedas estándar"))
     db.flush()
 
     # ---- inventario: alcanza para casi todo, pero no hay silla de ruedas (nadie donó nada del tipo "otro")

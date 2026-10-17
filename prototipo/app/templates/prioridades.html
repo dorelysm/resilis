@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_solicitud.html" import que_pidio %}
 {% block titulo %}Prioridades{% endblock %}
 {% block contenido %}
 <h1>Prioridades</h1>
@@ -59,10 +60,10 @@
 <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Solicitudes registradas o verificadas, de la más prioritaria a la menos. Las que no están verificadas no se pueden asignar todavía.</caption>
-  <thead><tr><th scope="col">Barrio</th><th scope="col">Municipio</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Estado</th></tr></thead>
+  <thead><tr><th scope="col">Barrio</th><th scope="col">Municipio</th><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Estado</th></tr></thead>
   <tbody>
   {% for s, barrio, municipio in solicitudes %}
-    <tr><td>{{ barrio }}</td><td>{{ municipio }}</td><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td>
+    <tr><td>{{ barrio }}</td><td>{{ municipio }}</td><td>{{ que_pidio(s, 140) }}</td><td>{{ urgencia[s.urgencia] }}</td>
         <td>{{ pct(s.prioridad) }}</td><td>{{ pct(s.confianza or 0) }}</td>
         <td>{{ 'Verificada' if s.estado == 'verificada' else 'Por verificar' }}</td></tr>
   {% endfor %}

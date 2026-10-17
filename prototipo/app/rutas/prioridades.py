@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
+from app.solicitud_info import adjuntar_detalles
 from app import motor
 from app import puntaje as pj
 from app.db import get_db
@@ -90,6 +91,7 @@ def prioridades(request: Request, db: Db, usuario: Ve, todos: str = "", municipi
         .join(m.Municipio, m.Municipio.codigo == m.Barrio.municipio_codigo)
         .where(m.Solicitud.prioridad.is_not(None), m.Solicitud.estado.in_(["registrada", "verificada"]), *filtro_b)
         .order_by(m.Solicitud.prioridad.desc()).limit(limite)).all()
+    adjuntar_detalles(db, [f[0] for f in solicitudes])
     return render(request, "prioridades.html", usuario, barrios=barrios, solicitudes=solicitudes,
                   municipios=municipios, elegido=elegido, total_barrios=total_barrios, con_alerta=con_alerta,
                   n_con_datos=n_con_datos, solo_con_datos=solo_con_datos,

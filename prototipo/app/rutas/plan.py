@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import models as m
 from app import plan as pl
+from app.solicitud_info import adjuntar_detalles
 from app import servicios as sv
 from app.config import get_settings
 from app.simulacion import UNIDADES
@@ -58,6 +59,7 @@ def _paquetes_vista(db: Session, plan: m.PlanAsignacion | None) -> dict | None:
                           "asignado": sum(l.cantidad for l in lineas[sol_id]), "aislado": sol_id in datos.get("acceso_bloqueado", [])})
         p["filas"] = filas
         p["unidades"] = sum(f["asignado"] for f in filas)
+    adjuntar_detalles(db, [f["sol"] for p in todos for f in p["filas"]])
     pendientes = [p for p in todos if not p["resuelto"]]
     return {"todos": todos, "pendientes": pendientes, "abiertos": pendientes[:PAQUETES_ABIERTOS],
             "siguientes": pendientes[PAQUETES_ABIERTOS:PAQUETES_ABIERTOS + 12],
@@ -86,6 +88,7 @@ def _vista(db: Session, plan: m.PlanAsignacion | None, todos: bool = False):
     if not todos:
         grupos = grupos[:MAX_GRUPOS]
     sin = [{**s, "sol": db.get(m.Solicitud, s["solicitud_id"])} for s in datos.get("sin_cubrir", [])]
+    adjuntar_detalles(db, [s["sol"] for s in sin])
     mejora = None
     base = datos.get("cubierta_ponderada_voraz") or 0.0
     if base > 0:

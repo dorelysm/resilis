@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_campos.html" import resumen_errores %}
+{% from "_solicitud.html" import que_pidio %}
 {% block titulo %}Plan de asignación{% endblock %}
 {% block contenido %}
 <h1>Plan de asignación</h1>
@@ -34,7 +35,7 @@
         <ul class="lista-paquete">
         {% for f in paq.filas %}
           <li>
-            <span class="que"><strong>{{ necesidad[f.sol.necesidad] }}</strong>: {{ f.asignado }} {{ unidad[f.sol.necesidad] }}</span>
+            <span class="que">{{ que_pidio(f.sol, 200) }}<br>Recibe {{ f.asignado }} {{ unidad[f.sol.necesidad] }}.</span>
             <span class="donde">{{ f.barrio }} · {{ f.sol.personas_hogar }} persona(s)</span>
             <span class="estado">{{ urgencia[f.sol.urgencia] }}</span>
             {% if f.aislado %}<span class="estado estado-aviso">Barrio aislado: confirme la ruta</span>{% endif %}
@@ -105,7 +106,7 @@
     </table>
     </div>
     {% if vista.sin_cubrir %}
-    <ul>{% for s in vista.sin_cubrir[:25] %}<li>{{ necesidad[s.tipo] }}: faltan {{ s.falta }}. {{ s.motivo }}</li>{% endfor %}</ul>
+    <ul>{% for s in vista.sin_cubrir[:25] %}<li>{{ que_pidio(s.sol, 200) }}<br>Faltan {{ s.falta }}. {{ s.motivo }}</li>{% endfor %}</ul>
     {% if vista.sin_cubrir|length > 25 %}<p class="ayuda">Y {{ vista.sin_cubrir|length - 25 }} más.</p>{% endif %}
     {% else %}<p>Todo lo pedido queda cubierto.</p>{% endif %}
 

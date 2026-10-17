@@ -55,7 +55,7 @@ def test_la_pagina_de_prioridades_muestra_barrios_y_solicitudes(app_cliente, equ
     reportar(c, mundo)
     entrar(c, "3100000004")
     pagina = c.get("/prioridades").text
-    assert "Barrio de prueba" in pagina and "Agua (12)" in pagina and "Por verificar" in pagina
+    assert "Barrio de prueba" in pagina and "Agua</strong> · 12 litros" in pagina and "Por verificar" in pagina
     assert "Una confianza baja quiere decir que hay que verificar" in pagina
     detalle = c.get(f"/prioridades/barrios/{mundo['barrio_id']}").text
     assert "Por qué ocupa este lugar" in detalle and "Gravedad de la afectación" in detalle

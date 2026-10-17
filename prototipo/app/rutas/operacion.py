@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import models as m
 from app import recorrido as rc
 from app import servicios as sv
+from app.solicitud_info import adjuntar_detalles
 from app.config import get_settings
 from app.db import get_db
 from app.rutas.prioridades import refrescar
@@ -57,7 +58,9 @@ def _solicitudes_a_verificar(db: Session, usuario: m.Usuario):
     if usuario.rol == m.Rol.BRIGADISTA and usuario.barrio_id:  # un brigadista revisa lo de su zona de trabajo
         zona = db.get(m.Barrio, usuario.barrio_id)
         q = q.where(m.Barrio.municipio_codigo == zona.municipio_codigo)
-    return db.execute(q).all()
+    filas = db.execute(q).all()
+    adjuntar_detalles(db, [f[0] for f in filas])
+    return filas
 
 
 @router.get("/verificacion")
@@ -193,6 +196,7 @@ def asignacion(request: Request, db: Db, usuario: Entidad):
         .where(m.Solicitud.estado == m.EstadoSolicitud.VERIFICADA)  # la prioridad la calcula el bloque 5
         .order_by(m.Solicitud.prioridad.desc().nulls_last(), m.Solicitud.urgencia.desc(), m.Solicitud.creado_en)
         .limit(100)).all()
+    adjuntar_detalles(db, [sol for sol, _ in verificadas])
     filas = [(sol, barrio, sv.disponible_para(db, sol)) for sol, barrio in verificadas]
     equipos = [(u.id, u.nombre) for u in db.scalars(select(m.Usuario).where(
         m.Usuario.rol == m.Rol.EQUIPO_ENTREGA, m.Usuario.aprobado.is_(True), m.Usuario.password_hash.is_not(None)))]
@@ -239,7 +243,9 @@ def _mis_entregas(db: Session, equipo: m.Usuario):
 @router.get("/entregas")
 def entregas(request: Request, db: Db, usuario: Equipo):
     filas = []
-    for e, sol, persona, barrio in _mis_entregas(db, usuario):
+    mias = _mis_entregas(db, usuario)
+    adjuntar_detalles(db, [f[1] for f in mias])
+    for e, sol, persona, barrio in mias:
         vuln = db.scalar(select(m.Vulnerabilidad).where(m.Vulnerabilidad.solicitud_id == sol.id))
         filas.append((e, sol, persona, barrio, vuln))
     return render(request, "entregas.html", usuario, filas=filas, necesidad=NECESIDAD, urgencia=URGENCIA,

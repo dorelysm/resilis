@@ -31,6 +31,7 @@
     {% for f in elementos %}
     <li>{% if f.enlace %}<a href="{{ f.enlace }}">{{ f.titulo }}</a>{% else %}{{ f.titulo }}{% endif %}
       {% if f.lugar %} · {{ f.lugar }}{% endif %}
+      {% if f.detalle %}<br><span class="descripcion">«{{ f.detalle|truncate(160, True, '…') }}»</span>{% endif %}
       {% if f.horas is not none %}<span class="estado{% if f.horas >= 6 %} estado-aviso{% endif %}">{{ f.horas|round(1) }} h en esta etapa</span>{% endif %}</li>
     {% endfor %}
   </ul>

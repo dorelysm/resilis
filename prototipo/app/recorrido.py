@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
+from app.solicitud_info import adjuntar_detalles
 
 HECHO, ACTUAL, PENDIENTE, PROBLEMA = "hecho", "actual", "pendiente", "problema"
 HORAS_ESPERA_LARGA = 6.0  # una etapa con algo esperando más que esto se marca como posible cuello de botella
@@ -235,8 +236,10 @@ def elementos_de_etapa(db: Session, tipo: str, etapa: str, limite: int = 25) -> 
         desde = _desde_cuando_solicitudes(db)
         consulta = db.execute(select(m.Solicitud, m.Barrio.etiqueta).join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
                               .where(m.Solicitud.estado == etapa)).all()
+        adjuntar_detalles(db, [sol for sol, _ in consulta])
         for sol, barrio in consulta:
-            filas.append({"titulo": f"{sol.necesidad.replace('_', ' ').capitalize()} · {sol.cantidad}", "lugar": barrio,
+            filas.append({"titulo": f"{sol.necesidad.replace('_', ' ').capitalize()}{': ' + sol.especifica if sol.especifica else ''} · {sol.cantidad}",
+                          "detalle": sol.descripcion or "", "lugar": barrio,
                           "horas": _horas_desde(desde.get(sol.id) or sol.creado_en, ahora),
                           "enlace": f"/recorrido/solicitudes/{sol.id}", "id": sol.id})
     elif tipo == "donacion" and etapa in {c for c, *_ in ETAPAS["donacion"]}:

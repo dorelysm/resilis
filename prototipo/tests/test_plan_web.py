@@ -111,7 +111,7 @@ def test_cuando_falta_inventario_el_plan_dice_lo_que_queda_sin_cubrir(app_client
     calcular(c)
     pagina = c.get("/plan").text
     assert "Cubre <strong>20 de 36</strong>" in pagina and "Lo que queda sin cubrir" in pagina
-    assert "faltan" in pagina
+    assert "Faltan" in pagina
 
 
 def test_los_parametros_se_validan_y_se_guardan(app_cliente, sesiones, equipo_completo):

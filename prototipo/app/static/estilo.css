@@ -185,3 +185,6 @@ button.grande { width: 100%; min-height: 3.25rem; font-size: 1.2rem; }
 .pin-equipo { background: var(--azul-profundo); color: #fff; border-color: #fff; }
 .pin-equipo .pin-punto { background: #fff; }
 .leaflet-marker-icon:focus-visible .pin { outline: 3px solid var(--naranja-oscuro); outline-offset: 2px; }
+
+/* Qué pidió una solicitud */
+.que-pidio .descripcion { font-style: italic; color: var(--texto-suave); }

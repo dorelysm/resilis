@@ -135,3 +135,27 @@ def test_las_paginas_del_recorrido_son_accesibles(app_cliente, sesiones, equipo_
     salir(c)
     entrar(c, "3100000001")  # la persona ve su propio recorrido en su página
     assert 'aria-current="step"' in c.get("/solicitudes/1").text
+
+
+def test_las_listas_muestran_que_pidio_cada_solicitud(app_cliente, sesiones, equipo_completo, mundo):
+    """Lo que no se ve no se sabe: el tipo, lo específico, la cantidad y lo que escribió la persona."""
+    pedir(app_cliente, mundo)  # solicitud 1: agua para 2 personas
+    with sesiones() as db:
+        sol = db.get(m.Solicitud, 1)
+        sol.necesidad, sol.cantidad = "otro", 1
+        sol.descripcion = "Mi silla de ruedas quedó destruida con el vendaval y ya no sirve."
+        db.add(m.Vulnerabilidad(solicitud_id=1, tipo="discapacidad", descripcion_situacion="Movilidad reducida",
+                                necesidad_especifica="Silla de ruedas", consentimiento=True))
+        db.commit()
+    entrar(app_cliente, "3100000003")  # brigadista
+    lista = app_cliente.get("/verificacion").text
+    assert "Otro: Silla de ruedas" in lista and "1 unidades" in lista and "silla de ruedas quedó destruida" in lista
+    assert "Movilidad reducida" not in lista  # la situación de la persona no sale en las listas, solo lo que necesita
+    salir(app_cliente)
+    verificar(app_cliente, 1)
+    entrar(app_cliente, "3100000004")  # entidad
+    for ruta in ("/asignacion", "/prioridades", "/recorrido/solicitudes/1"):
+        pagina = app_cliente.get(ruta).text
+        assert "Silla de ruedas" in pagina and "silla de ruedas quedó destruida" in pagina, ruta
+    etapa = app_cliente.get("/recorrido?tipo=solicitud&etapa=verificada").text
+    assert "Otro: Silla de ruedas" in etapa and "silla de ruedas quedó destruida" in etapa

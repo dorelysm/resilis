@@ -1,0 +1,4 @@
+{# Qué pidió una solicitud: el tipo (con lo específico), la cantidad y lo que escribió la persona. #}
+{% macro que_pidio(sol, largo=160) %}
+<span class="que-pidio"><strong>{{ NOMBRE_NECESIDAD[sol.necesidad] }}{% if sol.especifica %}: {{ sol.especifica }}{% endif %}</strong> · {{ sol.cantidad }} {{ UNIDAD_NECESIDAD[sol.necesidad] }}{% if sol.descripcion %}<br><span class="descripcion">«{{ sol.descripcion|truncate(largo, True, '…') }}»</span>{% endif %}</span>
+{% endmacro %}

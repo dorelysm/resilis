@@ -7,10 +7,13 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Rol, Usuario
+from app.models import Rol, TipoNecesidad, Usuario
+from app.simulacion import UNIDADES
 from app.seguridad import csrf_valido, token_csrf
 
 plantillas = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+plantillas.env.globals["NOMBRE_NECESIDAD"] = {t.value: t.name.replace("_", " ").capitalize() for t in TipoNecesidad}
+plantillas.env.globals["UNIDAD_NECESIDAD"] = dict(UNIDADES)
 
 ETIQUETA_ROL = {
     Rol.SOLICITANTE: "Persona que necesita ayuda",

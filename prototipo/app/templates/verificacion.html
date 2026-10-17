@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_solicitud.html" import que_pidio %}
 {% block titulo %}Verificar{% endblock %}
 {% block contenido %}
 <h1>Verificar</h1>
@@ -8,10 +9,10 @@
 <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">Las más urgentes primero. Verifique la identidad y la necesidad antes de que se asigne la ayuda.</caption>
-  <thead><tr><th scope="col">Persona</th><th scope="col">Barrio</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Acción</th></tr></thead>
+  <thead><tr><th scope="col">Persona</th><th scope="col">Barrio</th><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Acción</th></tr></thead>
   <tbody>
   {% for s, persona, barrio in solicitudes %}
-    <tr><td>{{ persona }}</td><td>{{ barrio }}</td><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td>
+    <tr><td>{{ persona }}</td><td>{{ barrio }}</td><td>{{ que_pidio(s, 120) }}</td><td>{{ urgencia[s.urgencia] }}</td>
         <td><a href="/verificacion/solicitudes/{{ s.id }}">Revisar<span class="visually-hidden"> la solicitud de {{ persona }}</span></a></td></tr>
   {% endfor %}
   </tbody>

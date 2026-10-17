@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import models as m
 from app import recorrido as rc
+from app.solicitud_info import adjuntar_detalles
 from app.db import get_db
 from app.rutas.prioridades import NECESIDAD, URGENCIA
 from app.web import render, requiere_rol
@@ -34,5 +35,6 @@ def recorrido_solicitud(sol_id: int, request: Request, db: Db, usuario: Ve):
     if sol is None:
         raise HTTPException(status_code=404)
     barrio = db.get(m.Barrio, sol.barrio_id)
+    adjuntar_detalles(db, [sol])
     return render(request, "recorrido_solicitud.html", usuario, sol=sol, barrio=barrio.etiqueta if barrio else "",
                   pasos=rc.pasos_solicitud(db, sol), necesidad=NECESIDAD, urgencia=URGENCIA)
