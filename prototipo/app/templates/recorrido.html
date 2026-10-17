@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Recorrido{% endblock %}
+{% block contenido %}
+<h1>Recorrido de la ayuda</h1>
+<p>Todo lo que entra al sistema sigue un camino. Aquí se ve <strong>cuántas cosas hay en cada etapa y dónde se acumula el trabajo</strong>. Toque una etapa para ver qué hay en ella, de lo que más lleva esperando a lo que menos.</p>
+
+{% for r in recorridos %}
+<section class="embudo" aria-labelledby="emb-{{ r.tipo }}">
+  <h2 id="emb-{{ r.tipo }}">{{ r.titulo }}</h2>
+  <ol class="etapas">
+    {% for e in r.etapas %}
+    <li class="etapa{% if e.espera_larga %} etapa-larga{% endif %}{% if tipo == r.tipo and etapa == e.clave %} etapa-elegida{% endif %}">
+      <a href="/recorrido?tipo={{ r.tipo }}&amp;etapa={{ e.clave }}#lista"{% if tipo == r.tipo and etapa == e.clave %} aria-current="true"{% endif %}>
+        <span class="num">{{ e.cantidad }}</span>
+        <span class="nom">{{ e.titulo }}</span>
+        {% if e.espera_horas is not none and e.cantidad %}<span class="espera">{% if e.espera_larga %}Espera larga: {% else %}Espera máxima: {% endif %}{{ e.espera_horas|round(1) }} h</span>{% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+  {% for a in r.aparte %}<p class="ayuda">{{ a.titulo }}: {{ a.cantidad }}.</p>{% endfor %}
+</section>
+{% endfor %}
+
+<section id="lista" aria-labelledby="titulo-lista" tabindex="-1">
+  {% if elegida %}
+  <h2 id="titulo-lista">{{ elegida.titulo }}: {{ elegida.etapa_titulo }}</h2>
+  <p>{{ elegida.ayuda }}</p>
+  {% if elementos %}
+  <ul class="elementos">
+    {% for f in elementos %}
+    <li>{% if f.enlace %}<a href="{{ f.enlace }}">{{ f.titulo }}</a>{% else %}{{ f.titulo }}{% endif %}
+      {% if f.lugar %} · {{ f.lugar }}{% endif %}
+      {% if f.horas is not none %}<span class="estado{% if f.horas >= 6 %} estado-aviso{% endif %}">{{ f.horas|round(1) }} h en esta etapa</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if total_etapa > elementos|length %}<p class="ayuda">Se muestran los {{ elementos|length }} que más llevan esperando, de {{ total_etapa }}.</p>{% endif %}
+  {% else %}<p>No hay nada en esta etapa.</p>{% endif %}
+  {% else %}
+  <h2 id="titulo-lista">Qué hay en cada etapa</h2>
+  <p class="ayuda">Elija una etapa arriba para ver su contenido.</p>
+  {% endif %}
+</section>
+{% endblock %}

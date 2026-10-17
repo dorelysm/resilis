@@ -1,23 +1,18 @@
 {% extends "base.html" %}
+{% from "_recorrido.html" import recorrido %}
 {% block titulo %}Mis donaciones{% endblock %}
 {% block contenido %}
 <h1>Mis donaciones</h1>
+<p>Siga el camino de cada donación, desde que la ofrece hasta que llega a las personas. Toque una etapa para ver qué significa.</p>
 {% if filas %}
-<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
-<table>
-  <caption class="ayuda">Estado de cada donación que usted registró.</caption>
-  <thead><tr><th scope="col">Qué donó</th><th scope="col">Estado</th><th scope="col">Registrada</th></tr></thead>
-  <tbody>
   {% for d in filas %}
-    <tr>
-      <td>{% if d.monetaria %}Dinero: ${{ '{:,}'.format(d.monto or 0).replace(',', '.') }}{% else %}{{ d.cantidad }} {{ d.unidad }} de {{ tipos[d.tipo_bien]|lower }}{% endif %}</td>
-      <td><span class="estado">{{ d.estado.replace('_', ' ')|capitalize }}</span></td>
-      <td>{{ d.creado_en.strftime('%d/%m/%Y') }}</td>
-    </tr>
+  <section class="tarjeta-recorrido" aria-labelledby="don-{{ d.id }}">
+    <h2 id="don-{{ d.id }}">{% if d.monetaria %}Dinero: ${{ '{:,}'.format(d.monto or 0).replace(',', '.') }}{% else %}{{ d.cantidad }} {{ d.unidad }} de {{ tipos[d.tipo_bien]|lower }}{% endif %}
+      <span class="estado">{{ d.estado.replace('_', ' ')|capitalize }}</span></h2>
+    <p class="ayuda">Registrada el {{ d.creado_en.strftime('%d/%m/%Y') }}.</p>
+    {{ recorrido(pasos[d.id], 'Recorrido de la donación') }}
+  </section>
   {% endfor %}
-  </tbody>
-</table>
-</div>
 {% else %}<p>Todavía no ha registrado donaciones.</p>{% endif %}
 <a class="boton" href="/donaciones/nueva">Registrar una donación</a>
 {% endblock %}

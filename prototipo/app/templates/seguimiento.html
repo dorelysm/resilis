@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_recorrido.html" import recorrido %}
 {% block titulo %}Mi solicitud{% endblock %}
 {% block contenido %}
 <h1>Mi solicitud</h1>
@@ -19,9 +20,7 @@
 {% endif %}
 
 <h2>Cómo va</h2>
-<ol class="linea-tiempo">
-  {% for hora, texto in hitos %}<li>{{ texto }}<time datetime="{{ hora.strftime('%Y-%m-%dT%H:%M') }}">{{ hora.strftime('%d/%m/%Y %H:%M') }}</time></li>{% endfor %}
-</ol>
+{{ recorrido(pasos, 'Recorrido de mi solicitud') }}
 
 {% if sol.estado == 'entregada' %}
 <form method="post" action="/solicitudes/{{ sol.id }}/confirmar">

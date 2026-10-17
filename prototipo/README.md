@@ -63,6 +63,11 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Páginas:** `/prioridades` (listas), `/prioridades/barrios/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
 - `motor.ahp_pesos` (AHP: devuelve los pesos y la razón de consistencia CR, que debe ser menor que 0,1) existe y tiene pruebas, pero todavía no hay una pantalla de comparación por pares: `/pesos` recibe los pesos directamente.
 
+## Plan por paquetes y recorrido (ajustes tras la primera prueba)
+
+- **Plan en paquetes pequeños:** el plan se calcula completo, pero se revisa y se aprueba de a un paquete: hasta 6 entregas de un mismo municipio, de la más prioritaria a la menos, con un solo equipo, y letra y botón grandes. Cada línea dice qué, dónde, para cuántas personas y qué tan urgente, sin porcentajes. Cuánto cubre, la comparación con la referencia, lo que queda sin cubrir y los parámetros quedan plegados. "Aprobar todo de una vez" sigue existiendo, pero escondido. El plan se cierra solo cuando se resuelven todos sus paquetes. (`app/plan.py`: `armar_paquetes`, `aprobar_paquete`.)
+- **Recorrido visual:** cada solicitud, donación y reporte muestra sus etapas (hecho, aquí va, falta, problema) con texto y símbolo, no solo color; al tocar una etapa se explica qué significa. Lo ven la persona que pidió la ayuda, el donante y quien reportó. `/recorrido` (entidad, brigadista y administrador) cuenta cuántas cosas hay en cada etapa, marca las que llevan más de 6 horas esperando y deja entrar a ver qué hay en cada una, sin datos personales. (`app/recorrido.py`.)
+
 ## Mapa (bloque 7)
 
 `/mapa` (entidad, brigadista y administrador) dibuja los barrios con Leaflet 1.9.4, que viene incluido en `app/static/vendor/leaflet/` (sin CDN; licencia BSD en el mismo directorio). Los datos salen de `/mapa/datos.json`: un renglón por barrio, **sin datos de personas**.

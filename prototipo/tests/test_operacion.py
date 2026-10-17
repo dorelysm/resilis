@@ -145,7 +145,7 @@ def test_el_solicitante_ve_el_seguimiento_y_solo_el_suyo(app_cliente, equipo_com
     flujo_hasta_asignar(c, ids, mundo)
     entrar(c, "3100000001")
     pagina = c.get("/solicitudes/1").text
-    assert "Verificaron su solicitud" in pagina and "Se asignó un equipo" in pagina
+    assert "Verificada" in pagina and "Equipo asignado" in pagina
     assert "Su código de entrega" in pagina and c.get("/solicitudes/1/ficha").status_code == 200
     salir(c)
     entrar(c, "3100000002")  # otra persona no puede ver la solicitud ajena

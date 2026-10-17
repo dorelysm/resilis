@@ -1,0 +1,16 @@
+{# Recorrido de una cosa por sus etapas: se ve dónde va, qué sigue y, al abrir una etapa, qué significa. #}
+{% macro recorrido(pasos, etiqueta='Recorrido') %}
+<ol class="recorrido" aria-label="{{ etiqueta }}">
+  {% for p in pasos %}
+  <li class="paso paso-{{ p.estado }}"{% if p.estado == 'actual' %} aria-current="step"{% endif %}>
+    <span class="marca-paso" aria-hidden="true">{% if p.estado == 'hecho' %}✓{% elif p.estado == 'problema' %}!{% else %}{{ loop.index }}{% endif %}</span>
+    <details{% if p.estado in ('actual', 'problema') and p.nota %} open{% endif %}>
+      <summary><span class="titulo-paso">{{ p.titulo }}</span>
+        <span class="estado-paso">{{ p.estado_texto }}{% if p.hora %} · <time datetime="{{ p.hora.strftime('%Y-%m-%dT%H:%M') }}">{{ p.hora.strftime('%d/%m %H:%M') }}</time>{% endif %}</span></summary>
+      <p>{{ p.ayuda }}</p>
+      {% if p.nota %}<p><strong>{{ p.nota }}</strong></p>{% endif %}
+    </details>
+  </li>
+  {% endfor %}
+</ol>
+{% endmacro %}

@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app import recorrido as rc
 from app.db import get_db
 from app.models import (
     CentroAcopio, Donacion, Donante, EstadoDonacion, Evento, FuenteReporte, ReporteDanos, Rol, Barrio, Solicitud,
@@ -104,9 +105,10 @@ def reporte(
 def mis_reportes(request: Request, db: Db, usuario: Annotated[Usuario, Depends(requiere_rol(*ROLES_REPORTAN))]):
     filas = db.execute(
         select(ReporteDanos, Barrio.etiqueta).join(Barrio, Barrio.id == ReporteDanos.barrio_id)
-        .where(ReporteDanos.autor_id == usuario.id).order_by(ReporteDanos.hora_captura.desc()).limit(100)
+        .where(ReporteDanos.autor_id == usuario.id).order_by(ReporteDanos.hora_captura.desc()).limit(30)
     ).all()
-    return render(request, "mis_reportes.html", usuario, filas=filas, niveles=dict(NIVELES_DANO))
+    pasos = {r.id: rc.pasos_reporte(db, r) for r, _ in filas}
+    return render(request, "mis_reportes.html", usuario, filas=filas, pasos=pasos, niveles=dict(NIVELES_DANO))
 
 
 # ----------------------------------------------------------------------------- solicitudes de ayuda
@@ -275,5 +277,6 @@ def mis_donaciones(request: Request, db: Db, usuario: Annotated[Usuario, Depends
     filas = []
     if donante:
         filas = db.scalars(select(Donacion).where(Donacion.donante_id == donante.id)
-                           .order_by(Donacion.creado_en.desc()).limit(100)).all()
-    return render(request, "mis_donaciones.html", usuario, filas=filas, tipos=dict(NECESIDADES))
+                           .order_by(Donacion.creado_en.desc()).limit(30)).all()
+    pasos = {d.id: rc.pasos_donacion(db, d) for d in filas}
+    return render(request, "mis_donaciones.html", usuario, filas=filas, pasos=pasos, tipos=dict(NECESIDADES))

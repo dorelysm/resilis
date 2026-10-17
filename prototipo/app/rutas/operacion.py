@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import models as m
+from app import recorrido as rc
 from app import servicios as sv
 from app.config import get_settings
 from app.db import get_db
@@ -348,7 +349,7 @@ def _contexto_seguimiento(db: Session, sol: m.Solicitud):
     if entrega and sol.estado in (m.EstadoSolicitud.ASIGNADA, m.EstadoSolicitud.EN_CAMINO):
         codigo = sv.con_guion(sv.codigo_para(get_settings().secret_key, entrega.id, entrega.codigo_sal))
         equipo = db.get(m.Usuario, entrega.equipo_id)
-    return dict(sol=sol, hitos=hitos, codigo=codigo, equipo=equipo, entrega=entrega, nombres_estado=ESTADO,
+    return dict(sol=sol, hitos=hitos, pasos=rc.pasos_solicitud(db, sol), codigo=codigo, equipo=equipo, entrega=entrega, nombres_estado=ESTADO,
                 necesidad=NECESIDAD, urgencia=URGENCIA)
 
 

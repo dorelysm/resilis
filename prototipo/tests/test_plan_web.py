@@ -52,8 +52,8 @@ def test_calcular_mostrar_y_aprobar_el_plan(app_cliente, sesiones, equipo_comple
     pagina = c.get("/plan").text
     assert "El plan está listo" in pagina or "Plan 1" in pagina
     assert "Cubre <strong>24 de 24</strong>" in pagina  # 2 solicitudes de 2 personas x 6 litros
-    assert "Asignación de referencia" in pagina and "Aprobar el plan" in pagina
-    assert "Hasta que usted lo apruebe, no se reserva nada" in pagina
+    assert "Asignación de referencia" in pagina and "Aprobar este paquete" in pagina
+    assert "hasta entonces no se reserva nada" in pagina
     with sesiones() as db:
         assert db.scalar(select(m.Entrega)) is None  # calcular no reservó nada
 
@@ -86,7 +86,7 @@ def test_rechazar_el_plan_no_reserva_nada(app_cliente, sesiones, equipo_completo
     calcular(c)
     c.post("/plan/1/rechazar", data={"csrf": csrf(c, "/plan"), "motivo": "Quiero revisar a mano"})
     pagina = c.get("/plan").text
-    assert "Rechazado" in pagina and "Quiero revisar a mano" in pagina and "Aprobar el plan" not in pagina
+    assert "Rechazado" in pagina and "Quiero revisar a mano" in pagina and "Aprobar este paquete" not in pagina
     with sesiones() as db:
         assert db.scalar(select(m.Lote.cantidad_reservada)) == 0
     assert "ya fue resuelto" in c.post("/plan/1/rechazar", data={"csrf": csrf(c, "/plan")}, follow_redirects=True).text
@@ -148,27 +148,83 @@ def test_despues_de_aprobar_el_plan_la_persona_ve_su_codigo(app_cliente, equipo_
     salir(c)
     entrar(c, "3100000001")
     pagina = c.get("/solicitudes/1").text
-    assert re.search(r'class="codigo"[^>]*>[A-Z0-9]{4}-[A-Z0-9]{4}<', pagina) and "Se asignó un equipo" in pagina
+    assert re.search(r'class="codigo"[^>]*>[A-Z0-9]{4}-[A-Z0-9]{4}<', pagina) and "Equipo asignado" in pagina
 
 
-def test_un_plan_grande_muestra_lo_mas_prioritario_y_aprueba_todo(app_cliente, sesiones, equipo_completo, mundo):
-    """Si el plan tiene más solicitudes de las que caben en pantalla, las que no se muestran también se aprueban
-    (con el equipo propuesto); solo se dejan fuera las que la entidad marca."""
-    c, ids = app_cliente, equipo_completo
+def _plan_grande(c, ids, mundo, sesiones, n=45):
     recibir_inventario(c, ids, 1000)
     with sesiones() as db:
-        for _ in range(45):
+        for _ in range(n):
             db.add(m.Solicitud(solicitante_id=ids["solicitante"], creador_id=ids["solicitante"],
                                barrio_id=mundo["barrio_id"], necesidad="agua", cantidad=6, personas_hogar=1,
                                estado="verificada"))
         db.commit()
     entrar(c, "3100000004")
     calcular(c)
+
+
+def test_un_plan_grande_se_divide_en_paquetes_pequenos(app_cliente, sesiones, equipo_completo, mundo):
+    """Una persona en una emergencia revisa un paquete corto, no 45 solicitudes a la vez."""
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones)
     pagina = c.get("/plan").text
-    assert pagina.count('name="excluir_') == 40 and "Las otras 5" in pagina
-    assert c.get("/plan?todos=si").text.count('name="excluir_') == 45
-    c.post("/plan/1/aprobar", data={"csrf": csrf(c, "/plan"), "excluir_1": "si"})
+    assert pagina.count('name="excluir_') == 6  # un solo paquete abierto, de 6 entregas
+    assert "Siguiente: paquete 1" in pagina and "0 de 8</strong> paquetes resueltos" in pagina
+    assert "Los que siguen" in pagina and "Aprobar este paquete" in pagina
+    with sesiones() as db:
+        from app import plan as pl
+
+        plan = db.get(m.PlanAsignacion, 1)
+        paquetes = pl.armar_paquetes(db, plan)
+        assert [len(p["solicitudes"]) for p in paquetes] == [6] * 7 + [3]
+        assert sorted(j for p in paquetes for j in p["solicitudes"]) == sorted(
+            l.solicitud_id for l in db.scalars(select(m.PlanLinea)).all())  # nada se pierde ni se repite
+
+
+def test_aprobar_un_paquete_asigna_solo_ese_y_el_plan_sigue_abierto(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones)
+    pagina = c.get("/plan").text
+    solicitudes = re.search(r'name="solicitudes" value="([\d,]+)"', pagina).group(1)
+    primera = solicitudes.split(",")[0]
+    r = c.post("/plan/1/paquete", follow_redirects=False, data={
+        "csrf": csrf(c, "/plan"), "solicitudes": solicitudes, "equipo": str(ids["equipo"]), f"excluir_{primera}": "si"})
+    assert r.status_code == 303
     with sesiones() as db:
         asignadas = db.scalars(select(m.Solicitud).where(m.Solicitud.estado == "asignada")).all()
-        assert len(asignadas) == 44  # las 45 menos la que se dejó fuera, incluidas las 5 que no se veían
-        assert db.get(m.Solicitud, 1).estado == "verificada"
+        assert len(asignadas) == 5 and int(primera) not in {s.id for s in asignadas}  # la de "dejar fuera" no sale
+        assert {e.equipo_id for e in db.scalars(select(m.Entrega))} == {ids["equipo"]}  # todas con el mismo equipo
+        assert db.get(m.PlanAsignacion, 1).estado == "propuesto"
+    pagina = c.get("/plan").text
+    assert "1 de 8</strong> paquetes resueltos" in pagina and "Siguiente: paquete 2" in pagina
+    assert "Rechazar el plan" not in pagina  # ya hay entregas aprobadas: no se puede rechazar todo
+    otra = c.post("/plan/1/paquete", data={"csrf": csrf(c, "/plan"), "solicitudes": solicitudes,
+                                           "equipo": str(ids["equipo"])}, follow_redirects=True).text
+    assert "ya se resolvió" in otra  # no se aprueba dos veces
+
+
+def test_al_resolver_todos_los_paquetes_el_plan_queda_aprobado(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones, n=8)  # 2 paquetes: 6 y 2
+    for _ in range(2):
+        pagina = c.get("/plan").text
+        solicitudes = re.search(r'name="solicitudes" value="([\d,]+)"', pagina).group(1)
+        c.post("/plan/1/paquete", data={"csrf": csrf(c, "/plan"), "solicitudes": solicitudes, "equipo": str(ids["equipo"])})
+    with sesiones() as db:
+        plan = db.get(m.PlanAsignacion, 1)
+        assert plan.estado == "aprobado" and plan.aprobado_por is not None
+        assert len(db.scalars(select(m.Entrega)).all()) == 8
+    assert "Este plan ya se resolvió" in c.get("/plan").text
+
+
+def test_un_paquete_inventado_o_sin_equipo_se_rechaza(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones, n=8)
+    inventado = c.post("/plan/1/paquete", data={"csrf": csrf(c, "/plan"), "solicitudes": "1,2", "equipo": str(ids["equipo"])},
+                       follow_redirects=True).text
+    assert "no existe en este plan" in inventado
+    sin = c.post("/plan/1/paquete", data={"csrf": csrf(c, "/plan"), "solicitudes": "1,2,3,4,5,6"}, follow_redirects=True).text
+    assert "Elija el equipo" in sin
+    assert c.post("/plan/1/paquete", data={"solicitudes": "1", "equipo": "1"}).status_code == 403  # sin token CSRF
+    with sesiones() as db:
+        assert db.scalar(select(m.Entrega)) is None

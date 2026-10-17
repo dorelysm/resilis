@@ -1,19 +1,17 @@
 {% extends "base.html" %}
+{% from "_recorrido.html" import recorrido %}
 {% block titulo %}Mis reportes{% endblock %}
 {% block contenido %}
 <h1>Mis reportes</h1>
+<p>Siga lo que pasó con cada reporte que envió, del más reciente al más antiguo.</p>
 {% if filas %}
-<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
-<table>
-  <caption class="ayuda">Reportes que usted envió, del más reciente al más antiguo.</caption>
-  <thead><tr><th scope="col">Barrio</th><th scope="col">Daño</th><th scope="col">Personas</th><th scope="col">Enviado</th></tr></thead>
-  <tbody>
   {% for r, barrio in filas %}
-    <tr><td>{{ barrio }}</td><td>{{ niveles[r.nivel_dano] }}</td><td>{{ r.personas_afectadas }}</td><td>{{ r.hora_captura.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+  <section class="tarjeta-recorrido" aria-labelledby="rep-{{ r.id }}">
+    <h2 id="rep-{{ r.id }}">{{ barrio }}: {{ niveles[r.nivel_dano] }}</h2>
+    <p class="ayuda">{{ r.personas_afectadas }} persona(s) afectadas. Enviado el {{ r.hora_captura.strftime('%d/%m/%Y %H:%M') }}.</p>
+    {{ recorrido(pasos[r.id], 'Recorrido del reporte') }}
+  </section>
   {% endfor %}
-  </tbody>
-</table>
-</div>
 {% else %}<p>Todavía no ha enviado reportes.</p>{% endif %}
 <a class="boton" href="/reportes/nuevo">Enviar un reporte</a>
 {% endblock %}

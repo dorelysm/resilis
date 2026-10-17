@@ -7,7 +7,7 @@ import math
 from collections import defaultdict
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
@@ -200,22 +200,83 @@ def calcular_plan(db: Session, usuario: m.Usuario) -> m.PlanAsignacion | None:
     return plan
 
 
-# ----------------------------------------------------------------------------- aprobar y rechazar
-def aprobar_plan(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, secreto: str,
-                 equipos: dict[int, int] | None = None, excluir: set[int] | None = None) -> dict:
-    """Ejecuta el plan: por cada solicitud reserva sus lotes y la asigna a un equipo, con su código. Lo que ya no
-    se pueda hacer (porque el inventario cambió desde que se calculó) se omite y se informa."""
-    if plan.estado != m.EstadoPlan.PROPUESTO:
-        raise sv.ErrorNegocio("Este plan ya fue resuelto.")
-    equipos, excluir = equipos or {}, excluir or set()
+# ----------------------------------------------------------------------------- paquetes
+TAMANO_PAQUETE = 6  # entregas por paquete: lo que una persona puede revisar de una vez
+
+
+def _lineas_por_solicitud(db: Session, plan: m.PlanAsignacion) -> dict[int, list[m.PlanLinea]]:
     lineas: dict[int, list[m.PlanLinea]] = defaultdict(list)
     for linea in db.scalars(select(m.PlanLinea).where(m.PlanLinea.plan_id == plan.id).order_by(m.PlanLinea.id)):
         lineas[linea.solicitud_id].append(linea)
+    return lineas
 
-    asignadas, omitidas = [], []
-    for sol_id, ls in lineas.items():
-        if sol_id in excluir:
+
+def resueltas(db: Session, plan: m.PlanAsignacion) -> set[int]:
+    """Solicitudes del plan que ya se aprobaron, se omitieron o se dejaron fuera."""
+    res = db.get(m.PlanResumen, plan.id)
+    return set((res.datos if res else {}).get("resueltas", []))
+
+
+def armar_paquetes(db: Session, plan: m.PlanAsignacion, tamano: int = TAMANO_PAQUETE) -> list[dict]:
+    """Divide el plan en paquetes pequeños para revisarlos y aprobarlos de uno en uno. Cada paquete reúne solicitudes
+    de un mismo municipio (un equipo puede recorrerlas juntas), de la más prioritaria a la menos, y los paquetes salen
+    en orden: primero el del municipio que tiene la solicitud más prioritaria. El resultado solo depende del plan."""
+    lineas = _lineas_por_solicitud(db, plan)
+    hechas = resueltas(db, plan)
+    barrios = {b.id: b for b in db.scalars(select(m.Barrio))}
+    municipios = {mu.codigo: mu.nombre for mu in db.scalars(select(m.Municipio))}
+    por_municipio: dict[str, list[m.Solicitud]] = defaultdict(list)
+    for sol_id in lineas:
+        sol = db.get(m.Solicitud, sol_id)
+        barrio = barrios.get(sol.barrio_id)
+        por_municipio[barrio.municipio_codigo if barrio else ""].append(sol)
+    for sols in por_municipio.values():
+        sols.sort(key=lambda x: (-(x.prioridad or 0.0), x.id))
+    orden = sorted(por_municipio, key=lambda c: (-(por_municipio[c][0].prioridad or 0.0), c))
+    paquetes = []
+    for codigo in orden:
+        sols = por_municipio[codigo]
+        for i in range(0, len(sols), tamano):
+            grupo = sols[i:i + tamano]
+            ids = [x.id for x in grupo]
+            paquetes.append({
+                "municipio_codigo": codigo, "municipio": municipios.get(codigo, "Sin municipio"),
+                "solicitudes": ids, "personas": sum(x.personas_hogar for x in grupo),
+                "prioridad": max((x.prioridad or 0.0) for x in grupo),
+                "resuelto": all(j in hechas for j in ids),
+            })
+    paquetes.sort(key=lambda p: (-p["prioridad"], p["municipio_codigo"], p["solicitudes"][0]))
+    for n, p in enumerate(paquetes, start=1):
+        p["numero"] = n
+    return paquetes
+
+
+def equipo_sugerido(db: Session) -> int | None:
+    """El equipo de entrega aprobado con menos entregas abiertas."""
+    abiertas = dict(db.execute(select(m.Entrega.equipo_id, func.count()).where(m.Entrega.estado.in_(["asignada", "en_camino"]))
+                               .group_by(m.Entrega.equipo_id)).all())
+    equipos = [u.id for u in db.scalars(select(m.Usuario).where(
+        m.Usuario.rol == m.Rol.EQUIPO_ENTREGA, m.Usuario.aprobado.is_(True), m.Usuario.password_hash.is_not(None))
+        .order_by(m.Usuario.id))]
+    return min(equipos, key=lambda e: (abiertas.get(e, 0), e)) if equipos else None
+
+
+# ----------------------------------------------------------------------------- aprobar y rechazar
+def _ejecutar(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, secreto: str, solicitudes: list[int],
+              equipos: dict[int, int], excluir: set[int]) -> dict:
+    """Aprueba las solicitudes indicadas: reserva sus lotes y las asigna a un equipo, con su código. Lo que ya no se
+    pueda hacer (porque el inventario cambió desde que se calculó) se omite y se informa. Anota lo resuelto en el
+    resumen del plan y, cuando no queda nada pendiente, cierra el plan como aprobado."""
+    lineas = _lineas_por_solicitud(db, plan)
+    hechas = resueltas(db, plan)
+    asignadas, omitidas, excluidas = [], [], []
+    for sol_id in solicitudes:
+        if sol_id not in lineas or sol_id in hechas:
             continue
+        if sol_id in excluir:
+            excluidas.append(sol_id)
+            continue
+        ls = lineas[sol_id]
         sol = db.get(m.Solicitud, sol_id)
         equipo = db.get(m.Usuario, equipos.get(sol_id) or ls[0].equipo_id or 0)
         try:
@@ -225,16 +286,42 @@ def aprobar_plan(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, secret
             asignadas.append(sol_id)
         except sv.ErrorNegocio as e:
             omitidas.append({"solicitud_id": sol_id, "motivo": str(e)})
-    plan.estado = m.EstadoPlan.APROBADO
-    plan.aprobado_por, plan.aprobado_en = usuario.id, ahora()
     res = db.get(m.PlanResumen, plan.id)
+    nuevas = set(asignadas) | set(excluidas) | {o["solicitud_id"] for o in omitidas}
+    todas_hechas = hechas | nuevas
     if res:
-        res.datos = {**res.datos, "resultado": {"asignadas": asignadas, "omitidas": omitidas,
-                                                  "excluidas": sorted(excluir & set(lineas))}}
+        previo = res.datos.get("resultado") or {"asignadas": [], "omitidas": [], "excluidas": []}
+        res.datos = {**res.datos, "resueltas": sorted(todas_hechas),
+                     "resultado": {"asignadas": previo["asignadas"] + asignadas, "omitidas": previo["omitidas"] + omitidas,
+                                   "excluidas": previo["excluidas"] + excluidas}}
+    if set(lineas) <= todas_hechas:
+        plan.estado = m.EstadoPlan.APROBADO
+        plan.aprobado_por, plan.aprobado_en = usuario.id, ahora()
     db.add(m.Bitacora(usuario_id=usuario.id, accion="aprobar_plan", objeto=f"plan:{plan.id}",
-                      detalle={"asignadas": len(asignadas), "omitidas": len(omitidas), "excluidas": len(excluir)}))
+                      detalle={"asignadas": len(asignadas), "omitidas": len(omitidas), "excluidas": len(excluidas)}))
     db.commit()
-    return {"asignadas": len(asignadas), "omitidas": omitidas, "excluidas": len(excluir & set(lineas))}
+    return {"asignadas": len(asignadas), "omitidas": omitidas, "excluidas": len(excluidas)}
+
+
+def aprobar_plan(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, secreto: str,
+                 equipos: dict[int, int] | None = None, excluir: set[int] | None = None) -> dict:
+    """Aprueba todo el plan de una vez."""
+    if plan.estado != m.EstadoPlan.PROPUESTO:
+        raise sv.ErrorNegocio("Este plan ya fue resuelto.")
+    return _ejecutar(db, plan, usuario, secreto, list(_lineas_por_solicitud(db, plan)), equipos or {}, excluir or set())
+
+
+def aprobar_paquete(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, secreto: str, solicitudes: list[int],
+                    equipo_id: int, excluir: set[int] | None = None) -> dict:
+    """Aprueba un paquete: todas sus solicitudes salen con el mismo equipo, salvo las que se dejen fuera."""
+    if plan.estado != m.EstadoPlan.PROPUESTO:
+        raise sv.ErrorNegocio("Este plan ya fue resuelto.")
+    paquete = next((p for p in armar_paquetes(db, plan) if p["solicitudes"] == solicitudes), None)
+    if paquete is None:
+        raise sv.ErrorNegocio("Ese paquete no existe en este plan. Vuelva a abrir la página del plan.")
+    if paquete["resuelto"]:
+        raise sv.ErrorNegocio("Ese paquete ya se resolvió.")
+    return _ejecutar(db, plan, usuario, secreto, solicitudes, {j: equipo_id for j in solicitudes}, excluir or set())
 
 
 def rechazar_plan(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, motivo: str = "") -> None:

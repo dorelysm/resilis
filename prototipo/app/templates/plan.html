@@ -3,43 +3,78 @@
 {% block titulo %}Plan de asignación{% endblock %}
 {% block contenido %}
 <h1>Plan de asignación</h1>
-<p>El sistema propone qué lote entregar a cada solicitud verificada para cubrir la mayor necesidad posible, dando más peso a lo más prioritario y a lo más confiable. <strong>Hasta que usted lo apruebe, no se reserva nada.</strong></p>
+<p>El sistema reparte lo que hay en inventario entre las solicitudes verificadas. <strong>Usted aprueba un paquete pequeño a la vez; hasta entonces no se reserva nada.</strong></p>
 {{ resumen_errores(errores) }}
 
 <form method="post" action="/plan/calcular" class="no-imprimir">
   <input type="hidden" name="csrf" value="{{ csrf }}">
-  <p class="ayuda">Hay {{ verificadas if verificadas is not none else '—' }} solicitud(es) verificadas y {{ disponible if disponible is not none else '—' }} unidades disponibles en el inventario.</p>
+  <p class="ayuda">Hay {{ verificadas if verificadas is not none else '—' }} solicitud(es) verificadas y {{ disponible if disponible is not none else '—' }} unidades disponibles.</p>
   <button class="principal" type="submit">Calcular un plan nuevo</button>
 </form>
-
-<details{% if errores %} open{% endif %}>
-  <summary>Ajustar cómo se calcula (avanzado)</summary>
-  <p class="ayuda">Valores provisionales: conviene validarlos con una persona experta en gestión del riesgo.</p>
-  <form method="post" action="/plan/parametros" novalidate>
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    {% for clave, nombre, ayuda in [('theta', 'Cobertura mínima de lo más prioritario', 'De 0 a 1. Antes de completar una solicitud, cada una de las más prioritarias recibe al menos esta fracción de lo que pide (0,3 es el 30 %).'), ('kappa', 'Peso de usar primero lo que vence antes', 'De 0 a 1. Más alto: se gasta antes lo que está por vencer.'), ('lambda', 'Costo de la distancia, por kilómetro', 'De 0 a 0,1. Más alto: se prefiere el centro de acopio más cercano.')] %}
-    <div class="campo">
-      <label for="{{ clave }}">{{ nombre }}</label>
-      <p class="ayuda" id="{{ clave }}-ayuda">{{ ayuda }}</p>
-      <input type="number" id="{{ clave }}" name="{{ clave }}" step="any" inputmode="decimal" required value="{{ parametros[clave] }}"
-             aria-describedby="{{ clave }}-ayuda{% if errores.get(clave) %} {{ clave }}-error{% endif %}"{% if errores.get(clave) %} aria-invalid="true"{% endif %}>
-      {% if errores.get(clave) %}<p class="error" id="{{ clave }}-error">{{ errores[clave] }}</p>{% endif %}
-    </div>
-    {% endfor %}
-    <button class="principal" type="submit">Guardar parámetros</button>
-  </form>
-</details>
 
 {% if not vista %}
   <p>Todavía no se ha calculado ningún plan.</p>
 {% else %}
-  {% set p = vista.plan %}{% set d = vista.datos %}
+  {% set p = vista.plan %}{% set d = vista.datos %}{% set pq = vista.paquetes %}
   <h2>Plan {{ p.id }} <span class="estado">{{ estados[p.estado] }}</span></h2>
-  <p>Calculado el {{ p.creado_en.strftime('%d/%m/%Y %H:%M') }}. Cubre <strong>{{ p.necesidad_cubierta|int }} de {{ p.necesidad_total|int }}</strong> unidades pedidas.</p>
+  {% if pq %}
+  <div class="progreso" role="group" aria-label="Avance del plan">
+    <progress max="{{ pq.todos|length }}" value="{{ pq.hechos }}" aria-label="Paquetes resueltos">{{ pq.hechos }} de {{ pq.todos|length }}</progress>
+    <p><strong>{{ pq.hechos }} de {{ pq.todos|length }}</strong> paquetes resueltos.{% if pq.pendientes %} Faltan {{ pq.pendientes|length }}.{% endif %}</p>
+  </div>
 
-  <section aria-labelledby="comparacion">
-    <h3 id="comparacion">Qué tan bueno es</h3>
-    <p>Se comparó con una asignación sencilla de referencia (la más prioritaria primero, hasta que se acaba).</p>
+  {% if p.estado == 'propuesto' %}
+    {% for paq in pq.abiertos %}
+    <section class="paquete" aria-labelledby="paq-{{ paq.numero }}">
+      <h3 id="paq-{{ paq.numero }}">Siguiente: paquete {{ paq.numero }} · {{ paq.municipio }}</h3>
+      <p class="resumen-paquete">{{ paq.filas|length }} entrega(s) · {{ paq.personas }} persona(s) · {{ paq.unidades }} unidades en total</p>
+      <form method="post" action="/plan/{{ p.id }}/paquete">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="solicitudes" value="{{ paq.solicitudes|join(',') }}">
+        <ul class="lista-paquete">
+        {% for f in paq.filas %}
+          <li>
+            <span class="que"><strong>{{ necesidad[f.sol.necesidad] }}</strong>: {{ f.asignado }} {{ unidad[f.sol.necesidad] }}</span>
+            <span class="donde">{{ f.barrio }} · {{ f.sol.personas_hogar }} persona(s)</span>
+            <span class="estado">{{ urgencia[f.sol.urgencia] }}</span>
+            {% if f.aislado %}<span class="estado estado-aviso">Barrio aislado: confirme la ruta</span>{% endif %}
+            <span class="opcion"><input type="checkbox" id="excluir-{{ f.sol.id }}" name="excluir_{{ f.sol.id }}" value="si">
+              <label for="excluir-{{ f.sol.id }}">Dejar fuera<span class="visually-hidden"> la entrega de {{ necesidad[f.sol.necesidad] }} en {{ f.barrio }}</span></label></span>
+          </li>
+        {% endfor %}
+        </ul>
+        <div class="campo"><label for="equipo-{{ paq.numero }}">Equipo que lo lleva</label>
+          <select id="equipo-{{ paq.numero }}" name="equipo" required>
+            {% for id, nombre in equipos %}<option value="{{ id }}"{% if id == pq.equipo_sugerido %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+            {% if not equipos %}<option value="">No hay equipos</option>{% endif %}
+          </select></div>
+        <div class="acciones"><button class="principal grande" type="submit"{% if not equipos %} disabled aria-disabled="true"{% endif %}>Aprobar este paquete</button></div>
+      </form>
+    </section>
+    {% else %}
+    <p class="mensaje">Todos los paquetes de este plan están resueltos.</p>
+    {% endfor %}
+
+    {% if pq.siguientes %}
+    <section aria-labelledby="proximos">
+      <h3 id="proximos">Los que siguen</h3>
+      <ol class="proximos" start="{{ pq.siguientes[0].numero }}">
+      {% for paq in pq.siguientes %}<li>Paquete {{ paq.numero }} · {{ paq.municipio }} · {{ paq.solicitudes|length }} entrega(s)</li>{% endfor %}
+      </ol>
+      {% if pq.mas %}<p class="ayuda">Y {{ pq.mas }} paquete(s) más.</p>{% endif %}
+    </section>
+    {% endif %}
+  {% else %}
+    <p class="mensaje">Este plan ya se resolvió.{% if d.resultado %} Se asignaron {{ d.resultado.asignadas|length }} entrega(s).{% endif %}</p>
+  {% endif %}
+  {% else %}
+  <p class="mensaje">Este plan no asigna nada: no hay inventario que sirva para las solicitudes verificadas.</p>
+  {% endif %}
+
+  <details class="no-imprimir">
+    <summary>Cómo se calculó, lo que queda sin cubrir y opciones avanzadas</summary>
+    <p>Calculado el {{ p.creado_en.strftime('%d/%m/%Y %H:%M') }}. Cubre <strong>{{ p.necesidad_cubierta|int }} de {{ p.necesidad_total|int }}</strong> unidades pedidas.</p>
+    <h3>Qué tan bueno es</h3>
     <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
     <table>
       <thead><tr><th scope="col">Plan</th><th scope="col">Unidades cubiertas</th><th scope="col">Necesidad cubierta ponderada</th></tr></thead>
@@ -49,64 +84,19 @@
       </tbody>
     </table>
     </div>
-    {% if vista.mejora is not none %}<p>{% if vista.mejora > 0 %}Este plan cubre un <strong>{{ vista.mejora }} %</strong> más de necesidad ponderada que la referencia.{% elif vista.mejora == 0 %}Este plan y la referencia cubren lo mismo.{% else %}La referencia cubre más; revise los avisos.{% endif %}</p>{% endif %}
+    {% if vista.mejora is not none %}<p>{% if vista.mejora > 0 %}Cubre un <strong>{{ vista.mejora }} %</strong> más de necesidad ponderada que la referencia (la más prioritaria primero, hasta que se acaba).{% elif vista.mejora == 0 %}Este plan y la referencia cubren lo mismo.{% else %}La referencia cubre más; revise los avisos.{% endif %}</p>{% endif %}
     <p class="ayuda">Resultado del cálculo: {{ d.estado_solucionador }} ({{ d.segundos }} s).{% if d.equidad_aplicada %} Se garantizó una cobertura mínima de lo más prioritario.{% endif %}</p>
     {% for nota in d.notas %}<p class="mensaje">{{ nota }}</p>{% endfor %}
     {% if d.sin_equipos %}<p class="mensaje mensaje-error" role="alert">No hay equipos de entrega aprobados. Pida al administrador que cree uno antes de aprobar.</p>{% endif %}
-  </section>
 
-  {% if vista.grupos %}
-  <section aria-labelledby="entregas-plan">
-    <h3 id="entregas-plan">Qué se entrega a quién</h3>
-    {% if p.estado == 'propuesto' %}
-    <form method="post" action="/plan/{{ p.id }}/aprobar">
-      <input type="hidden" name="csrf" value="{{ csrf }}">
-    {% endif %}
-    {% for g in vista.grupos %}
-      <section class="fila-accion" aria-label="Solicitud en {{ g.barrio }}">
-        <p><strong>{{ necesidad[g.sol.necesidad] }}</strong> en {{ g.barrio }}: recibe <strong>{{ g.asignado }} de {{ g.sol.cantidad }}</strong>.
-          Prioridad {{ (g.sol.prioridad * 100)|round|int if g.sol.prioridad is not none else '—' }} %.</p>
-        <ul>{% for l in g.lineas %}<li>{{ l.cantidad }} del lote {{ l.lote_id }}. {{ l.razon }}</li>{% endfor %}</ul>
-        {% if g.aislado %}<p class="mensaje mensaje-error" role="note">Este barrio está aislado: confirme que hay una ruta antes de enviar la entrega.</p>{% endif %}
-        {% if p.estado == 'propuesto' %}
-        <div class="campo"><label for="equipo-{{ g.sol.id }}">Equipo de entrega<span class="visually-hidden"> para la solicitud en {{ g.barrio }}</span></label>
-          <select id="equipo-{{ g.sol.id }}" name="equipo_{{ g.sol.id }}">
-            {% for id, nombre in equipos %}<option value="{{ id }}"{% if id == g.equipo_id %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
-            {% if not equipos %}<option value="">No hay equipos</option>{% endif %}
-          </select></div>
-        <div class="opcion"><input type="checkbox" id="excluir-{{ g.sol.id }}" name="excluir_{{ g.sol.id }}" value="si">
-          <label for="excluir-{{ g.sol.id }}">Dejar fuera del plan<span class="visually-hidden"> la solicitud en {{ g.barrio }}</span></label></div>
-        {% elif g.equipo_id %}<p>Equipo: {{ (equipos|selectattr(0, 'equalto', g.equipo_id)|map(attribute=1)|first) or 'asignado' }}.</p>{% endif %}
-      </section>
-    {% endfor %}
-    {% if vista.ocultos %}
-      <p class="mensaje">Se muestran las {{ vista.grupos|length }} solicitudes más prioritarias de {{ vista.total_grupos }}. Las otras {{ vista.ocultos }} se aprueban con el equipo propuesto. <a href="/plan?todos=si">Ver todas para revisarlas</a>.</p>
-    {% endif %}
-    {% if p.estado == 'propuesto' %}
-      <div class="acciones"><button class="principal" type="submit"{% if d.sin_equipos %} disabled aria-disabled="true"{% endif %}>Aprobar el plan</button></div>
-    </form>
-    <form method="post" action="/plan/{{ p.id }}/rechazar" class="no-imprimir">
-      <input type="hidden" name="csrf" value="{{ csrf }}">
-      <div class="campo"><label for="motivo">Motivo para rechazarlo <span class="opcional">(opcional)</span></label>
-        <input type="text" id="motivo" name="motivo"></div>
-      <button class="principal" type="submit">Rechazar el plan</button>
-    </form>
-    {% endif %}
-  </section>
-  {% else %}
-  <p class="mensaje">Este plan no asigna nada: no hay inventario que sirva para las solicitudes verificadas.</p>
-  {% endif %}
-
-  {% if d.resultado %}
-  <section aria-labelledby="resultado"><h3 id="resultado">Resultado de la aprobación</h3>
-    <p>{{ d.resultado.asignadas|length }} solicitud(es) asignadas{% if d.resultado.excluidas %}, {{ d.resultado.excluidas|length }} excluidas por la entidad{% endif %}{% if d.resultado.omitidas %}, {{ d.resultado.omitidas|length }} omitidas porque el inventario cambió{% endif %}.</p>
+    {% if d.resultado %}
+    <h3>Lo aprobado hasta ahora</h3>
+    <p>{{ d.resultado.asignadas|length }} solicitud(es) asignadas{% if d.resultado.excluidas %}, {{ d.resultado.excluidas|length }} dejadas fuera{% endif %}{% if d.resultado.omitidas %}, {{ d.resultado.omitidas|length }} omitidas porque el inventario cambió{% endif %}.</p>
     {% if d.resultado.omitidas %}<ul>{% for o in d.resultado.omitidas %}<li>Solicitud {{ o.solicitud_id }}: {{ o.motivo }}</li>{% endfor %}</ul>{% endif %}
-  </section>
-  {% endif %}
-  {% if d.motivo_rechazo %}<p>Motivo del rechazo: {{ d.motivo_rechazo }}.</p>{% endif %}
+    {% endif %}
+    {% if d.motivo_rechazo %}<p>Motivo del rechazo: {{ d.motivo_rechazo }}.</p>{% endif %}
 
-  <section aria-labelledby="sin-cubrir">
-    <h3 id="sin-cubrir">Lo que queda sin cubrir</h3>
+    <h3>Lo que queda sin cubrir</h3>
     <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
     <table>
       <caption class="ayuda">Por tipo de necesidad: lo pedido, lo que hay y lo que este plan asigna.</caption>
@@ -118,11 +108,45 @@
     <ul>{% for s in vista.sin_cubrir[:25] %}<li>{{ necesidad[s.tipo] }}: faltan {{ s.falta }}. {{ s.motivo }}</li>{% endfor %}</ul>
     {% if vista.sin_cubrir|length > 25 %}<p class="ayuda">Y {{ vista.sin_cubrir|length - 25 }} más.</p>{% endif %}
     {% else %}<p>Todo lo pedido queda cubierto.</p>{% endif %}
-  </section>
+
+    {% if p.estado == 'propuesto' and vista.grupos %}
+    <h3>Aprobar todo de una vez</h3>
+    <p class="ayuda">Solo para quien ya revisó el plan completo. Cada solicitud sale con el equipo propuesto.</p>
+    <form method="post" action="/plan/{{ p.id }}/aprobar">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="principal" type="submit"{% if d.sin_equipos %} disabled aria-disabled="true"{% endif %}>Aprobar todo el plan</button>
+    </form>
+    {% endif %}
+    {% if p.estado == 'propuesto' and not d.resueltas %}
+    <form method="post" action="/plan/{{ p.id }}/rechazar">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="campo"><label for="motivo">Motivo para rechazar el plan <span class="opcional">(opcional)</span></label>
+        <input type="text" id="motivo" name="motivo"></div>
+      <button class="principal" type="submit">Rechazar el plan</button>
+    </form>
+    {% endif %}
+
+    <h3>Ajustar cómo se calcula</h3>
+    <p class="ayuda">Valores provisionales: conviene validarlos con una persona experta en gestión del riesgo.</p>
+    <form method="post" action="/plan/parametros" novalidate>
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      {% for clave, nombre, ayuda in [('theta', 'Cobertura mínima de lo más prioritario', 'De 0 a 1. Antes de completar una solicitud, cada una de las más prioritarias recibe al menos esta fracción de lo que pide (0,3 es el 30 %).'), ('kappa', 'Peso de usar primero lo que vence antes', 'De 0 a 1. Más alto: se gasta antes lo que está por vencer.'), ('lambda', 'Costo de la distancia, por kilómetro', 'De 0 a 0,1. Más alto: se prefiere el centro de acopio más cercano.')] %}
+      <div class="campo">
+        <label for="{{ clave }}">{{ nombre }}</label>
+        <p class="ayuda" id="{{ clave }}-ayuda">{{ ayuda }}</p>
+        <input type="number" id="{{ clave }}" name="{{ clave }}" step="any" inputmode="decimal" required value="{{ parametros[clave] }}"
+               aria-describedby="{{ clave }}-ayuda{% if errores.get(clave) %} {{ clave }}-error{% endif %}"{% if errores.get(clave) %} aria-invalid="true"{% endif %}>
+        {% if errores.get(clave) %}<p class="error" id="{{ clave }}-error">{{ errores[clave] }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <button class="principal" type="submit">Guardar parámetros</button>
+    </form>
+  </details>
 {% endif %}
 
 {% if historial %}
-<h2>Planes anteriores</h2>
+<details class="no-imprimir"><summary>Planes anteriores</summary>
 <ul>{% for h in historial %}<li>Plan {{ h.id }}: {{ estados[h.estado] }}, {{ h.necesidad_cubierta|int }} de {{ h.necesidad_total|int }} unidades ({{ h.creado_en.strftime('%d/%m/%Y %H:%M') }}).</li>{% endfor %}</ul>
+</details>
 {% endif %}
 {% endblock %}

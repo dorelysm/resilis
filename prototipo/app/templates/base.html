@@ -23,7 +23,7 @@
         {% if usuario.rol in ('solicitante',) %}<a href="/solicitudes">Mis solicitudes</a>{% endif %}
         {% if usuario.rol in ('solicitante', 'brigadista', 'entidad') %}<a href="/reportes">Mis reportes</a>{% endif %}
         {% if usuario.rol == 'donante' %}<a href="/donaciones">Mis donaciones</a>{% endif %}
-        {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}<a href="/mapa">Mapa</a><a href="/prioridades">Prioridades</a>{% endif %}
+        {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}<a href="/mapa">Mapa</a><a href="/prioridades">Prioridades</a><a href="/recorrido">Recorrido</a>{% endif %}
         {% if usuario.rol in ('brigadista', 'entidad') %}<a href="/verificacion">Verificar</a>{% endif %}
         {% if usuario.rol == 'entidad' %}<a href="/plan">Plan</a><a href="/asignacion">Asignar</a>{% endif %}
         {% if usuario.rol in ('centro_acopio', 'entidad') %}<a href="/inventario">Inventario</a>{% endif %}
