@@ -88,8 +88,11 @@ def test_la_portada_usa_el_lema_elegido_y_no_el_del_logo(app_cliente):
     assert "Decisiones inteligentes, recursos optimizados, vidas protegidas" in html
     assert "emblema-grande.webp" in html
     # El logo original trae otro lema; se recortó solo el dibujo y ese texto no aparece en el sistema
+    # Solo la infografía de la portada lo cita, explicando el significado del logo; ninguna otra pantalla lo usa
     for archivo in (RAIZ / "app" / "templates").glob("*.html"):
-        assert "Inteligencia que conecta" not in archivo.read_text(encoding="utf-8"), archivo.name
+        if archivo.name != "inicio.html":
+            assert "Inteligencia que conecta" not in archivo.read_text(encoding="utf-8"), archivo.name
+    assert "Inteligencia que conecta" not in html.split('id="logo"')[0]  # el lema de la portada sigue siendo el elegido
 
 
 def test_la_ficha_para_imprimir_lleva_el_emblema():

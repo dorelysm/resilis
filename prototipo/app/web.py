@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Rol, TipoNecesidad, Usuario
+from app import equipo as equipo_resilis
 from app.iconos import icono, icono_etapa, icono_necesidad
 from app.formato import hora_co, iso_utc, nivel_confianza, nivel_prioridad, plural
 from app.simulacion import UNIDADES
@@ -16,7 +17,9 @@ from app.seguridad import csrf_valido, token_csrf
 plantillas = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 plantillas.env.globals["NOMBRE_NECESIDAD"] = {t.value: t.name.replace("_", " ").capitalize() for t in TipoNecesidad}
 plantillas.env.globals["UNIDAD_NECESIDAD"] = dict(UNIDADES)
-plantillas.env.globals.update(icono=icono, icono_etapa=icono_etapa, icono_necesidad=icono_necesidad)
+plantillas.env.globals.update(icono=icono, icono_etapa=icono_etapa, icono_necesidad=icono_necesidad,
+                              FUNDADORES=equipo_resilis.FUNDADORES, INSTITUCION=equipo_resilis.INSTITUCION,
+                              iniciales=equipo_resilis.iniciales)
 plantillas.env.filters.update(hora_co=hora_co, iso_utc=iso_utc, plural=plural, nivel_prioridad=nivel_prioridad,
                               nivel_confianza=nivel_confianza)
 

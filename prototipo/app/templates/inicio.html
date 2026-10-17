@@ -7,14 +7,103 @@
 {% if not usuario %}
   <div class="portada">
     <img src="/static/img/emblema-grande.webp" alt="" width="346" height="360">
-    <h1>Ayuda después de un desastre, con seguimiento</h1>
+    <h1>Después de un desastre, la ayuda llega primero a quien más la necesita</h1>
     <p class="lema">Decisiones inteligentes, recursos optimizados, vidas protegidas</p>
-    <p>Si el desastre le afectó, cree una cuenta para pedir ayuda y ver cómo avanza su solicitud. Si quiere ayudar, puede registrarse como donante.</p>
+    <p>Resilis reúne las solicitudes y los reportes de daños, decide con transparencia a quién atender primero y permite seguir la ayuda hasta que llega.</p>
     <div class="acciones">
       <a class="boton" href="/registro">Crear cuenta</a>
       <a class="boton" href="/entrar">Entrar</a>
     </div>
+    <p class="ayuda">Si el desastre le afectó, cree una cuenta para pedir ayuda y ver cómo avanza su solicitud. Si quiere ayudar, puede registrarse como donante.</p>
   </div>
+
+  <nav class="indice-portada" aria-label="En esta página">
+    <a href="#que-es">Qué es</a><a href="#como-funciona">Cómo funciona</a><a href="#para-quien">Para quién</a><a href="#logo">Nuestro logo</a><a href="#fundadores">Fundadores</a>
+  </nav>
+
+  <section class="bloque" aria-labelledby="que-es">
+    <h2 id="que-es">¿Qué es Resilis?</h2>
+    <p>Después de una inundación, un vendaval o un sismo, las autoridades tienen que decidir en minutos qué comunidades atender primero y dónde enviar recursos limitados, con información incompleta y sin saber cuánto fiarse de ella. Después, nadie puede comprobar si la ayuda llegó a quien la pidió.</p>
+    <p><strong>Resilis</strong> es una plataforma para priorizar los recursos tras una emergencia en el Atlántico: 23 municipios y 600 barrios. Combina reportes de daños, solicitudes de las familias y el inventario disponible para recomendar qué atender primero, y muestra en cada paso <em>qué tan confiable</em> es el dato. Es un prototipo del Rally Latinoamericano de Innovación 2026.</p>
+  </section>
+
+  <section class="bloque" aria-labelledby="como-funciona">
+    <h2 id="como-funciona">Cómo funciona</h2>
+    <ol class="pasos-portada">
+      <li><span class="icono-redondo">{{ icono('ayuda') }}</span><div><h3>1. Se pide ayuda o se avisa de un daño</h3><p>Una familia pide lo que necesita, o una persona reporta cómo quedó su barrio.</p></div></li>
+      <li><span class="icono-redondo">{{ icono('verificar') }}</span><div><h3>2. Un brigadista lo verifica</h3><p>Se comprueba en campo que la necesidad es real, para no repartir ayuda por reportes falsos o repetidos.</p></div></li>
+      <li><span class="icono-redondo">{{ icono('plan') }}</span><div><h3>3. El sistema prioriza y arma el plan</h3><p>Calcula qué barrios y personas atender primero y qué entregar a cada una, en paquetes pequeños que una persona revisa y aprueba.</p></div></li>
+      <li><span class="icono-redondo">{{ icono('entregas') }}</span><div><h3>4. Se entrega con código y seguimiento</h3><p>Quien pidió ve en un mapa cómo se acerca su ayuda y la recibe con un código de un solo uso. Quien dona ve por dónde va su donación.</p></div></li>
+    </ol>
+  </section>
+
+  <section class="bloque" aria-labelledby="para-quien">
+    <h2 id="para-quien">Para quién es</h2>
+    <div class="tarjetas">
+      <section class="tarjeta"><h3>{{ icono('solicitudes') }}Personas afectadas</h3><p>Piden ayuda en pocos pasos y ven cómo avanza, como en una aplicación de pedidos.</p></section>
+      <section class="tarjeta"><h3>{{ icono('donar') }}Donantes</h3><p>Ven por dónde va su donación y dónde llegó, sin datos de quienes la recibieron.</p></section>
+      <section class="tarjeta"><h3>{{ icono('prioridades') }}Brigadistas y entidades</h3><p>Verifican, ven el mapa de necesidades por barrio y aprueban el plan de entregas.</p></section>
+      <section class="tarjeta"><h3>{{ icono('inventario') }}Equipos y centros de acopio</h3><p>Reciben donaciones, controlan el inventario y entregan con un código, incluso sin conexión.</p></section>
+    </div>
+  </section>
+
+  <section class="bloque" aria-labelledby="distinto">
+    <h2 id="distinto">Lo que lo distingue</h2>
+    <ul class="distingue">
+      <li><strong>Prioridad que se explica.</strong> Cada barrio y cada solicitud tienen prioridad Alta, Media o Baja, con la confianza del dato al lado.</li>
+      <li><strong>Un plan, no una lista.</strong> El reparto se calcula para cubrir la mayor necesidad con lo que hay, y se compara con una asignación simple.</li>
+      <li><strong>Privacidad por diseño.</strong> Los donantes ven una zona aproximada, nunca direcciones ni nombres.</li>
+      <li><strong>Hecho para el celular y la emergencia.</strong> Se usa con poca conexión y cumple pautas de accesibilidad (WCAG 2.2 AA).</li>
+    </ul>
+  </section>
+
+  <section class="bloque" aria-labelledby="logo">
+    <h2 id="logo">Qué significa nuestro logo</h2>
+    <p>Cada elemento del emblema cuenta algo del proyecto: las personas que coordinan, las comunidades, el cuidado, la inteligencia artificial que analiza los datos y la red que los conecta.</p>
+    <figure class="infografia">
+      <a href="/static/img/infografia-logo.webp"><img src="/static/img/infografia-logo.webp" width="1312" height="1199" loading="lazy"
+        alt="Infografía «Significado del Logo» de Resilis. El texto completo está debajo."></a>
+      <figcaption><a href="/static/img/infografia-logo.webp">Ver la infografía en tamaño completo</a></figcaption>
+    </figure>
+    <details>
+      <summary>Leer el significado como texto</summary>
+      <h3>Los elementos del logo</h3>
+      <ul>
+        <li><strong>Figura humana superior:</strong> el liderazgo, la protección y la responsabilidad humana; las personas que coordinan las acciones.</li>
+        <li><strong>Figuras humanas de los lados:</strong> las comunidades, los equipos de emergencia y los organismos de socorro. Sus colores reflejan la diversidad y la colaboración.</li>
+        <li><strong>Manos que rodean el símbolo:</strong> el cuidado, la protección, la solidaridad y el apoyo humanitario; la tecnología al servicio de las personas.</li>
+        <li><strong>Cerebro con circuitos:</strong> la inteligencia artificial y el análisis de datos; la capacidad de procesar información y apoyar la toma de decisiones.</li>
+        <li><strong>Círculo con puntos conectados:</strong> una red de comunicación e intercambio de información entre personas, instituciones y sistemas tecnológicos.</li>
+        <li><strong>Línea del electrocardiograma:</strong> la vida, la salud y la atención oportuna; el propósito de la tecnología es proteger a las personas.</li>
+      </ul>
+      <h3>El eslogan del logo</h3>
+      <p>«Inteligencia que conecta, innovación que salva vidas». <em>Inteligencia que conecta</em> alude al uso de la inteligencia artificial y los datos para comunicar información relevante entre comunidades, autoridades y organismos de emergencia. <em>Innovación que salva vidas</em> expresa el objetivo de usar la tecnología para identificar riesgos, priorizar la ayuda y facilitar respuestas más rápidas y eficientes.</p>
+      <h3>Los colores</h3>
+      <ul>
+        <li><strong>Azul oscuro:</strong> confianza, seguridad, estabilidad y tecnología.</li>
+        <li><strong>Verde turquesa:</strong> esperanza, cooperación, innovación y bienestar.</li>
+        <li><strong>Naranja:</strong> energía, atención prioritaria, acción y urgencia.</li>
+        <li><strong>Blanco:</strong> claridad, transparencia y organización.</li>
+      </ul>
+      <h3>En conjunto</h3>
+      <p>El logo comunica que la inteligencia artificial y la colaboración humana pueden trabajar juntas para mejorar la atención de emergencias y proteger vidas.</p>
+    </details>
+  </section>
+
+  <section class="bloque" aria-labelledby="fundadores">
+    <h2 id="fundadores">Fundadores</h2>
+    <p>Resilis lo construye un equipo de la {{ INSTITUCION }} para el Rally Latinoamericano de Innovación 2026.</p>
+    <ul class="fundadores">
+      {% for f in FUNDADORES %}
+      <li class="fundador">
+        {% if f.foto %}<img src="/static/img/{{ f.foto }}" alt="" width="96" height="96" loading="lazy">{% else %}<span class="iniciales" aria-hidden="true">{{ iniciales(f.nombre) }}</span>{% endif %}
+        <div><h3>{{ f.nombre }}</h3><p class="rol">{{ f.rol }}</p>{% if f.texto %}<p>{{ f.texto }}</p>{% endif %}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <p class="ayuda">Esta es una versión de demostración, con datos ficticios, en construcción.</p>
 {% else %}
   <h1>Hola, {{ usuario.nombre.split(' ')[0] }}</h1>
 

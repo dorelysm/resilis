@@ -316,3 +316,29 @@ button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
   .tabla-apilada td:not([data-etiqueta]) { display: block; }
 }
 @media (max-width: 47.99rem) { .tabla-apilada td > .estado { justify-self: start; } }
+
+/* Portada pública: descripción del proyecto, infografía y fundadores */
+.portada h1 { font-size: 1.9rem; line-height: 1.2; margin: .2rem 0; }
+.indice-portada { display: flex; flex-wrap: wrap; justify-content: center; gap: .1rem .4rem; margin: .5rem 0 1rem; }
+.indice-portada a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 .6rem; }
+.bloque { margin: 2rem 0; }
+.bloque > h2 { border-bottom: 3px solid var(--teal); padding-bottom: .3rem; }
+.pasos-portada { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .8rem; }
+.pasos-portada li { display: grid; grid-template-columns: auto 1fr; gap: .8rem; align-items: start; border: 2px solid var(--borde-suave); border-radius: .5rem; padding: .8rem; background: #fff; }
+.pasos-portada h3 { margin: 0 0 .2rem; font-size: 1.1rem; }
+.pasos-portada p { margin: 0; }
+.pasos-portada .icono-redondo { margin-top: .1rem; }
+.bloque .tarjeta h3 { margin: 0 0 .3rem; font-size: 1.1rem; display: flex; align-items: center; }
+.distingue { padding-left: 1.2rem; }
+.distingue li { margin: .5rem 0; }
+.infografia { margin: 1rem 0; }
+.infografia img { display: block; width: 100%; height: auto; border: 2px solid var(--borde-suave); border-radius: .5rem; background: #fff; }
+.infografia figcaption { margin-top: .4rem; }
+.bloque details { margin-top: .5rem; }
+.fundadores { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.fundador { display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-items: center; border: 2px solid var(--borde-suave); border-top: 5px solid var(--naranja-oscuro, #b34a10); border-radius: .5rem; padding: .9rem; background: #fff; }
+.fundador img, .fundador .iniciales { width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover; }
+.fundador .iniciales { display: flex; align-items: center; justify-content: center; background: var(--azul-profundo); color: #fff; font-weight: 700; font-size: 1.5rem; }
+.fundador h3 { margin: 0; font-size: 1.1rem; }
+.fundador .rol { margin: .1rem 0 0; color: var(--texto-suave); }
+@media (min-width: 48rem) { main:has(.portada) { max-width: 52rem; } }

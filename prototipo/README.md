@@ -173,3 +173,7 @@ Las pruebas usan SQLite en memoria, así que no necesitan Docker.
 ## Notas
 - No se usan migraciones: `crear_tablas()` crea lo que falta. Si cambia una tabla existente hay que recrear la base de desarrollo.
 - Los datos de personas son ficticios.
+
+## Portada pública
+
+La página de inicio para quien no ha entrado describe el proyecto (qué es, cómo funciona, para quién, qué lo distingue), muestra la infografía del significado del logo (`app/static/img/infografia-logo.webp`, con su texto completo plegable) y la sección de fundadores. Los fundadores salen de la lista `FUNDADORES` de `app/equipo.py`: para agregar a alguien se añade un diccionario con `nombre`, `rol` y, opcionalmente, `texto` y `foto` (archivo dentro de `app/static/img/`).
