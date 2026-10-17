@@ -30,8 +30,8 @@ def mini(db):
     return {"evento": evento, "gente": gente}
 
 
-def sector(db, nombre, **kw):
-    s = m.Sector(municipio_codigo="08001", nombre=nombre, personas=1000, viviendas=300,
+def barrio(db, nombre, **kw):
+    s = m.Barrio(municipio_codigo="08001", nombre=nombre, personas=1000, viviendas=300,
                  amenaza_base=kw.pop("amenaza_base", 0.3), vulnerabilidad_base=kw.pop("vulnerabilidad_base", 0.3),
                  acceso_base=kw.pop("acceso_base", 1.0), **kw)
     db.add(s)
@@ -40,7 +40,7 @@ def sector(db, nombre, **kw):
 
 
 def reporte(db, mini, s, autor, nivel, horas=1.0, personas=100, acceso=1.0):
-    r = m.ReporteDanos(sector_id=s.id, evento_id=mini["evento"].id, autor_id=mini["gente"][autor].id,
+    r = m.ReporteDanos(barrio_id=s.id, evento_id=mini["evento"].id, autor_id=mini["gente"][autor].id,
                        hora_evento=ahora() - timedelta(hours=horas), hora_captura=ahora() - timedelta(hours=horas),
                        nivel_dano=nivel, personas_afectadas=personas, acceso=acceso)
     db.add(r)
@@ -49,7 +49,7 @@ def reporte(db, mini, s, autor, nivel, horas=1.0, personas=100, acceso=1.0):
 
 
 def puntaje_de(db, s):
-    return db.get(m.PuntajeSector, s.id)
+    return db.get(m.PuntajeBarrio, s.id)
 
 
 def verificar(db, mini, obj_tipo, obj_id, resultado="verificado"):
@@ -58,9 +58,9 @@ def verificar(db, mini, obj_tipo, obj_id, resultado="verificado"):
     db.flush()
 
 
-# ----------------------------------------------------------------------------- sectores
-def test_el_sector_con_daño_grave_confirmado_supera_al_de_daño_leve_dudoso(db, mini):
-    a, b = sector(db, "A grave"), sector(db, "B leve")
+# ----------------------------------------------------------------------------- barrios
+def test_el_barrio_con_daño_grave_confirmado_supera_al_de_daño_leve_dudoso(db, mini):
+    a, b = barrio(db, "A grave"), barrio(db, "B leve")
     reporte(db, mini, a, "brigadista", 3, personas=400)
     reporte(db, mini, a, "entidad", 3, personas=380)
     reporte(db, mini, b, "ciudadano", 1, personas=20)
@@ -71,7 +71,7 @@ def test_el_sector_con_daño_grave_confirmado_supera_al_de_daño_leve_dudoso(db,
 
 
 def test_verificar_sube_la_confianza_y_desmentir_la_anula(db, mini):
-    s = sector(db, "S")
+    s = barrio(db, "S")
     r = reporte(db, mini, s, "ciudadano", 2)
     pj.recalcular(db, mini["evento"])
     antes = puntaje_de(db, s).confianza
@@ -87,8 +87,8 @@ def test_verificar_sube_la_confianza_y_desmentir_la_anula(db, mini):
 
 
 def test_sin_reportes_se_usa_la_linea_base_y_se_avisa(db, mini):
-    riesgoso = sector(db, "Riesgoso", amenaza_base=0.9, vulnerabilidad_base=0.9)
-    seguro = sector(db, "Seguro", amenaza_base=0.1, vulnerabilidad_base=0.1)
+    riesgoso = barrio(db, "Riesgoso", amenaza_base=0.9, vulnerabilidad_base=0.9)
+    seguro = barrio(db, "Seguro", amenaza_base=0.1, vulnerabilidad_base=0.1)
     pj.recalcular(db, mini["evento"])
     r, s = puntaje_de(db, riesgoso), puntaje_de(db, seguro)
     assert r.posicion == 1 and r.prioridad > s.prioridad  # recomienda desde la hora cero
@@ -97,7 +97,7 @@ def test_sin_reportes_se_usa_la_linea_base_y_se_avisa(db, mini):
 
 
 def test_reportes_que_se_contradicen_bajan_la_confianza_y_alertan(db, mini):
-    coinciden, chocan = sector(db, "Coinciden"), sector(db, "Chocan")
+    coinciden, chocan = barrio(db, "Coinciden"), barrio(db, "Chocan")
     reporte(db, mini, coinciden, "brigadista", 2)
     reporte(db, mini, coinciden, "ciudadano", 2)
     reporte(db, mini, chocan, "brigadista", 0)
@@ -110,7 +110,7 @@ def test_reportes_que_se_contradicen_bajan_la_confianza_y_alertan(db, mini):
 
 
 def test_un_dato_viejo_pesa_menos_en_un_evento_real(db, mini):
-    reciente, viejo = sector(db, "Reciente"), sector(db, "Viejo")
+    reciente, viejo = barrio(db, "Reciente"), barrio(db, "Viejo")
     reporte(db, mini, reciente, "brigadista", 2, horas=1)
     reporte(db, mini, viejo, "brigadista", 2, horas=40)
     pj.recalcular(db, mini["evento"])
@@ -120,7 +120,7 @@ def test_un_dato_viejo_pesa_menos_en_un_evento_real(db, mini):
 
 
 def test_la_baja_accesibilidad_no_penaliza(db, mini):
-    libre, aislado = sector(db, "Libre"), sector(db, "Aislado")
+    libre, aislado = barrio(db, "Libre"), barrio(db, "Aislado")
     for s, acceso in ((libre, 1.0), (aislado, 0.0)):
         reporte(db, mini, s, "brigadista", 2, personas=100, acceso=acceso)
     pj.recalcular(db, mini["evento"])
@@ -128,19 +128,19 @@ def test_la_baja_accesibilidad_no_penaliza(db, mini):
 
 
 def test_cada_puntaje_se_explica(db, mini):
-    a, b = sector(db, "A"), sector(db, "B")
+    a, b = barrio(db, "A"), barrio(db, "B")
     reporte(db, mini, a, "brigadista", 3, personas=500)
     reporte(db, mini, b, "ciudadano", 1, personas=10)
     pj.recalcular(db, mini["evento"])
     p = puntaje_de(db, a)
-    assert set(p.indicadores) == set(motor.CRITERIOS_SECTOR) == set(p.aportes)
+    assert set(p.indicadores) == set(motor.CRITERIOS_BARRIO) == set(p.aportes)
     assert sum(p.aportes.values()) == pytest.approx(1.0, abs=0.01)
-    assert p.aportes["gravedad"] > p.aportes["accesibilidad"]  # el sector A destaca por su gravedad
+    assert p.aportes["gravedad"] > p.aportes["accesibilidad"]  # el barrio A destaca por su gravedad
 
 
 # ----------------------------------------------------------------------------- solicitudes
 def solicitud(db, mini, s, urgencia, hogar, quien="ciudadano", estado="verificada", vulnerable=None, horas=1.0):
-    sol = m.Solicitud(solicitante_id=mini["gente"][quien].id, creador_id=mini["gente"][quien].id, sector_id=s.id,
+    sol = m.Solicitud(solicitante_id=mini["gente"][quien].id, creador_id=mini["gente"][quien].id, barrio_id=s.id,
                       evento_id=mini["evento"].id, necesidad="agua", cantidad=hogar * 6, personas_hogar=hogar,
                       urgencia=urgencia, estado=estado, creado_en=ahora() - timedelta(hours=horas))
     db.add(sol)
@@ -152,7 +152,7 @@ def solicitud(db, mini, s, urgencia, hogar, quien="ciudadano", estado="verificad
 
 
 def test_una_solicitud_urgente_y_vulnerable_va_antes(db, mini):
-    s = sector(db, "S")
+    s = barrio(db, "S")
     reporte(db, mini, s, "brigadista", 2)
     tranquila = solicitud(db, mini, s, urgencia=0, hogar=2)
     urgente = solicitud(db, mini, s, urgencia=3, hogar=2, vulnerable="discapacidad")
@@ -161,7 +161,7 @@ def test_una_solicitud_urgente_y_vulnerable_va_antes(db, mini):
 
 
 def test_la_espera_sube_la_posicion_de_quien_lleva_mas_tiempo(db, mini):
-    s = sector(db, "S")
+    s = barrio(db, "S")
     reporte(db, mini, s, "brigadista", 2)
     nueva = solicitud(db, mini, s, urgencia=1, hogar=3, horas=0.5)
     vieja = solicitud(db, mini, s, urgencia=1, hogar=3, horas=30)
@@ -170,7 +170,7 @@ def test_la_espera_sube_la_posicion_de_quien_lleva_mas_tiempo(db, mini):
 
 
 def test_solo_se_recalculan_las_solicitudes_pendientes(db, mini):
-    s = sector(db, "S")
+    s = barrio(db, "S")
     entregada = solicitud(db, mini, s, 3, 2, estado="entregada")
     anulada = solicitud(db, mini, s, 3, 2, estado="anulada")
     pendiente = solicitud(db, mini, s, 3, 2, estado="registrada")
@@ -180,7 +180,7 @@ def test_solo_se_recalculan_las_solicitudes_pendientes(db, mini):
 
 
 def test_la_solicitud_verificada_inspira_mas_confianza(db, mini):
-    s = sector(db, "S")
+    s = barrio(db, "S")
     a = solicitud(db, mini, s, 2, 2, estado="registrada")
     b = solicitud(db, mini, s, 2, 2, estado="registrada")
     verificar(db, mini, "solicitud", b.id)
@@ -188,8 +188,8 @@ def test_la_solicitud_verificada_inspira_mas_confianza(db, mini):
     assert b.confianza > a.confianza
 
 
-def test_las_solicitudes_suben_la_urgencia_de_su_sector(db, mini):
-    con, sin = sector(db, "Con solicitudes"), sector(db, "Sin solicitudes")
+def test_las_solicitudes_suben_la_urgencia_de_su_barrio(db, mini):
+    con, sin = barrio(db, "Con solicitudes"), barrio(db, "Sin solicitudes")
     for s in (con, sin):
         reporte(db, mini, s, "brigadista", 2, personas=100)
     solicitud(db, mini, con, urgencia=3, hogar=4, vulnerable="menor")
@@ -199,25 +199,25 @@ def test_las_solicitudes_suben_la_urgencia_de_su_sector(db, mini):
 
 # ----------------------------------------------------------------------------- pesos
 def test_los_pesos_se_guardan_normalizados_y_cambian_el_orden(db, mini):
-    grave, aislado = sector(db, "Grave"), sector(db, "Aislado")
+    grave, aislado = barrio(db, "Grave"), barrio(db, "Aislado")
     reporte(db, mini, grave, "brigadista", 3, personas=300, acceso=1.0)
     reporte(db, mini, aislado, "brigadista", 1, personas=20, acceso=0.0)
     pj.recalcular(db, mini["evento"])
     assert puntaje_de(db, grave).posicion == 1  # con los pesos iniciales manda la gravedad
 
-    guardado = pj.guardar_pesos(db, "sector", {"gravedad": 0, "urgencia": 0, "expuestas": 0, "accesibilidad": 10,
+    guardado = pj.guardar_pesos(db, "barrio", {"gravedad": 0, "urgencia": 0, "expuestas": 0, "accesibilidad": 10,
                                                "recursos": 0}, mini["gente"]["entidad"])
     assert guardado["accesibilidad"] == 1.0 and sum(guardado.values()) == pytest.approx(1.0)
     pj.recalcular(db, mini["evento"])
     assert puntaje_de(db, aislado).posicion == 1  # ahora el acceso decide
-    assert sum(pj.leer_pesos(db)["sector"].values()) == pytest.approx(1.0)
+    assert sum(pj.leer_pesos(db)["barrio"].values()) == pytest.approx(1.0)
     bitacora = db.scalar(select(m.Bitacora).where(m.Bitacora.accion == "cambiar_pesos"))
     assert bitacora.usuario_id == mini["gente"]["entidad"].id and bitacora.detalle["accesibilidad"] == 1.0
 
 
 def test_pesos_por_defecto_si_no_hay_nada_guardado(db):
     p = pj.leer_pesos(db)
-    assert p["sector"]["gravedad"] == pytest.approx(0.30) and p["solicitud"]["urgencia"] == pytest.approx(0.30)
+    assert p["barrio"]["gravedad"] == pytest.approx(0.30) and p["solicitud"]["urgencia"] == pytest.approx(0.30)
 
 
 # ----------------------------------------------------------------------------- con el escenario simulado
@@ -231,9 +231,9 @@ def escenario(db):
 def test_el_escenario_simulado_queda_completo_y_ordenado(escenario):
     db = escenario
     resumen = pj.recalcular(db)
-    puntajes = db.scalars(select(m.PuntajeSector).order_by(m.PuntajeSector.posicion)).all()
-    assert resumen["sectores"] == len(puntajes) == 153
-    assert [p.posicion for p in puntajes] == list(range(1, 154))
+    puntajes = db.scalars(select(m.PuntajeBarrio).order_by(m.PuntajeBarrio.posicion)).all()
+    assert resumen["barrios"] == len(puntajes) == 600
+    assert [p.posicion for p in puntajes] == list(range(1, 601))
     assert all(0.0 <= p.prioridad <= 1.0 and 0.0 <= p.confianza <= 1.0 for p in puntajes)
     prioridades = [p.prioridad for p in puntajes]
     assert prioridades == sorted(prioridades, reverse=True)
@@ -243,11 +243,11 @@ def test_el_escenario_simulado_queda_completo_y_ordenado(escenario):
 
 
 def test_la_prioridad_sigue_al_dano_real_simulado(escenario):
-    """Validación sintética: los sectores con más daño real quedan arriba, aunque los reportes tengan ruido."""
+    """Validación sintética: los barrios con más daño real quedan arriba, aunque los reportes tengan ruido."""
     db = escenario
     pj.recalcular(db)
     verdad = db.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))["dano"]
-    puntajes = {p.sector_id: p.prioridad for p in db.scalars(select(m.PuntajeSector))}
+    puntajes = {p.barrio_id: p.prioridad for p in db.scalars(select(m.PuntajeBarrio))}
     ids = list(puntajes)
     d = [verdad[str(i)] for i in ids]
     p = [puntajes[i] for i in ids]
@@ -260,19 +260,19 @@ def test_la_prioridad_sigue_al_dano_real_simulado(escenario):
 def test_el_escenario_simulado_no_envejece(escenario, monkeypatch):
     db = escenario
     pj.recalcular(db)
-    antes = [(p.sector_id, p.prioridad, p.confianza) for p in db.scalars(select(m.PuntajeSector).order_by(m.PuntajeSector.sector_id))]
+    antes = [(p.barrio_id, p.prioridad, p.confianza) for p in db.scalars(select(m.PuntajeBarrio).order_by(m.PuntajeBarrio.barrio_id))]
     monkeypatch.setattr(pj, "ahora", lambda: ahora() + timedelta(days=10))
     pj.recalcular(db)
-    despues = [(p.sector_id, p.prioridad, p.confianza) for p in db.scalars(select(m.PuntajeSector).order_by(m.PuntajeSector.sector_id))]
+    despues = [(p.barrio_id, p.prioridad, p.confianza) for p in db.scalars(select(m.PuntajeBarrio).order_by(m.PuntajeBarrio.barrio_id))]
     assert antes == despues
 
 
 def test_recalcular_es_repetible(escenario):
     db = escenario
     pj.recalcular(db)
-    uno = [p.prioridad for p in db.scalars(select(m.PuntajeSector).order_by(m.PuntajeSector.sector_id))]
+    uno = [p.prioridad for p in db.scalars(select(m.PuntajeBarrio).order_by(m.PuntajeBarrio.barrio_id))]
     pj.recalcular(db)
-    dos = [p.prioridad for p in db.scalars(select(m.PuntajeSector).order_by(m.PuntajeSector.sector_id))]
+    dos = [p.prioridad for p in db.scalars(select(m.PuntajeBarrio).order_by(m.PuntajeBarrio.barrio_id))]
     assert uno == dos
 
 

@@ -26,7 +26,7 @@
       <td>{{ tipos[l.tipo_bien] }} ({{ l.unidad }})</td><td>{{ centro_nombre }}</td>
       <td>{{ l.cantidad_disponible }}</td><td>{{ l.cantidad_reservada }}</td><td>{{ l.cantidad_entregada }}</td>
       <td>{% if l.vencimiento %}{{ l.vencimiento.strftime('%d/%m/%Y') }}{% if l.vencimiento.replace(tzinfo=None) < hoy.replace(tzinfo=None) %} <strong>(vencido)</strong>{% elif (l.vencimiento.replace(tzinfo=None) - hoy.replace(tzinfo=None)).days < 7 %} <strong>(vence pronto)</strong>{% endif %}{% else %}No vence{% endif %}</td>
-      <td>{% if l.destino_solicitud_id %}Una solicitud{% elif l.destino_sector_id %}Un sector{% elif l.destino_tipo_necesidad %}Un tipo de necesidad{% else %}General{% endif %}</td>
+      <td>{% if l.destino_solicitud_id %}Una solicitud{% elif l.destino_barrio_id %}Un barrio{% elif l.destino_tipo_necesidad %}Un tipo de necesidad{% else %}General{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>

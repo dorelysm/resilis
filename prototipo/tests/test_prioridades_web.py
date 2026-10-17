@@ -12,7 +12,7 @@ from tests.test_operacion import (  # noqa: F401
 
 def reportar(c, mundo, telefono="3100000003", nivel="3", personas="300"):
     entrar(c, telefono)
-    c.post("/reportes/nuevo", data={"sector_id": str(mundo["sector_id"]), "nivel_dano": nivel,
+    c.post("/reportes/nuevo", data={"barrio_id": str(mundo["barrio_id"]), "nivel_dano": nivel,
                                     "personas_afectadas": personas, "acceso": "1",
                                     "csrf": csrf(c, "/reportes/nuevo")})
     salir(c)
@@ -30,7 +30,7 @@ def test_los_formularios_actualizan_las_prioridades_solos(app_cliente, sesiones,
         assert db.get(m.Solicitud, 1).confianza > antes  # verificar subió la confianza
     reportar(c, mundo)
     with sesiones() as db:
-        p = db.get(m.PuntajeSector, mundo["sector_id"])
+        p = db.get(m.PuntajeBarrio, mundo["barrio_id"])
         assert p.n_reportes == 1 and p.confianza > 0 and "sin_reportes" not in p.alertas
 
 
@@ -43,44 +43,44 @@ def test_permisos_de_las_paginas_de_prioridades(app_cliente, equipo_completo, mu
     entrar(c, "3100000003")  # el brigadista ve, pero no cambia los pesos
     assert c.get("/prioridades").status_code == 200
     assert c.get("/pesos").status_code == 403
-    assert c.post("/pesos/sector", data={"csrf": csrf(c, "/prioridades")}).status_code == 403
+    assert c.post("/pesos/barrio", data={"csrf": csrf(c, "/prioridades")}).status_code == 403
     salir(c)
     entrar(c, "3100000004")  # la entidad sí
     assert c.get("/pesos").status_code == 200
 
 
-def test_la_pagina_de_prioridades_muestra_sectores_y_solicitudes(app_cliente, equipo_completo, mundo):
+def test_la_pagina_de_prioridades_muestra_barrios_y_solicitudes(app_cliente, equipo_completo, mundo):
     c = app_cliente
     pedir(c, mundo)
     reportar(c, mundo)
     entrar(c, "3100000004")
     pagina = c.get("/prioridades").text
-    assert "Sector de prueba" in pagina and "Agua (12)" in pagina and "Por verificar" in pagina
+    assert "Barrio de prueba" in pagina and "Agua (12)" in pagina and "Por verificar" in pagina
     assert "Una confianza baja quiere decir que hay que verificar" in pagina
-    detalle = c.get(f"/prioridades/sectores/{mundo['sector_id']}").text
+    detalle = c.get(f"/prioridades/barrios/{mundo['barrio_id']}").text
     assert "Por qué ocupa este lugar" in detalle and "Gravedad de la afectación" in detalle
     assert "no penaliza" in detalle
-    assert c.get("/prioridades/sectores/9999").status_code == 404
+    assert c.get("/prioridades/barrios/9999").status_code == 404
 
 
-def test_un_sector_sin_reportes_dice_que_hay_que_verificar(app_cliente, equipo_completo, mundo):
+def test_un_barrio_sin_reportes_dice_que_hay_que_verificar(app_cliente, equipo_completo, mundo):
     entrar(app_cliente, "3100000004")
     app_cliente.get("/prioridades")  # calcula la primera vez
-    detalle = app_cliente.get(f"/prioridades/sectores/{mundo['sector_id']}").text
+    detalle = app_cliente.get(f"/prioridades/barrios/{mundo['barrio_id']}").text
     assert "No tiene reportes" in detalle and "Conviene enviar a alguien a verificar" in detalle
 
 
 def test_cambiar_los_pesos_recalcula(app_cliente, sesiones, equipo_completo, mundo):
     c = app_cliente
     entrar(c, "3100000004")
-    r = c.post("/pesos/sector", follow_redirects=False, data={
-        "sector_gravedad": "50", "sector_urgencia": "50", "sector_expuestas": "0", "sector_accesibilidad": "0",
-        "sector_recursos": "0", "csrf": csrf(c, "/pesos")})
+    r = c.post("/pesos/barrio", follow_redirects=False, data={
+        "barrio_gravedad": "50", "barrio_urgencia": "50", "barrio_expuestas": "0", "barrio_accesibilidad": "0",
+        "barrio_recursos": "0", "csrf": csrf(c, "/pesos")})
     assert r.status_code == 303
     pagina = c.get("/pesos").text
     assert "hoy: 50 %" in pagina  # los pesos quedaron normalizados a 100 %
     with sesiones() as db:
-        pesos = {p.dimension: p.valor for p in db.scalars(select(m.Peso).where(m.Peso.ambito == "sector"))}
+        pesos = {p.dimension: p.valor for p in db.scalars(select(m.Peso).where(m.Peso.ambito == "barrio"))}
         assert pesos["gravedad"] == pytest.approx(0.5) and sum(pesos.values()) == pytest.approx(1.0)
         assert db.scalar(select(m.Bitacora).where(m.Bitacora.accion == "cambiar_pesos")) is not None
 
@@ -88,15 +88,15 @@ def test_cambiar_los_pesos_recalcula(app_cliente, sesiones, equipo_completo, mun
 def test_los_pesos_no_validos_se_rechazan(app_cliente, sesiones, equipo_completo):
     c = app_cliente
     entrar(c, "3100000004")
-    base = {"sector_gravedad": "30", "sector_urgencia": "25", "sector_expuestas": "25", "sector_accesibilidad": "10",
-            "sector_recursos": "10"}
-    for cambio, mensaje in [({"sector_gravedad": "abc"}, "Escriba un número"),
-                            ({"sector_gravedad": "150"}, "entre 0 y 100"),
-                            ({"sector_gravedad": "-5"}, "entre 0 y 100")]:
-        r = c.post("/pesos/sector", data={**base, **cambio, "csrf": csrf(c, "/pesos")})
+    base = {"barrio_gravedad": "30", "barrio_urgencia": "25", "barrio_expuestas": "25", "barrio_accesibilidad": "10",
+            "barrio_recursos": "10"}
+    for cambio, mensaje in [({"barrio_gravedad": "abc"}, "Escriba un número"),
+                            ({"barrio_gravedad": "150"}, "entre 0 y 100"),
+                            ({"barrio_gravedad": "-5"}, "entre 0 y 100")]:
+        r = c.post("/pesos/barrio", data={**base, **cambio, "csrf": csrf(c, "/pesos")})
         assert r.status_code == 422 and mensaje in r.text, cambio
     todos_cero = {k: "0" for k in base}
-    r = c.post("/pesos/sector", data={**todos_cero, "csrf": csrf(c, "/pesos")})
+    r = c.post("/pesos/barrio", data={**todos_cero, "csrf": csrf(c, "/pesos")})
     assert r.status_code == 422 and "Al menos un peso debe ser mayor que cero" in r.text
     assert c.post("/pesos/otra_cosa", data={**base, "csrf": csrf(c, "/pesos")}).status_code == 404
     with sesiones() as db:

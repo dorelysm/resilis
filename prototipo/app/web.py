@@ -65,13 +65,15 @@ def chequear_csrf(request: Request, enviado: str | None) -> None:
         raise HTTPException(status_code=403, detail="La página caducó. Vuelva a cargarla e intente de nuevo.")
 
 
-def opciones_sectores(db: Session) -> list[tuple[int, str]]:
-    """Sectores como (id, nombre) para las listas desplegables."""
+def opciones_barrios(db: Session) -> list[tuple[int, str, str]]:
+    """Barrios como (id, nombre, municipio) para las listas desplegables, agrupados por municipio."""
     from sqlalchemy import select
 
-    from app.models import Sector
+    from app.models import Barrio, Municipio
 
-    return [(s.id, s.nombre) for s in db.scalars(select(Sector).order_by(Sector.municipio_codigo, Sector.nombre))]
+    filas = db.execute(select(Barrio.id, Barrio.nombre, Municipio.nombre).join(Municipio)
+                       .order_by(Municipio.nombre, Barrio.nombre)).all()
+    return [(i, nombre, municipio) for i, nombre, municipio in filas]
 
 
 def solo_digitos(texto: str) -> str:

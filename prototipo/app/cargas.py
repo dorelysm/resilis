@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Municipio, ViviendaProyeccion
+from app.territorio import MUNICIPIOS
 
 CSV_VIVIENDAS = Path(__file__).resolve().parent.parent / "data" / "viviendas_atlantico.csv"
 
@@ -29,7 +30,7 @@ def cargar_viviendas(db: Session, ruta: Path = CSV_VIVIENDAS) -> dict[str, int]:
         for fila in lector:
             codigo = fila["Código Municipio"].strip()
             if codigo not in municipios:
-                m = db.get(Municipio, codigo) or Municipio(codigo=codigo, nombre=fila["Nombre Municipio"].strip())
+                m = db.get(Municipio, codigo) or Municipio(codigo=codigo, nombre=MUNICIPIOS.get(codigo, fila["Nombre Municipio"].strip()))
                 db.add(m)
                 municipios[codigo] = m
             for anio in anios:

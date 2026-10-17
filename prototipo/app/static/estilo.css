@@ -108,15 +108,15 @@ footer { max-width: 40rem; margin: 2rem auto 1rem; padding: 0 1rem; color: var(-
   .codigo { background: #fff; border-color: #000; color: #000; }
 }
 
-/* Mapa de sectores */
+/* Mapa de barrios */
 .controles-mapa { display: grid; gap: .25rem 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); align-items: start; margin-bottom: .5rem; }
 .controles-mapa fieldset { margin: 0 0 .75rem; }
 .mapa { height: 62vh; min-height: 360px; border: 2px solid var(--borde); border-radius: .35rem; background: var(--tinte-azul); margin-bottom: 1rem; }
 .mapa .leaflet-popup-content { font: .95rem/1.4 system-ui, sans-serif; color: var(--texto); }
-.sector-marca { background: transparent; border: 0; }
-.sector-punto { display: flex; align-items: center; justify-content: center; border: 3px solid var(--azul-profundo); border-radius: 50%; font: 700 .75rem/1 system-ui, sans-serif; box-shadow: 0 0 0 1px #fff; }
-.sector-punto.sin-datos, .muestra-rayada { background: repeating-linear-gradient(45deg, #fff 0, #fff 3px, #c3d3da 3px, #c3d3da 6px); border-style: dashed; color: var(--azul-profundo); }
-.sector-marca:focus-visible .sector-punto, .sector-marca:focus .sector-punto { outline: 3px solid var(--naranja-oscuro); outline-offset: 3px; }
+.barrio-marca { background: transparent; border: 0; }
+.barrio-punto { display: flex; align-items: center; justify-content: center; border: 3px solid var(--azul-profundo); border-radius: 50%; font: 700 .75rem/1 system-ui, sans-serif; box-shadow: 0 0 0 1px #fff; }
+.barrio-punto.sin-datos, .muestra-rayada { background: repeating-linear-gradient(45deg, #fff 0, #fff 3px, #c3d3da 3px, #c3d3da 6px); border-style: dashed; color: var(--azul-profundo); }
+.barrio-marca:focus-visible .barrio-punto, .barrio-marca:focus .barrio-punto { outline: 3px solid var(--naranja-oscuro); outline-offset: 3px; }
 .leyenda { list-style: none; padding: 0; margin: 0 0 .5rem; }
 .leyenda li { display: flex; align-items: center; gap: .6rem; padding: .15rem 0; }
 .muestra { display: inline-block; width: 1.4rem; height: 1.4rem; border: 3px solid var(--azul-profundo); border-radius: 50%; flex: none; }

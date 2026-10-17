@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_campos.html" import campo, selector, casilla, opciones_radio, resumen_errores %}
+{% from "_campos.html" import campo, selector, selector_barrio, casilla, opciones_radio, resumen_errores %}
 {% block titulo %}Crear cuenta{% endblock %}
 {% block contenido %}
 <h1>Crear cuenta</h1>
@@ -10,7 +10,7 @@
   {{ opciones_radio('tipo_cuenta', 'Quiero registrarme como', [('solicitante', 'Persona que necesita ayuda'), ('donante', 'Donante')], datos or {'tipo_cuenta': 'solicitante'}, errores) }}
   {{ campo('nombre', 'Nombre completo', datos, errores, extra='autocomplete="name"') }}
   {{ campo('telefono', 'Teléfono', datos, errores, tipo='tel', ayuda='Lo usará para entrar. Solo números.', extra='autocomplete="tel" inputmode="numeric"') }}
-  {{ selector('sector_id', 'Sector donde vive', sectores, datos, errores, ayuda='Solo es obligatorio si necesita ayuda.', requerido=False) }}
+  {{ selector_barrio('barrio_id', 'Barrio donde vive', barrios, datos, errores, ayuda='Solo es obligatorio si necesita ayuda.', requerido=False) }}
   {{ campo('documento', 'Documento de identidad', datos, errores, ayuda='Solo se pedirá para entregas de mayor valor.', requerido=False, extra='inputmode="numeric"') }}
   {{ selector('tipo_donante', 'Tipo de donante', [('persona', 'Persona'), ('organizacion', 'Organización'), ('empresa', 'Empresa')], datos, errores, requerido=False, ayuda='Solo para donantes.') }}
   {{ campo('password', 'Contraseña', datos, errores, tipo='password', ayuda='Mínimo 8 caracteres.', extra='autocomplete="new-password"') }}

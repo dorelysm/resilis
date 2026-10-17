@@ -6,10 +6,10 @@
 <p id="estado-sync" class="mensaje" role="status" aria-live="polite" hidden></p>
 
 {% if filas %}
-  {% for e, sol, persona, sector, vuln in filas %}
+  {% for e, sol, persona, barrio, vuln in filas %}
   <section class="fila-accion" id="entrega-{{ e.id }}" aria-labelledby="titulo-{{ e.id }}">
     <h2 id="titulo-{{ e.id }}">{{ persona.nombre }}</h2>
-    <p>{{ sector.nombre }}. {{ sol.direccion }}<br>
+    <p>{{ barrio.etiqueta }}. {{ sol.direccion }}<br>
        Teléfono: {{ persona.telefono }}<br>
        Lleva: {{ necesidad[sol.necesidad] }}, {{ sol.cantidad }} para {{ sol.personas_hogar }} persona(s).</p>
     {% if vuln %}<p><strong>Atención:</strong> {{ tipo_vuln[vuln.tipo] }}.{% if vuln.necesidad_especifica %} Necesita en especial: {{ vuln.necesidad_especifica }}.{% endif %}</p>{% endif %}

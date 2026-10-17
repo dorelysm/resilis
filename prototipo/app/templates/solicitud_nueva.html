@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_campos.html" import campo, selector, texto_largo, casilla, opciones_radio, resumen_errores %}
+{% from "_campos.html" import campo, selector, selector_barrio, texto_largo, casilla, opciones_radio, resumen_errores %}
 {% block titulo %}Pedir ayuda{% endblock %}
 {% block contenido %}
 <h1>Pedir ayuda</h1>
@@ -11,7 +11,7 @@
   {{ campo('personas_hogar', 'Cuántas personas viven con usted', datos, errores, tipo='number', ayuda='Cuéntese a usted también.', extra='min="1" max="30" inputmode="numeric"') }}
   {{ opciones_radio('urgencia', 'Qué tan urgente es', urgencias, datos, errores) }}
   {{ texto_largo('descripcion', 'Cuéntenos su situación', datos, errores) }}
-  {{ selector('sector_id', 'Sector donde está', sectores, datos, errores, vacio='Elija el sector') }}
+  {{ selector_barrio('barrio_id', 'Barrio donde está', barrios, datos, errores, vacio='Elija el barrio') }}
   {{ campo('direccion', 'Dirección o punto de referencia', datos, errores, ayuda='Por ejemplo: calle, número o "frente a la iglesia".', extra='autocomplete="street-address"') }}
 
   <details{% if datos.get('vulnerable') == 'si' or errores.get('vuln_tipo') or errores.get('vuln_descripcion') or errores.get('vuln_consentimiento') %} open{% endif %}>

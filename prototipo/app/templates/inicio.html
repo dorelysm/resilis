@@ -20,7 +20,7 @@
     <section class="tarjeta"><h2>Mis solicitudes</h2><p>Vea cómo avanza lo que pidió.</p><a class="boton" href="/solicitudes">Ver solicitudes</a></section>
   {% endif %}
   {% if usuario.rol in ('solicitante', 'brigadista', 'entidad') %}
-    <section class="tarjeta"><h2>Avisar de daños</h2><p>Informe cómo quedó un sector.</p><a class="boton" href="/reportes/nuevo">Enviar reporte</a></section>
+    <section class="tarjeta"><h2>Avisar de daños</h2><p>Informe cómo quedó un barrio.</p><a class="boton" href="/reportes/nuevo">Enviar reporte</a></section>
     <section class="tarjeta"><h2>Mis reportes</h2><p>Los reportes que usted envió.</p><a class="boton" href="/reportes">Ver reportes</a></section>
   {% endif %}
   {% if usuario.rol == 'donante' %}
@@ -31,8 +31,8 @@
     <section class="tarjeta"><h2>Cuentas</h2><p>Cree cuentas de brigadistas, entidades y equipos de entrega.</p><a class="boton" href="/admin/usuarios">Administrar cuentas</a></section>
   {% endif %}
   {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}
-    <section class="tarjeta"><h2>Mapa</h2><p>Los sectores en el mapa, con su prioridad y la confianza en la información.</p><a class="boton" href="/mapa">Ver el mapa</a></section>
-    <section class="tarjeta"><h2>Prioridades</h2><p>Qué sectores y personas atender primero, y qué tan confiable es la información.</p><a class="boton" href="/prioridades">Ver prioridades</a></section>
+    <section class="tarjeta"><h2>Mapa</h2><p>Los barrios en el mapa, con su prioridad y la confianza en la información.</p><a class="boton" href="/mapa">Ver el mapa</a></section>
+    <section class="tarjeta"><h2>Prioridades</h2><p>Qué barrios y personas atender primero, y qué tan confiable es la información.</p><a class="boton" href="/prioridades">Ver prioridades</a></section>
   {% endif %}
   {% if usuario.rol in ('brigadista', 'entidad') %}
     <section class="tarjeta"><h2>Verificar</h2><p>Revise solicitudes y reportes pendientes.</p><a class="boton" href="/verificacion">Ir a verificar</a></section>

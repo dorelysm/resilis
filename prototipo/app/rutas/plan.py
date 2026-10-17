@@ -47,8 +47,8 @@ def _vista(db: Session, plan: m.PlanAsignacion | None, todos: bool = False):
     grupos = []
     for sol_id, ls in por_sol.items():
         sol = db.get(m.Solicitud, sol_id)
-        sector = db.get(m.Sector, sol.sector_id)
-        grupos.append({"sol": sol, "sector": sector.nombre if sector else "", "lineas": ls,
+        barrio = db.get(m.Barrio, sol.barrio_id)
+        grupos.append({"sol": sol, "barrio": barrio.etiqueta if barrio else "", "lineas": ls,
                        "asignado": sum(l.cantidad for l in ls), "equipo_id": ls[0].equipo_id,
                        "aislado": sol_id in datos.get("acceso_bloqueado", [])})
     grupos.sort(key=lambda g: -(g["sol"].prioridad or 0))

@@ -2,7 +2,7 @@
 {% block titulo %}Prioridades{% endblock %}
 {% block contenido %}
 <h1>Prioridades</h1>
-<p>Qué sectores y qué personas atender primero, y qué tan confiable es la información de cada uno. La prioridad va de 0 a 100 %; la confianza también. <strong>Una confianza baja quiere decir que hay que verificar, no que el sector no importe.</strong></p>
+<p>Qué barrios y qué personas atender primero, y qué tan confiable es la información de cada uno. La prioridad va de 0 a 100 %; la confianza también. <strong>Una confianza baja quiere decir que hay que verificar, no que el barrio no importe.</strong></p>
 <form method="post" action="/prioridades/recalcular" class="no-imprimir">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="acciones">
@@ -10,19 +10,36 @@
     {% if puede_pesos %}<a class="boton" href="/pesos">Ajustar los pesos</a>{% endif %}
   </div>
 </form>
-<p>{{ con_alerta }} de {{ total_sectores }} sectores tienen alertas de información faltante.</p>
+<p>{{ con_alerta }} de {{ total_barrios }} barrios tienen alertas de información faltante.</p>
 
-<h2>Sectores</h2>
-{% if sectores %}
+<h2>Municipios</h2>
 <div class="tabla-scroll">
 <table>
-  <caption class="ayuda">Del que más urge al que menos. {% if not todos %}Se muestran los 25 primeros. <a href="/prioridades?todos=si">Ver todos</a>.{% else %}Se muestran todos. <a href="/prioridades">Ver solo los 25 primeros</a>.{% endif %}</caption>
-  <thead><tr><th scope="col">N.º</th><th scope="col">Sector</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Avisos</th></tr></thead>
+  <caption class="ayuda">De donde hay un barrio más urgente al que menos. La prioridad de un municipio es la de su barrio más prioritario. Elija uno para ver solo sus barrios y solicitudes.</caption>
+  <thead><tr><th scope="col">Municipio</th><th scope="col">Barrios</th><th scope="col">Prioridad más alta</th><th scope="col">Prioridad promedio</th><th scope="col">Con avisos</th><th scope="col">Solicitudes por atender</th></tr></thead>
   <tbody>
-  {% for p, nombre in sectores %}
+  {% for r in municipios %}
+    <tr>
+      <td>{% if r.codigo == elegido %}<strong>{{ r.nombre }}</strong> <a href="/prioridades">(ver todos)</a>{% else %}<a href="/prioridades?municipio={{ r.codigo }}">{{ r.nombre }}</a>{% endif %}</td>
+      <td>{{ r.barrios }}</td><td>{{ pct(r.maxima) }}</td><td>{{ pct(r.promedio) }}</td><td>{{ r.con_alerta }}</td><td>{{ r.pendientes }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Barrios{% if elegido %} de {{ (municipios|selectattr('codigo', 'equalto', elegido)|first).nombre }}{% endif %}</h2>
+{% if barrios %}
+<div class="tabla-scroll">
+<table>
+  <caption class="ayuda">Del que más urge al que menos. {% if not todos %}Se muestran los 25 primeros. <a href="/prioridades?todos=si{% if elegido %}&amp;municipio={{ elegido }}{% endif %}">Ver todos</a>.{% else %}Se muestran todos. <a href="/prioridades{% if elegido %}?municipio={{ elegido }}{% endif %}">Ver solo los 25 primeros</a>.{% endif %}</caption>
+  <thead><tr><th scope="col">N.º</th><th scope="col">Barrio</th><th scope="col">Municipio</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Avisos</th></tr></thead>
+  <tbody>
+  {% for p, nombre, municipio in barrios %}
     <tr>
       <td>{{ p.posicion }}</td>
-      <td><a href="/prioridades/sectores/{{ p.sector_id }}">{{ nombre }}</a></td>
+      <td><a href="/prioridades/barrios/{{ p.barrio_id }}">{{ nombre }}</a></td>
+      <td>{{ municipio }}</td>
       <td>{{ pct(p.prioridad) }}</td>
       <td>{{ pct(p.confianza) }}</td>
       <td>{% if p.alertas %}{% for a in p.alertas %}<span class="estado">{{ alertas[a] }}</span> {% endfor %}{% else %}Sin avisos{% endif %}{% if p.base_previa %}<br><span class="ayuda">Calculado solo con datos previos.</span>{% endif %}</td>
@@ -31,17 +48,17 @@
   </tbody>
 </table>
 </div>
-{% else %}<p>Todavía no hay sectores.</p>{% endif %}
+{% else %}<p>Todavía no hay barrios.</p>{% endif %}
 
 <h2>Solicitudes por atender</h2>
 {% if solicitudes %}
 <div class="tabla-scroll">
 <table>
   <caption class="ayuda">Solicitudes registradas o verificadas, de la más prioritaria a la menos. Las que no están verificadas no se pueden asignar todavía.</caption>
-  <thead><tr><th scope="col">Sector</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Estado</th></tr></thead>
+  <thead><tr><th scope="col">Barrio</th><th scope="col">Municipio</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Confianza</th><th scope="col">Estado</th></tr></thead>
   <tbody>
-  {% for s, sector in solicitudes %}
-    <tr><td>{{ sector }}</td><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td>
+  {% for s, barrio, municipio in solicitudes %}
+    <tr><td>{{ barrio }}</td><td>{{ municipio }}</td><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td>
         <td>{{ pct(s.prioridad) }}</td><td>{{ pct(s.confianza or 0) }}</td>
         <td>{{ 'Verificada' if s.estado == 'verificada' else 'Por verificar' }}</td></tr>
   {% endfor %}

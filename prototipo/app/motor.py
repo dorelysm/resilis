@@ -2,7 +2,7 @@
 
 Fórmulas del documento de requerimientos, sección 5:
 - Confianza de un reporte o solicitud (RM-09):  c = 0,35 F + 0,30 V + 0,15 A + 0,20 K
-- Confianza de un sector (RM-10):               C = [1 - prod(1 - c)] (1 - 0,5 D)
+- Confianza de un barrio (RM-10):               C = [1 - prod(1 - c)] (1 - 0,5 D)
 - Prioridad (RM-01 a RM-05):                    TOPSIS con pesos ajustables
 - Pesos (RM-06):                                AHP con razón de consistencia
 """
@@ -19,16 +19,16 @@ FUENTE = {  # peso de la fuente F según quién envía el dato
 }
 VERIFICACION = {"verificado": 1.0, "sin_verificar": 0.4, "desmentido": 0.0}
 TAU_HORAS = 12.0  # vigencia: A = exp(-horas / tau)
-UMBRAL_CONFIANZA = 0.4  # alerta si la confianza del sector es menor
+UMBRAL_CONFIANZA = 0.4  # alerta si la confianza del barrio es menor
 UMBRAL_DISPERSION = 0.5  # alerta si los reportes se contradicen más que esto
 
-CRITERIOS_SECTOR = ["gravedad", "urgencia", "expuestas", "accesibilidad", "recursos"]
-CRITERIOS_SOLICITUD = ["urgencia", "vulnerabilidad", "personas_hogar", "tiempo_espera", "prioridad_sector"]
+CRITERIOS_BARRIO = ["gravedad", "urgencia", "expuestas", "accesibilidad", "recursos"]
+CRITERIOS_SOLICITUD = ["urgencia", "vulnerabilidad", "personas_hogar", "tiempo_espera", "prioridad_barrio"]
 ETIQUETAS = {
     "gravedad": "Gravedad de la afectación", "urgencia": "Urgencia de la atención",
     "expuestas": "Personas expuestas y necesidades especiales", "accesibilidad": "Accesibilidad de las rutas",
     "recursos": "Recursos disponibles", "vulnerabilidad": "Vulnerabilidad", "personas_hogar": "Personas en el hogar",
-    "tiempo_espera": "Tiempo de espera", "prioridad_sector": "Prioridad del sector",
+    "tiempo_espera": "Tiempo de espera", "prioridad_barrio": "Prioridad del barrio",
 }
 
 
@@ -61,7 +61,7 @@ def dispersion(niveles: list[float], maximo: float = 3.0) -> float:
     return float(min(1.0, np.std(niveles) / (maximo / 2.0)))
 
 
-def confianza_sector(confianzas: list[float], disp: float) -> float:
+def confianza_barrio(confianzas: list[float], disp: float) -> float:
     """C = [1 - prod(1 - c)] (1 - 0,5 D). Varios reportes independientes se refuerzan; si no hay, C = 0."""
     if not confianzas:
         return 0.0

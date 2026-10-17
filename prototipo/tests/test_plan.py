@@ -69,8 +69,8 @@ def test_el_plan_no_pasa_del_inventario_y_dice_lo_que_falta(db, listo):
 
 def test_no_se_planea_con_lotes_vencidos_ni_con_los_dirigidos_a_otro_destino(db, listo):
     donar(db, listo, 100, dias=-1)  # vencido
-    donar(db, listo, 100, destino_sector_id=listo["otro"].id)  # dirigido a otro sector
-    sol = pedir(db, listo, cantidad=10)  # la solicitud es del sector 1
+    donar(db, listo, 100, destino_barrio_id=listo["otro"].id)  # dirigido a otro barrio
+    sol = pedir(db, listo, cantidad=10)  # la solicitud es del barrio 1
     vacio = hacer_plan(db, listo)  # hay inventario, pero ninguno sirve: el plan no asigna nada y dice por qué
     assert lineas(db, vacio) == [] and vacio.necesidad_cubierta == 0
     sin = resumen(db, vacio)["sin_cubrir"]

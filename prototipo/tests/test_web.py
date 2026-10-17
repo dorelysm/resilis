@@ -10,7 +10,7 @@ from app import main
 from app.cargas import cargar_viviendas
 from app.db import get_db
 from app.models import (
-    Donacion, Donante, Evento, Municipio, ReporteDanos, Rol, Sector, Solicitud, Usuario, Vulnerabilidad, ahora,
+    Donacion, Donante, Evento, Municipio, ReporteDanos, Rol, Barrio, Solicitud, Usuario, Vulnerabilidad, ahora,
 )
 from app.seguridad import hash_password, verificar_password
 
@@ -24,15 +24,15 @@ def sesiones(engine):
 
 @pytest.fixture()
 def mundo(sesiones):
-    """Un municipio, un sector y un evento."""
+    """Un municipio, un barrio y un evento."""
     with sesiones() as db:
         db.add(Municipio(codigo="08001", nombre="Barranquilla"))
         db.flush()
-        s = Sector(municipio_codigo="08001", nombre="Sector de prueba", personas=1000, viviendas=300)
+        s = Barrio(municipio_codigo="08001", nombre="Barrio de prueba", personas=1000, viviendas=300)
         db.add(s)
         db.add(Evento(tipo="inundacion", nombre="Evento de prueba"))
         db.commit()
-        return {"sector_id": s.id}
+        return {"barrio_id": s.id}
 
 
 @pytest.fixture()
@@ -68,7 +68,7 @@ def entrar(c, telefono, clave=CLAVE):
 
 
 def registrar(c, mundo, **cambios):
-    datos = {"nombre": "María Prueba", "telefono": "3001112233", "sector_id": str(mundo["sector_id"]),
+    datos = {"nombre": "María Prueba", "telefono": "3001112233", "barrio_id": str(mundo["barrio_id"]),
              "tipo_cuenta": "solicitante", "password": CLAVE, "password2": CLAVE, "consentimiento": "si"}
     datos.update(cambios)
     datos["csrf"] = csrf(c, "/registro")
@@ -109,13 +109,13 @@ def test_la_siembra_de_demostracion_no_borra_nada_y_no_se_repite(sesiones, monke
         db.commit()
     main.sembrar_demo()
     with sesiones() as db:
-        sectores = db.scalar(select(func.count()).select_from(Sector))
-        assert sectores > 100 and db.scalar(select(func.count()).select_from(Municipio)) == 23
+        barrios = db.scalar(select(func.count()).select_from(Barrio))
+        assert barrios > 100 and db.scalar(select(func.count()).select_from(Municipio)) == 23
         assert db.scalar(select(Usuario.nombre).where(Usuario.ficticio.is_(False))) == "Persona Real"
         solicitudes = db.scalar(select(func.count()).select_from(Solicitud))
-    main.sembrar_demo()  # ya hay sectores: no hace nada
+    main.sembrar_demo()  # ya hay barrios: no hace nada
     with sesiones() as db:
-        assert db.scalar(select(func.count()).select_from(Sector)) == sectores
+        assert db.scalar(select(func.count()).select_from(Barrio)) == barrios
         assert db.scalar(select(func.count()).select_from(Solicitud)) == solicitudes
 
 
@@ -155,9 +155,9 @@ def test_registro_rechaza_telefono_repetido_y_clave_corta(app_cliente, mundo):
     assert r.status_code == 422 and "al menos 8 caracteres" in r.text
 
 
-def test_solicitante_exige_sector_pero_donante_no(app_cliente, mundo, sesiones):
-    assert registrar(app_cliente, mundo, sector_id="").status_code == 422
-    r = registrar(app_cliente, mundo, sector_id="", tipo_cuenta="donante", tipo_donante="empresa")
+def test_solicitante_exige_barrio_pero_donante_no(app_cliente, mundo, sesiones):
+    assert registrar(app_cliente, mundo, barrio_id="").status_code == 422
+    r = registrar(app_cliente, mundo, barrio_id="", tipo_cuenta="donante", tipo_donante="empresa")
     assert r.status_code == 303
     with sesiones() as db:
         assert db.scalar(select(Donante.tipo)) == "empresa"
@@ -219,7 +219,7 @@ def test_reporte_de_danos(app_cliente, mundo, sesiones):
     malo = app_cliente.post("/reportes/nuevo", data={"csrf": csrf(app_cliente, "/reportes/nuevo")})
     assert malo.status_code == 422
     r = app_cliente.post("/reportes/nuevo", follow_redirects=False, data={
-        "sector_id": str(mundo["sector_id"]), "nivel_dano": "2", "personas_afectadas": "40", "acceso": "0.5",
+        "barrio_id": str(mundo["barrio_id"]), "nivel_dano": "2", "personas_afectadas": "40", "acceso": "0.5",
         "csrf": csrf(app_cliente, "/reportes/nuevo")})
     assert r.status_code == 303
     with sesiones() as db:
@@ -232,7 +232,7 @@ def test_solicitud_sencilla(app_cliente, mundo, sesiones):
     crear_usuario(sesiones, Rol.SOLICITANTE, "3000000004")
     entrar(app_cliente, "3000000004")
     r = app_cliente.post("/solicitudes/nueva", follow_redirects=False, data={
-        "sector_id": str(mundo["sector_id"]), "necesidad": "agua", "personas_hogar": "4", "urgencia": "2",
+        "barrio_id": str(mundo["barrio_id"]), "necesidad": "agua", "personas_hogar": "4", "urgencia": "2",
         "descripcion": "No hay agua potable desde ayer.", "direccion": "Calle 10 # 5-20",
         "csrf": csrf(app_cliente, "/solicitudes/nueva")})
     assert r.status_code == 303
@@ -244,7 +244,7 @@ def test_solicitud_sencilla(app_cliente, mundo, sesiones):
 
 
 def _datos_vulnerable(mundo, **cambios):
-    d = {"sector_id": str(mundo["sector_id"]), "necesidad": "medicamentos", "personas_hogar": "2", "urgencia": "3",
+    d = {"barrio_id": str(mundo["barrio_id"]), "necesidad": "medicamentos", "personas_hogar": "2", "urgencia": "3",
          "descripcion": "Necesita su medicina.", "direccion": "Carrera 4 # 3-2", "vulnerable": "si",
          "vuln_tipo": "cronica", "vuln_descripcion": "Persona diabética sin insulina.",
          "vuln_necesidad": "Insulina"}
@@ -270,7 +270,7 @@ def test_la_vulnerabilidad_exige_consentimiento_expreso(app_cliente, mundo, sesi
 
 
 def test_donaciones_en_especie_y_en_dinero(app_cliente, mundo):
-    registrar(app_cliente, mundo, telefono="3225556677", tipo_cuenta="donante", sector_id="")
+    registrar(app_cliente, mundo, telefono="3225556677", tipo_cuenta="donante", barrio_id="")
     r = app_cliente.post("/donaciones/nueva", follow_redirects=False, data={
         "forma": "especie", "tipo_bien": "alimentos", "cantidad": "50", "estado_producto": "nuevo",
         "destino": "tipo", "csrf": csrf(app_cliente, "/donaciones/nueva")})
@@ -288,7 +288,7 @@ def test_donaciones_en_especie_y_en_dinero(app_cliente, mundo):
 def test_hay_un_limite_de_envios_por_hora(app_cliente, mundo, sesiones):
     crear_usuario(sesiones, Rol.BRIGADISTA, "3000000006")
     entrar(app_cliente, "3000000006")
-    datos = {"sector_id": str(mundo["sector_id"]), "nivel_dano": "1", "personas_afectadas": "1", "acceso": "1"}
+    datos = {"barrio_id": str(mundo["barrio_id"]), "nivel_dano": "1", "personas_afectadas": "1", "acceso": "1"}
     codigos = [app_cliente.post("/reportes/nuevo", follow_redirects=False,
                                 data={**datos, "csrf": csrf(app_cliente, "/reportes/nuevo")}).status_code
                for _ in range(21)]
@@ -343,11 +343,11 @@ def test_renovar_la_demostracion_conserva_al_administrador(sesiones, monkeypatch
     main.reiniciar_demo()
     assert "DEMO renovada" in capsys.readouterr().out
     with sesiones() as db:
-        assert db.scalar(select(func.count()).select_from(Sector)) > 100
+        assert db.scalar(select(func.count()).select_from(Barrio)) > 100
         assert db.scalar(select(Usuario.nombre).where(Usuario.ficticio.is_(False))) == "Admin Real"
     main.reiniciar_demo()  # se puede repetir: vuelve a generar lo mismo (semilla fija)
     with sesiones() as db:
-        assert db.scalar(select(func.count()).select_from(Sector)) > 100
+        assert db.scalar(select(func.count()).select_from(Barrio)) > 100
 
 
 def test_renovar_la_demostracion_conserva_cuentas_sin_datos_y_se_niega_si_ya_hicieron_algo(sesiones, monkeypatch, capsys):
@@ -356,24 +356,24 @@ def test_renovar_la_demostracion_conserva_cuentas_sin_datos_y_se_niega_si_ya_hic
         cargar_viviendas(db)
         db.add(Municipio(codigo="99999", nombre="Prueba")) if db.get(Municipio, "99999") is None else None
         db.flush()
-        sector = Sector(municipio_codigo="08001", nombre="Sector real de prueba")
-        db.add(sector)
+        barrio = Barrio(municipio_codigo="08001", nombre="Barrio real de prueba")
+        db.add(barrio)
         db.flush()
         persona = Usuario(nombre="Persona Real", telefono="3009998877", rol=Rol.SOLICITANTE, ficticio=False,
-                          sector_id=sector.id)
+                          barrio_id=barrio.id)
         db.add(persona)
         db.commit()
         persona_id = persona.id
     main.reiniciar_demo()  # la cuenta existe pero no ha hecho nada: se conserva y la simulación se renueva
     assert "DEMO renovada" in capsys.readouterr().out
     with sesiones() as db:
-        assert db.get(Usuario, persona_id) is not None and db.scalar(select(func.count()).select_from(Sector)) > 100
+        assert db.get(Usuario, persona_id) is not None and db.scalar(select(func.count()).select_from(Barrio)) > 100
         db.add(Solicitud(solicitante_id=persona_id, creador_id=persona_id,
-                         sector_id=db.scalar(select(Sector.id).limit(1)), necesidad="agua", cantidad=6))
+                         barrio_id=db.scalar(select(Barrio.id).limit(1)), necesidad="agua", cantidad=6))
         db.commit()
-        antes = db.scalar(select(func.count()).select_from(Sector))
+        antes = db.scalar(select(func.count()).select_from(Barrio))
     main.reiniciar_demo()  # ahora sí hizo algo: se niega, sin tumbar la aplicación
     salida = capsys.readouterr().out
     assert "DEMO no renovada" in salida and "solicitudes" in salida
     with sesiones() as db:
-        assert db.scalar(select(func.count()).select_from(Sector)) == antes
+        assert db.scalar(select(func.count()).select_from(Barrio)) == antes

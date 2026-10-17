@@ -132,7 +132,7 @@ def recibir_donacion(db: Session, donacion: m.Donacion, centro: m.CentroAcopio, 
     lote = m.Lote(
         donacion_id=donacion.id, centro_id=centro.id, tipo_bien=donacion.tipo_bien, unidad=donacion.unidad,
         cantidad_recibida=cantidad, cantidad_disponible=cantidad, estado_producto=estado_producto,
-        vencimiento=donacion.vencimiento, destino_sector_id=donacion.destino_sector_id,
+        vencimiento=donacion.vencimiento, destino_barrio_id=donacion.destino_barrio_id,
         destino_tipo_necesidad=donacion.destino_tipo_necesidad, destino_solicitud_id=donacion.destino_solicitud_id,
     )
     db.add(lote)
@@ -146,8 +146,8 @@ def _lote_admite(lote: m.Lote, sol: m.Solicitud) -> int:
     """0 si el lote no puede usarse para la solicitud; si puede, su prioridad (menor = antes)."""
     if lote.destino_solicitud_id is not None:
         return 1 if lote.destino_solicitud_id == sol.id else 0
-    if lote.destino_sector_id is not None:
-        return 2 if lote.destino_sector_id == sol.sector_id else 0
+    if lote.destino_barrio_id is not None:
+        return 2 if lote.destino_barrio_id == sol.barrio_id else 0
     if lote.destino_tipo_necesidad is not None:
         return 3 if lote.destino_tipo_necesidad == sol.necesidad else 0
     return 4

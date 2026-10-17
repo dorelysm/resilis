@@ -159,7 +159,7 @@ def test_un_plan_grande_muestra_lo_mas_prioritario_y_aprueba_todo(app_cliente, s
     with sesiones() as db:
         for _ in range(45):
             db.add(m.Solicitud(solicitante_id=ids["solicitante"], creador_id=ids["solicitante"],
-                               sector_id=mundo["sector_id"], necesidad="agua", cantidad=6, personas_hogar=1,
+                               barrio_id=mundo["barrio_id"], necesidad="agua", cantidad=6, personas_hogar=1,
                                estado="verificada"))
         db.commit()
     entrar(c, "3100000004")

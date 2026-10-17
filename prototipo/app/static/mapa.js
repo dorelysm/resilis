@@ -1,8 +1,8 @@
-/* Mapa de sectores. Dibuja un marcador por sector con Leaflet (incluido en /static/vendor/leaflet).
+/* Mapa de barrios. Dibuja un marcador por barrio con Leaflet (incluido en /static/vendor/leaflet).
  *
- * - Cada sector es un círculo que se puede enfocar con el teclado. El color es solo una ayuda: el número de
+ * - Cada barrio es un círculo que se puede enfocar con el teclado. El color es solo una ayuda: el número de
  *   adentro es el lugar en la lista, y la misma información está en la tabla de /prioridades.
- * - Los sectores sin reportes se dibujan rayados, para no confundirlos con los que están bien.
+ * - Los barrios sin reportes se dibujan rayados, para no confundirlos con los que están bien.
  * - Las clases de color son quintiles de los datos que se muestran, para que haya contraste aunque casi todos
  *   los valores sean parecidos.
  */
@@ -72,29 +72,29 @@
     return posicion <= 15 || (zoom >= 13 && posicion <= 99);
   }
 
-  function tieneAviso(sector, aviso) {
+  function tieneAviso(barrio, aviso) {
     if (!aviso) return true;
-    var alertas = sector.alertas || [];
+    var alertas = barrio.alertas || [];
     return aviso === 'cualquiera' ? alertas.length > 0 : alertas.indexOf(aviso) !== -1;
   }
 
-  function filtrar(sectores, filtros) {
-    return sectores.filter(function (s) {
+  function filtrar(barrios, filtros) {
+    return barrios.filter(function (s) {
       return (!filtros.municipio || s.codigo_municipio === filtros.municipio) && tieneAviso(s, filtros.aviso);
     });
   }
 
-  function sinDatos(sector) {
-    return (sector.alertas || []).indexOf('sin_reportes') !== -1;
+  function sinDatos(barrio) {
+    return (barrio.alertas || []).indexOf('sin_reportes') !== -1;
   }
 
   function pct(valor) { return Math.round(valor * 100) + ' %'; }
 
-  function resumen(sector, nombresAlerta, total) {
-    var partes = [sector.nombre + ' (' + sector.municipio + ')',
-      'lugar ' + sector.posicion + ' de ' + total,
-      'prioridad ' + pct(sector.prioridad), 'confianza ' + pct(sector.confianza)];
-    var avisos = (sector.alertas || []).map(function (a) { return nombresAlerta[a] || a; });
+  function resumen(barrio, nombresAlerta, total) {
+    var partes = [barrio.nombre + ' (' + barrio.municipio + ')',
+      'lugar ' + barrio.posicion + ' de ' + total,
+      'prioridad ' + pct(barrio.prioridad), 'confianza ' + pct(barrio.confianza)];
+    var avisos = (barrio.alertas || []).map(function (a) { return nombresAlerta[a] || a; });
     if (avisos.length) partes.push('avisos: ' + avisos.join(', '));
     return partes.join(', ');
   }
@@ -142,7 +142,7 @@
     if (!datos) return;
     var zoom = mapa.getZoom();
     var vista = vistaActual();
-    var visibles = filtrar(datos.sectores, { municipio: selMunicipio.value, aviso: selAviso.value });
+    var visibles = filtrar(datos.barrios, { municipio: selMunicipio.value, aviso: selAviso.value });
     if (capa) mapa.removeLayer(capa);
     capa = L.layerGroup();
     var conDatos = visibles.filter(function (s) { return !sinDatos(s); });
@@ -155,11 +155,11 @@
       var color = rayado ? '#ffffff' : RAMPAS[vista][claseDe(s[vista], cortes)];
       var lado = Math.round(tamano(s.personas, maxPersonas) * escala(zoom));
       var numero = mostrarNumero(s.posicion, zoom) ? s.posicion : '';
-      var html = '<span class="sector-punto' + (rayado ? ' sin-datos' : '') + '" style="width:' + lado + 'px;height:' + lado +
+      var html = '<span class="barrio-punto' + (rayado ? ' sin-datos' : '') + '" style="width:' + lado + 'px;height:' + lado +
         'px;background:' + (rayado ? '' : color) + ';color:' + textoSobre(color) + '">' + numero + '</span>';
       var etiqueta = resumen(s, datos.alertas, datos.total) + (rayado ? '. Sin reportes.' : '');
       var marcador = L.marker([s.lat, s.lon], {
-        icon: L.divIcon({ className: 'sector-marca', html: html, iconSize: [lado, lado], iconAnchor: [lado / 2, lado / 2] }),
+        icon: L.divIcon({ className: 'barrio-marca', html: html, iconSize: [lado, lado], iconAnchor: [lado / 2, lado / 2] }),
         keyboard: true, title: etiqueta, riseOnHover: true
       });
       marcador.bindPopup(
@@ -168,7 +168,7 @@
         '<br>Confianza: ' + pct(s.confianza) +
         (s.alertas.length ? '<br>Avisos: ' + escapar(s.alertas.map(function (a) { return datos.alertas[a] || a; }).join(', ')) : '') +
         '<br>' + s.n_reportes + ' reporte(s), ' + s.n_solicitudes + ' solicitud(es) abiertas' +
-        '<br><a href="/prioridades/sectores/' + s.id + '">Ver por qué ocupa este lugar</a>');
+        '<br><a href="/prioridades/barrios/' + s.id + '">Ver por qué ocupa este lugar</a>');
       marcador.on('add', function () {
         var el = marcador.getElement();
         if (el) el.setAttribute('aria-label', etiqueta);
@@ -180,8 +180,8 @@
     if (ajustar !== false && puntos.length) mapa.fitBounds(L.latLngBounds(puntos).pad(0.15), { maxZoom: 14 });
     dibujarLeyenda(vista, cortes, visibles.some(sinDatos));
     estado.textContent = visibles.length === 0
-      ? 'Ningún sector cumple con ese filtro.'
-      : 'Se muestran ' + visibles.length + ' de ' + datos.total + ' sectores.';
+      ? 'Ningún barrio cumple con ese filtro.'
+      : 'Se muestran ' + visibles.length + ' de ' + datos.total + ' barrios.';
   }
 
   function cargar() {

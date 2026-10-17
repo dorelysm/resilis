@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://resilis:resilis@localhost:5440/resilis"
     secret_key: str = "cambiar-en-produccion"
     entorno: str = "desarrollo"
-    # Si es verdadero y la base no tiene sectores, carga las viviendas y genera un escenario simulado al arrancar.
+    # Si es verdadero y la base no tiene barrios, carga las viviendas y genera un escenario simulado al arrancar.
     sembrar_demo: bool = False
     # Si es verdadero, renueva el escenario simulado al arrancar, conservando a los administradores. Se niega si hay
     # otras cuentas reales. Es de un solo uso: conviene quitarla después, o cada arranque volvería a renovarlo.

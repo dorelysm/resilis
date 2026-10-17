@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_campos.html" import campo, selector, casilla, resumen_errores %}
+{% from "_campos.html" import campo, selector, selector_barrio, casilla, resumen_errores %}
 {% block titulo %}Cuentas{% endblock %}
 {% block contenido %}
 <h1>Cuentas</h1>
@@ -11,7 +11,7 @@
   {{ campo('nombre', 'Nombre', datos, errores) }}
   {{ campo('telefono', 'Teléfono', datos, errores, tipo='tel', extra='inputmode="numeric"') }}
   {{ selector('rol', 'Tipo de cuenta', roles, datos, errores) }}
-  {{ selector('sector_id', 'Sector', sectores, datos, errores, requerido=False) }}
+  {{ selector_barrio('barrio_id', 'Barrio', barrios, datos, errores, requerido=False) }}
   {{ casilla('es_organizacion', 'Es una organización (necesita aprobación antes de poder entrar)', datos.get('es_organizacion') == 'si', errores) }}
   {{ campo('password', 'Contraseña temporal', datos, errores, tipo='password', ayuda='Mínimo 8 caracteres.', extra='autocomplete="new-password"') }}
   <button class="principal" type="submit">Crear cuenta</button>

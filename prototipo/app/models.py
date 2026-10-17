@@ -17,8 +17,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    select,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from app.db import Base
 
@@ -104,7 +105,7 @@ class Municipio(Base):
     nombre: Mapped[str] = mapped_column(String(80))
 
     proyecciones: Mapped[list["ViviendaProyeccion"]] = relationship(back_populates="municipio")
-    sectores: Mapped[list["Sector"]] = relationship(back_populates="municipio")
+    barrios: Mapped[list["Barrio"]] = relationship(back_populates="municipio")
 
 
 class ViviendaProyeccion(Base):
@@ -122,12 +123,13 @@ class ViviendaProyeccion(Base):
     municipio: Mapped[Municipio] = relationship(back_populates="proyecciones")
 
 
-class Sector(Base):
-    __tablename__ = "sector"
+class Barrio(Base):
+    __tablename__ = "barrio"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     municipio_codigo: Mapped[str] = mapped_column(ForeignKey("municipio.codigo"), index=True)
     nombre: Mapped[str] = mapped_column(String(120))
+    tipo: Mapped[str] = mapped_column(String(20), default="barrio")  # barrio | centro poblado
     geometria: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # GeoJSON
     lat: Mapped[float | None] = mapped_column(Float, nullable=True)
     lon: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -138,7 +140,13 @@ class Sector(Base):
     acceso_base: Mapped[float] = mapped_column(Float, default=1.0)  # 0 bloqueado, 1 libre
     simulado: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    municipio: Mapped[Municipio] = relationship(back_populates="sectores")
+    municipio: Mapped[Municipio] = relationship(back_populates="barrios")
+
+
+# "Barrio, Municipio": los nombres de barrio se repiten entre municipios, así que se muestran siempre juntos.
+Barrio.etiqueta = column_property(
+    Barrio.nombre + ", " + select(Municipio.nombre).where(Municipio.codigo == Barrio.municipio_codigo).correlate_except(Municipio).scalar_subquery(),
+    deferred=False)
 
 
 # ----------------------------------------------------------------------------- usuarios
@@ -150,7 +158,7 @@ class Usuario(Base):
     telefono: Mapped[str] = mapped_column(String(30), index=True)
     documento: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
     rol: Mapped[str] = mapped_column(String(20), index=True)
-    sector_id: Mapped[int | None] = mapped_column(ForeignKey("sector.id"), nullable=True)
+    barrio_id: Mapped[int | None] = mapped_column(ForeignKey("barrio.id"), nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     consentimiento_datos: Mapped[bool] = mapped_column(Boolean, default=False)
     consentimiento_fecha: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -179,7 +187,7 @@ class ReporteDanos(Base):
     __table_args__ = (CheckConstraint("nivel_dano BETWEEN 0 AND 3"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    sector_id: Mapped[int] = mapped_column(ForeignKey("sector.id"), index=True)
+    barrio_id: Mapped[int] = mapped_column(ForeignKey("barrio.id"), index=True)
     evento_id: Mapped[int] = mapped_column(ForeignKey("evento.id"), index=True)
     autor_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"), nullable=True)
     fuente: Mapped[str] = mapped_column(String(10), default=FuenteReporte.APP)
@@ -215,7 +223,7 @@ class Solicitud(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     solicitante_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"), index=True)
     creador_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))  # distinto si lo crea un brigadista
-    sector_id: Mapped[int] = mapped_column(ForeignKey("sector.id"), index=True)
+    barrio_id: Mapped[int] = mapped_column(ForeignKey("barrio.id"), index=True)
     evento_id: Mapped[int | None] = mapped_column(ForeignKey("evento.id"), nullable=True)
     necesidad: Mapped[str] = mapped_column(String(20))  # TipoNecesidad
     cantidad: Mapped[int] = mapped_column(Integer, default=1)  # cantidad necesaria, en la unidad del bien
@@ -272,7 +280,7 @@ class CentroAcopio(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nombre: Mapped[str] = mapped_column(String(120))
-    sector_id: Mapped[int | None] = mapped_column(ForeignKey("sector.id"), nullable=True)
+    barrio_id: Mapped[int | None] = mapped_column(ForeignKey("barrio.id"), nullable=True)
     lat: Mapped[float | None] = mapped_column(Float, nullable=True)
     lon: Mapped[float | None] = mapped_column(Float, nullable=True)
     responsable_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"), nullable=True)
@@ -303,8 +311,8 @@ class Donacion(Base):
     unidad: Mapped[str] = mapped_column(String(20), default="unidad")
     estado_producto: Mapped[str] = mapped_column(String(20), default="nuevo")
     vencimiento: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    # Donación dirigida: a un sector, a un tipo de necesidad o a una solicitud
-    destino_sector_id: Mapped[int | None] = mapped_column(ForeignKey("sector.id"), nullable=True)
+    # Donación dirigida: a un barrio, a un tipo de necesidad o a una solicitud
+    destino_barrio_id: Mapped[int | None] = mapped_column(ForeignKey("barrio.id"), nullable=True)
     destino_tipo_necesidad: Mapped[str | None] = mapped_column(String(20), nullable=True)
     destino_solicitud_id: Mapped[int | None] = mapped_column(ForeignKey("solicitud.id"), nullable=True)
     estado: Mapped[str] = mapped_column(String(15), default=EstadoDonacion.OFRECIDA, index=True)
@@ -331,7 +339,7 @@ class Lote(Base):
     cantidad_entregada: Mapped[int] = mapped_column(Integer, default=0)
     estado_producto: Mapped[str] = mapped_column(String(20), default="nuevo")
     vencimiento: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    destino_sector_id: Mapped[int | None] = mapped_column(ForeignKey("sector.id"), nullable=True)
+    destino_barrio_id: Mapped[int | None] = mapped_column(ForeignKey("barrio.id"), nullable=True)
     destino_tipo_necesidad: Mapped[str | None] = mapped_column(String(20), nullable=True)
     destino_solicitud_id: Mapped[int | None] = mapped_column(ForeignKey("solicitud.id"), nullable=True)
 
@@ -436,12 +444,12 @@ class EventoAuditoria(Base):
 
 
 # ----------------------------------------------------------------------------- puntajes calculados
-class PuntajeSector(Base):
-    """Resultado del cálculo de prioridad y confianza de cada sector (bloque 5). Se recalcula completo."""
+class PuntajeBarrio(Base):
+    """Resultado del cálculo de prioridad y confianza de cada barrio (bloque 5). Se recalcula completo."""
 
-    __tablename__ = "puntaje_sector"
+    __tablename__ = "puntaje_barrio"
 
-    sector_id: Mapped[int] = mapped_column(ForeignKey("sector.id"), primary_key=True)
+    barrio_id: Mapped[int] = mapped_column(ForeignKey("barrio.id"), primary_key=True)
     evento_id: Mapped[int | None] = mapped_column(ForeignKey("evento.id"), nullable=True)
     prioridad: Mapped[float] = mapped_column(Float, default=0.0)  # P (TOPSIS), de 0 a 1
     posicion: Mapped[int] = mapped_column(Integer, default=0)  # 1 = el que se debe atender primero
@@ -463,7 +471,7 @@ class Peso(Base):
     __table_args__ = (UniqueConstraint("ambito", "dimension"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    ambito: Mapped[str] = mapped_column(String(15))  # sector | solicitud | confianza
+    ambito: Mapped[str] = mapped_column(String(15))  # barrio | solicitud | confianza
     dimension: Mapped[str] = mapped_column(String(30))
     valor: Mapped[float] = mapped_column(Float)
     actualizado_por: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"), nullable=True)

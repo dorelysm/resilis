@@ -48,21 +48,21 @@ def _como_utc(hora: datetime | None) -> datetime | None:
 
 # ----------------------------------------------------------------------------- verificación
 def _solicitudes_a_verificar(db: Session, usuario: m.Usuario):
-    q = (select(m.Solicitud, m.Usuario.nombre, m.Sector.nombre)
+    q = (select(m.Solicitud, m.Usuario.nombre, m.Barrio.etiqueta)
          .join(m.Usuario, m.Usuario.id == m.Solicitud.solicitante_id)
-         .join(m.Sector, m.Sector.id == m.Solicitud.sector_id)
+         .join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
          .where(m.Solicitud.estado == m.EstadoSolicitud.REGISTRADA)
          .order_by(m.Solicitud.urgencia.desc(), m.Solicitud.creado_en).limit(100))
-    if usuario.rol == m.Rol.BRIGADISTA and usuario.sector_id:  # un brigadista revisa lo de su zona de trabajo
-        zona = db.get(m.Sector, usuario.sector_id)
-        q = q.where(m.Sector.municipio_codigo == zona.municipio_codigo)
+    if usuario.rol == m.Rol.BRIGADISTA and usuario.barrio_id:  # un brigadista revisa lo de su zona de trabajo
+        zona = db.get(m.Barrio, usuario.barrio_id)
+        q = q.where(m.Barrio.municipio_codigo == zona.municipio_codigo)
     return db.execute(q).all()
 
 
 @router.get("/verificacion")
 def verificacion(request: Request, db: Db, usuario: Verificador):
     reportes = db.execute(
-        select(m.ReporteDanos, m.Sector.nombre).join(m.Sector, m.Sector.id == m.ReporteDanos.sector_id)
+        select(m.ReporteDanos, m.Barrio.etiqueta).join(m.Barrio, m.Barrio.id == m.ReporteDanos.barrio_id)
         .where(~select(m.Verificacion.id).where(m.Verificacion.objeto_tipo == "reporte",
                                                 m.Verificacion.objeto_id == m.ReporteDanos.id).exists(),
                m.ReporteDanos.estado == "activo")
@@ -73,8 +73,8 @@ def verificacion(request: Request, db: Db, usuario: Verificador):
 
 def _detalle_solicitud(db: Session, sol_id: int):
     fila = db.execute(
-        select(m.Solicitud, m.Usuario, m.Sector).join(m.Usuario, m.Usuario.id == m.Solicitud.solicitante_id)
-        .join(m.Sector, m.Sector.id == m.Solicitud.sector_id).where(m.Solicitud.id == sol_id)).first()
+        select(m.Solicitud, m.Usuario, m.Barrio).join(m.Usuario, m.Usuario.id == m.Solicitud.solicitante_id)
+        .join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id).where(m.Solicitud.id == sol_id)).first()
     if fila is None:
         raise HTTPException(status_code=404)
     return fila
@@ -82,9 +82,9 @@ def _detalle_solicitud(db: Session, sol_id: int):
 
 @router.get("/verificacion/solicitudes/{sol_id}")
 def verificar_solicitud_form(sol_id: int, request: Request, db: Db, usuario: Verificador):
-    sol, persona, sector = _detalle_solicitud(db, sol_id)
+    sol, persona, barrio = _detalle_solicitud(db, sol_id)
     vuln = db.scalar(select(m.Vulnerabilidad).where(m.Vulnerabilidad.solicitud_id == sol.id))
-    return render(request, "verificar_solicitud.html", usuario, sol=sol, persona=persona, sector=sector, vuln=vuln,
+    return render(request, "verificar_solicitud.html", usuario, sol=sol, persona=persona, barrio=barrio, vuln=vuln,
                   necesidad=NECESIDAD, urgencia=URGENCIA, tipo_vuln=TIPO_VULNERABILIDAD)
 
 
@@ -188,11 +188,11 @@ def inventario(request: Request, db: Db, usuario: VeInventario):
 @router.get("/asignacion")
 def asignacion(request: Request, db: Db, usuario: Entidad):
     verificadas = db.execute(
-        select(m.Solicitud, m.Sector.nombre).join(m.Sector, m.Sector.id == m.Solicitud.sector_id)
+        select(m.Solicitud, m.Barrio.etiqueta).join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
         .where(m.Solicitud.estado == m.EstadoSolicitud.VERIFICADA)  # la prioridad la calcula el bloque 5
         .order_by(m.Solicitud.prioridad.desc().nulls_last(), m.Solicitud.urgencia.desc(), m.Solicitud.creado_en)
         .limit(100)).all()
-    filas = [(sol, sector, sv.disponible_para(db, sol)) for sol, sector in verificadas]
+    filas = [(sol, barrio, sv.disponible_para(db, sol)) for sol, barrio in verificadas]
     equipos = [(u.id, u.nombre) for u in db.scalars(select(m.Usuario).where(
         m.Usuario.rol == m.Rol.EQUIPO_ENTREGA, m.Usuario.aprobado.is_(True), m.Usuario.password_hash.is_not(None)))]
     en_curso = db.execute(
@@ -227,10 +227,10 @@ def asignar(sol_id: int, request: Request, db: Db, usuario: Entidad, equipo_id: 
 # ----------------------------------------------------------------------------- entregas (equipo)
 def _mis_entregas(db: Session, equipo: m.Usuario):
     return db.execute(
-        select(m.Entrega, m.Solicitud, m.Usuario, m.Sector)
+        select(m.Entrega, m.Solicitud, m.Usuario, m.Barrio)
         .join(m.Solicitud, m.Solicitud.id == m.Entrega.solicitud_id)
         .join(m.Usuario, m.Usuario.id == m.Solicitud.solicitante_id)
-        .join(m.Sector, m.Sector.id == m.Solicitud.sector_id)
+        .join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
         .where(m.Entrega.equipo_id == equipo.id, m.Entrega.estado.in_(["asignada", "en_camino"]),
                m.Entrega.estado_codigo == "activo").order_by(m.Entrega.vence_en)).all()
 
@@ -238,9 +238,9 @@ def _mis_entregas(db: Session, equipo: m.Usuario):
 @router.get("/entregas")
 def entregas(request: Request, db: Db, usuario: Equipo):
     filas = []
-    for e, sol, persona, sector in _mis_entregas(db, usuario):
+    for e, sol, persona, barrio in _mis_entregas(db, usuario):
         vuln = db.scalar(select(m.Vulnerabilidad).where(m.Vulnerabilidad.solicitud_id == sol.id))
-        filas.append((e, sol, persona, sector, vuln))
+        filas.append((e, sol, persona, barrio, vuln))
     return render(request, "entregas.html", usuario, filas=filas, necesidad=NECESIDAD, urgencia=URGENCIA,
                   tipo_vuln=TIPO_VULNERABILIDAD)
 

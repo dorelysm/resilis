@@ -42,6 +42,30 @@
 </div>
 {% endmacro %}
 
+{% macro selector_barrio(nombre, etiqueta, barrios, datos, errores, vacio='Elija el barrio', requerido=True, ayuda='') %}
+{# Dos listas: el municipio filtra los barrios (con JavaScript); sin JavaScript se ven todos, agrupados por municipio. #}
+<div class="campo" data-filtro-barrio>
+  <label for="{{ nombre }}-municipio">Municipio <span class="opcional">(para acortar la lista de barrios)</span></label>
+  <select id="{{ nombre }}-municipio" data-municipio>
+    <option value="">Todos los municipios</option>
+    {% for municipio in barrios|map(attribute=2)|unique %}<option value="{{ municipio }}">{{ municipio }}</option>{% endfor %}
+  </select>
+</div>
+<div class="campo">
+  <label for="{{ nombre }}">{{ etiqueta }}{% if not requerido %} <span class="opcional">(opcional)</span>{% endif %}</label>
+  {% if ayuda %}<p class="ayuda" id="{{ nombre }}-ayuda">{{ ayuda }}</p>{% endif %}
+  <select id="{{ nombre }}" name="{{ nombre }}"{% if requerido %} required{% endif %}{{ descripcion_de(nombre, ayuda, errores) }}{% if errores.get(nombre) %} aria-invalid="true"{% endif %}>
+    <option value="">{{ vacio }}</option>
+    {% for municipio, grupo in barrios|groupby(2) %}
+    <optgroup label="{{ municipio }}">
+      {% for valor, texto, _m in grupo %}<option value="{{ valor }}"{% if datos.get(nombre)|string == valor|string %} selected{% endif %}>{{ texto }}</option>{% endfor %}
+    </optgroup>
+    {% endfor %}
+  </select>
+  {% if errores.get(nombre) %}<p class="error" id="{{ nombre }}-error">{{ errores[nombre] }}</p>{% endif %}
+</div>
+{% endmacro %}
+
 {% macro opciones_radio(nombre, leyenda, opciones, datos, errores) %}
 <fieldset id="{{ nombre }}"{% if errores.get(nombre) %} aria-describedby="{{ nombre }}-error"{% endif %}>
   <legend>{{ leyenda }}</legend>

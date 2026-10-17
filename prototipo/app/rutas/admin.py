@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app import servicios
-from app.models import Bitacora, CentroAcopio, EventoAuditoria, Rol, Sector, Usuario, ahora
+from app.models import Bitacora, CentroAcopio, EventoAuditoria, Rol, Barrio, Usuario, ahora
 from app.seguridad import hash_password
-from app.web import ETIQUETA_ROL, chequear_csrf, entero, mensaje, opciones_sectores, render, requiere_rol, solo_digitos
+from app.web import ETIQUETA_ROL, chequear_csrf, entero, mensaje, opciones_barrios, render, requiere_rol, solo_digitos
 
 router = APIRouter(prefix="/admin")
 Db = Annotated[Session, Depends(get_db)]
@@ -22,8 +22,8 @@ ROLES_CREABLES = (Rol.BRIGADISTA, Rol.ENTIDAD, Rol.EQUIPO_ENTREGA, Rol.CENTRO_AC
 def _contexto(db: Session, datos=None, errores=None):
     cuentas = db.scalars(select(Usuario).where(Usuario.ficticio.is_(False)).order_by(Usuario.creado_en.desc())
                          .limit(200)).all()
-    sectores = opciones_sectores(db)
-    return dict(cuentas=cuentas, sectores=sectores, roles=[(r.value, ETIQUETA_ROL[r]) for r in ROLES_CREABLES],
+    barrios = opciones_barrios(db)
+    return dict(cuentas=cuentas, barrios=barrios, roles=[(r.value, ETIQUETA_ROL[r]) for r in ROLES_CREABLES],
                 datos=datos or {}, errores=errores or {})
 
 
@@ -36,11 +36,11 @@ def usuarios(request: Request, db: Db, admin: Admin):
 def crear_usuario(
     request: Request, db: Db, admin: Admin,
     nombre: Annotated[str, Form()] = "", telefono: Annotated[str, Form()] = "", rol: Annotated[str, Form()] = "",
-    sector_id: Annotated[str, Form()] = "", es_organizacion: Annotated[str, Form()] = "",
+    barrio_id: Annotated[str, Form()] = "", es_organizacion: Annotated[str, Form()] = "",
     password: Annotated[str, Form()] = "", csrf: Annotated[str, Form()] = "",
 ):
     chequear_csrf(request, csrf)
-    datos = {"nombre": nombre, "telefono": telefono, "rol": rol, "sector_id": sector_id,
+    datos = {"nombre": nombre, "telefono": telefono, "rol": rol, "barrio_id": barrio_id,
              "es_organizacion": es_organizacion}
     errores: dict[str, str] = {}
     if len(nombre.strip()) < 3:
@@ -54,22 +54,22 @@ def crear_usuario(
         errores["rol"] = "Elija un tipo de cuenta."
     if len(password) < 8:
         errores["password"] = "La contraseña temporal debe tener al menos 8 caracteres."
-    sid = entero(sector_id, 1, 10**9) if sector_id else None
-    if sector_id and (sid is None or db.get(Sector, sid) is None):
-        errores["sector_id"] = "Elija un sector de la lista."
+    sid = entero(barrio_id, 1, 10**9) if barrio_id else None
+    if barrio_id and (sid is None or db.get(Barrio, sid) is None):
+        errores["barrio_id"] = "Elija un barrio de la lista."
     if errores:
         return render(request, "admin_usuarios.html", admin, estado=422, **_contexto(db, datos, errores))
 
     organizacion = es_organizacion == "si"
     nuevo = Usuario(
-        nombre=nombre.strip(), telefono=tel, rol=rol, sector_id=sid, password_hash=hash_password(password),
+        nombre=nombre.strip(), telefono=tel, rol=rol, barrio_id=sid, password_hash=hash_password(password),
         consentimiento_datos=True, consentimiento_fecha=ahora(), ficticio=False,
         es_organizacion=organizacion, aprobado=not organizacion,  # las organizaciones requieren aprobación
     )
     db.add(nuevo)
     db.flush()
     if rol == Rol.CENTRO_ACOPIO:  # un centro de acopio necesita su sitio de inventario
-        db.add(CentroAcopio(nombre=f"Centro de acopio de {nuevo.nombre}", sector_id=sid, responsable_id=nuevo.id))
+        db.add(CentroAcopio(nombre=f"Centro de acopio de {nuevo.nombre}", barrio_id=sid, responsable_id=nuevo.id))
     db.add(Bitacora(usuario_id=admin.id, accion="crear_usuario", objeto=f"usuario:{nuevo.id}", detalle={"rol": rol}))
     db.commit()
     mensaje(request, "La cuenta fue creada." + (" Falta aprobarla." if organizacion else ""))

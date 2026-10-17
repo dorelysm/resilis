@@ -14,19 +14,26 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
 from app.cargas import cargar_viviendas
-from app.db import SessionLocal, crear_tablas, get_db
-from app.models import Municipio, Rol, Sector, Usuario, ahora
+from app.db import SessionLocal, crear_tablas, engine, get_db
+from app.migracion import migrar_sectores_a_barrios
+from app.models import Municipio, Rol, Barrio, Usuario, ahora
 from app.rutas import admin, auth, formularios, mapa, operacion, plan, prioridades
 from app.seguridad import hash_password
 from app.simulacion import generar
+from app.territorio import corregir_nombres_municipios
 from app.web import render, solo_digitos
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Al arrancar: crea las tablas que falten. No carga datos: la carga de viviendas es explícita
-    (`uv run python -m app.cargas`) y todavía no se ha ejecutado."""
+    (`uv run python -m app.cargas`). Si la base viene del esquema con sectores, los reemplaza por barrios."""
+    borrado = migrar_sectores_a_barrios(engine)
+    if borrado is not None:
+        print(f"Sectores reemplazados por barrios. Registros borrados: {borrado}", flush=True)
     crear_tablas()
+    with SessionLocal() as db:
+        corregir_nombres_municipios(db)
     if get_settings().sembrar_demo:
         sembrar_demo()
     if get_settings().reiniciar_demo:
@@ -36,10 +43,10 @@ async def lifespan(app: FastAPI):
 
 
 def sembrar_demo() -> None:
-    """Carga las viviendas y genera un escenario simulado, solo si la base todavía no tiene sectores.
+    """Carga las viviendas y genera un escenario simulado, solo si la base todavía no tiene barrios.
     Nunca borra nada: si ya hay datos, no hace nada."""
     with SessionLocal() as db:
-        if db.scalar(select(Sector.id).limit(1)) is not None:
+        if db.scalar(select(Barrio.id).limit(1)) is not None:
             return
         cargar_viviendas(db)
         generar(db, semilla=42, tipo="inundacion", reiniciar=False)
@@ -52,7 +59,7 @@ def reiniciar_demo() -> None:
     try:
         with SessionLocal() as db:
             r = generar(db, semilla=42, tipo="inundacion", reiniciar=True, conservar_cuentas=True)
-        print(f"DEMO renovada: {r['sectores']} sectores, {r['reportes']} reportes, {r['solicitudes']} solicitudes, "
+        print(f"DEMO renovada: {r['barrios']} barrios, {r['reportes']} reportes, {r['solicitudes']} solicitudes, "
               f"{r['lotes']} lotes", flush=True)
     except RuntimeError as e:
         print(f"DEMO no renovada: {e}", flush=True)
@@ -121,5 +128,5 @@ def salud(db: Session = Depends(get_db)) -> dict:
     """Comprueba que la aplicación y la base de datos responden."""
     db.execute(text("SELECT 1"))
     municipios = db.scalar(select(func.count()).select_from(Municipio))
-    sectores = db.scalar(select(func.count()).select_from(Sector))
-    return {"estado": "ok", "base_de_datos": "ok", "municipios": municipios, "sectores": sectores}
+    barrios = db.scalar(select(func.count()).select_from(Barrio))
+    return {"estado": "ok", "base_de_datos": "ok", "municipios": municipios, "barrios": barrios}

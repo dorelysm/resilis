@@ -9,7 +9,7 @@ from app.models import (
     Donante,
     Lote,
     Municipio,
-    Sector,
+    Barrio,
     Solicitud,
     Usuario,
     ViviendaProyeccion,
@@ -40,16 +40,16 @@ def test_carga_es_idempotente(db):
 def _crear_base(db):
     db.add(Municipio(codigo="08001", nombre="Barranquilla"))
     db.flush()
-    sector = Sector(municipio_codigo="08001", nombre="Sector de prueba")
+    barrio = Barrio(municipio_codigo="08001", nombre="Barrio de prueba")
     persona = Usuario(nombre="Persona Ficticia", telefono="3000000000", rol="solicitante")
-    db.add_all([sector, persona])
+    db.add_all([barrio, persona])
     db.flush()
-    return sector, persona
+    return barrio, persona
 
 
 def test_vulnerabilidad_exige_consentimiento(db):
-    sector, persona = _crear_base(db)
-    sol = Solicitud(solicitante_id=persona.id, creador_id=persona.id, sector_id=sector.id, necesidad="agua")
+    barrio, persona = _crear_base(db)
+    sol = Solicitud(solicitante_id=persona.id, creador_id=persona.id, barrio_id=barrio.id, necesidad="agua")
     db.add(sol)
     db.flush()
     db.add(Vulnerabilidad(solicitud_id=sol.id, tipo="discapacidad", descripcion_situacion="x", consentimiento=False))
@@ -58,8 +58,8 @@ def test_vulnerabilidad_exige_consentimiento(db):
 
 
 def test_lote_conserva_el_inventario(db):
-    sector, persona = _crear_base(db)
-    centro = CentroAcopio(nombre="Centro de prueba", sector_id=sector.id)
+    barrio, persona = _crear_base(db)
+    centro = CentroAcopio(nombre="Centro de prueba", barrio_id=barrio.id)
     donante = Donante(nombre="Donante Ficticio", tipo="persona")
     db.add_all([centro, donante])
     db.flush()

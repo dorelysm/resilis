@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_campos.html" import campo, selector, opciones_radio, resumen_errores %}
+{% from "_campos.html" import campo, selector, selector_barrio, opciones_radio, resumen_errores %}
 {% block titulo %}Registrar donación{% endblock %}
 {% block contenido %}
 <h1>Registrar donación</h1>
@@ -20,8 +20,8 @@
     {{ campo('monto', 'Valor en pesos', datos, errores, tipo='number', requerido=False, ayuda='Solo queda como constancia. Esta página no recibe pagos.', extra='min="1" inputmode="numeric"') }}
   </fieldset>
   {{ selector('centro_id', 'Centro de acopio', centros, datos, errores, vacio='Aún no lo sé', requerido=False) }}
-  {{ opciones_radio('destino', 'A quién quiere dirigir su donación', [('ninguno', 'Que la entidad decida'), ('tipo', 'A quienes necesiten este tipo de producto'), ('sector', 'A un sector en particular')], datos, errores) }}
-  {{ selector('destino_sector_id', 'Sector', sectores, datos, errores, requerido=False, ayuda='Solo si eligió un sector.') }}
+  {{ opciones_radio('destino', 'A quién quiere dirigir su donación', [('ninguno', 'Que la entidad decida'), ('tipo', 'A quienes necesiten este tipo de producto'), ('barrio', 'A un barrio en particular')], datos, errores) }}
+  {{ selector_barrio('destino_barrio_id', 'Barrio', barrios, datos, errores, requerido=False, ayuda='Solo si eligió un barrio.') }}
   <button class="principal" type="submit">Registrar donación</button>
 </form>
 {% endblock %}

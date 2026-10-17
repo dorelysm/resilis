@@ -21,18 +21,18 @@ def usuario(db, rol, nombre="Persona Ficticia", **extra):
 def mundo(db):
     db.add(m.Municipio(codigo="08001", nombre="Barranquilla"))
     db.flush()
-    sector = m.Sector(municipio_codigo="08001", nombre="Sector 1")
-    otro = m.Sector(municipio_codigo="08001", nombre="Sector 2")
-    db.add_all([sector, otro])
+    barrio = m.Barrio(municipio_codigo="08001", nombre="Barrio 1")
+    otro = m.Barrio(municipio_codigo="08001", nombre="Barrio 2")
+    db.add_all([barrio, otro])
     db.flush()
     centro_resp = usuario(db, m.Rol.CENTRO_ACOPIO, "Responsable")
-    centro = m.CentroAcopio(nombre="Centro 1", sector_id=sector.id, responsable_id=centro_resp.id)
+    centro = m.CentroAcopio(nombre="Centro 1", barrio_id=barrio.id, responsable_id=centro_resp.id)
     donante = m.Donante(nombre="Donante", tipo="persona")
     db.add_all([centro, donante])
     db.flush()
     return {
-        "sector": sector, "otro": otro, "centro": centro, "centro_resp": centro_resp, "donante": donante,
-        "solicitante": usuario(db, m.Rol.SOLICITANTE, "Solicitante", sector_id=sector.id),
+        "barrio": barrio, "otro": otro, "centro": centro, "centro_resp": centro_resp, "donante": donante,
+        "solicitante": usuario(db, m.Rol.SOLICITANTE, "Solicitante", barrio_id=barrio.id),
         "brigadista": usuario(db, m.Rol.BRIGADISTA, "Brigadista"),
         "entidad": usuario(db, m.Rol.ENTIDAD, "Entidad"),
         "equipo": usuario(db, m.Rol.EQUIPO_ENTREGA, "Equipo A"),
@@ -50,7 +50,7 @@ def donar(db, mundo, cantidad, tipo="agua", dias=None, **dest):
 
 def pedir(db, mundo, cantidad=10, necesidad="agua", estado=m.EstadoSolicitud.VERIFICADA):
     s = m.Solicitud(solicitante_id=mundo["solicitante"].id, creador_id=mundo["solicitante"].id,
-                    sector_id=mundo["sector"].id, necesidad=necesidad, cantidad=cantidad, estado=estado)
+                    barrio_id=mundo["barrio"].id, necesidad=necesidad, cantidad=cantidad, estado=estado)
     db.add(s)
     db.flush()
     return s
@@ -144,14 +144,14 @@ def test_primero_en_vencer_primero_en_salir_y_sin_vencidos(db, mundo):
 
 
 def test_los_lotes_dirigidos_solo_van_a_su_destino(db, mundo):
-    dirigido = donar(db, mundo, 100, destino_sector_id=mundo["otro"].id)
+    dirigido = donar(db, mundo, 100, destino_barrio_id=mundo["otro"].id)
     general = donar(db, mundo, 10)
-    sol = pedir(db, mundo, cantidad=10)  # el sector de la solicitud es el 1, no el 2
+    sol = pedir(db, mundo, cantidad=10)  # el barrio de la solicitud es el 1, no el 2
     sv.asignar(db, sol, mundo["equipo"], mundo["entidad"], SECRETO)
     assert lote_de(db, dirigido).cantidad_reservada == 0 and lote_de(db, general).cantidad_reservada == 10
     otra = pedir(db, mundo, cantidad=5)
     with pytest.raises(sv.ErrorNegocio, match="No hay inventario suficiente"):
-        sv.asignar(db, otra, mundo["equipo"], mundo["entidad"], SECRETO)  # el dirigido no es para este sector
+        sv.asignar(db, otra, mundo["equipo"], mundo["entidad"], SECRETO)  # el dirigido no es para este barrio
 
 
 # ----------------------------------------------------------------------------- entrega

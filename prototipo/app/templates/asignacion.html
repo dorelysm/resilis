@@ -6,9 +6,9 @@
 
 <h2>Solicitudes por asignar</h2>
 {% if filas %}
-  {% for s, sector, disponible in filas %}
-  <section class="fila-accion" aria-label="Solicitud en {{ sector }}">
-    <p><strong>{{ necesidad[s.necesidad] }}</strong>: {{ s.cantidad }} para {{ s.personas_hogar }} persona(s) en {{ sector }}. {{ urgencia[s.urgencia] }}.
+  {% for s, barrio, disponible in filas %}
+  <section class="fila-accion" aria-label="Solicitud en {{ barrio }}">
+    <p><strong>{{ necesidad[s.necesidad] }}</strong>: {{ s.cantidad }} para {{ s.personas_hogar }} persona(s) en {{ barrio }}. {{ urgencia[s.urgencia] }}.
       {% if s.prioridad is not none %}<br>Prioridad {{ (s.prioridad * 100)|round|int }} %{% if s.confianza is not none %} · confianza {{ (s.confianza * 100)|round|int }} %{% endif %}.{% endif %}</p>
     <p>Inventario disponible para esta solicitud: <strong>{{ disponible }}</strong>{% if disponible < s.cantidad %} <span class="error">(no alcanza)</span>{% endif %}.</p>
     {% if equipos %}
@@ -19,7 +19,7 @@
           <option value="">Elija un equipo</option>
           {% for id, nombre in equipos %}<option value="{{ id }}">{{ nombre }}</option>{% endfor %}
         </select></div>
-      <button class="principal" type="submit"{% if disponible < s.cantidad %} disabled aria-disabled="true"{% endif %}>Asignar<span class="visually-hidden"> solicitud en {{ sector }}</span></button>
+      <button class="principal" type="submit"{% if disponible < s.cantidad %} disabled aria-disabled="true"{% endif %}>Asignar<span class="visually-hidden"> solicitud en {{ barrio }}</span></button>
     </form>
     {% else %}<p>No hay equipos de entrega aprobados. Pida al administrador que cree uno.</p>{% endif %}
   </section>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_campos.html" import campo, selector, opciones_radio, resumen_errores %}
+{% from "_campos.html" import campo, selector, selector_barrio, opciones_radio, resumen_errores %}
 {% block titulo %}Avisar de daños{% endblock %}
 {% block contenido %}
 <h1>Avisar de daños</h1>
@@ -7,8 +7,8 @@
 {{ resumen_errores(errores) }}
 <form method="post" action="/reportes/nuevo" novalidate>
   <input type="hidden" name="csrf" value="{{ csrf }}">
-  {{ selector('sector_id', 'Sector', sectores, datos, errores, vacio='Elija el sector') }}
-  {{ opciones_radio('nivel_dano', 'Cómo quedó el sector', niveles, datos, errores) }}
+  {{ selector_barrio('barrio_id', 'Barrio', barrios, datos, errores, vacio='Elija el barrio') }}
+  {{ opciones_radio('nivel_dano', 'Cómo quedó el barrio', niveles, datos, errores) }}
   {{ campo('personas_afectadas', 'Personas afectadas (cálculo aproximado)', datos, errores, tipo='number', ayuda='Si no lo sabe, escriba 0.', extra='min="0" max="100000" inputmode="numeric"') }}
   {{ opciones_radio('acceso', 'Cómo está el acceso para llegar', accesos, datos, errores) }}
   {{ campo('hora_evento', 'Cuándo ocurrió', datos, errores, tipo='datetime-local', ayuda='Si lo deja vacío, se usa la hora actual.', requerido=False) }}

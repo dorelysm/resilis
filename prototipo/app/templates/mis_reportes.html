@@ -6,10 +6,10 @@
 <div class="tabla-scroll">
 <table>
   <caption class="ayuda">Reportes que usted envió, del más reciente al más antiguo.</caption>
-  <thead><tr><th scope="col">Sector</th><th scope="col">Daño</th><th scope="col">Personas</th><th scope="col">Enviado</th></tr></thead>
+  <thead><tr><th scope="col">Barrio</th><th scope="col">Daño</th><th scope="col">Personas</th><th scope="col">Enviado</th></tr></thead>
   <tbody>
-  {% for r, sector in filas %}
-    <tr><td>{{ sector }}</td><td>{{ niveles[r.nivel_dano] }}</td><td>{{ r.personas_afectadas }}</td><td>{{ r.hora_captura.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+  {% for r, barrio in filas %}
+    <tr><td>{{ barrio }}</td><td>{{ niveles[r.nivel_dano] }}</td><td>{{ r.personas_afectadas }}</td><td>{{ r.hora_captura.strftime('%d/%m/%Y %H:%M') }}</td></tr>
   {% endfor %}
   </tbody>
 </table>

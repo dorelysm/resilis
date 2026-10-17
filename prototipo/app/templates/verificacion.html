@@ -8,10 +8,10 @@
 <div class="tabla-scroll">
 <table>
   <caption class="ayuda">Las más urgentes primero. Verifique la identidad y la necesidad antes de que se asigne la ayuda.</caption>
-  <thead><tr><th scope="col">Persona</th><th scope="col">Sector</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Acción</th></tr></thead>
+  <thead><tr><th scope="col">Persona</th><th scope="col">Barrio</th><th scope="col">Necesita</th><th scope="col">Urgencia</th><th scope="col">Acción</th></tr></thead>
   <tbody>
-  {% for s, persona, sector in solicitudes %}
-    <tr><td>{{ persona }}</td><td>{{ sector }}</td><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td>
+  {% for s, persona, barrio in solicitudes %}
+    <tr><td>{{ persona }}</td><td>{{ barrio }}</td><td>{{ necesidad[s.necesidad] }} ({{ s.cantidad }})</td><td>{{ urgencia[s.urgencia] }}</td>
         <td><a href="/verificacion/solicitudes/{{ s.id }}">Revisar<span class="visually-hidden"> la solicitud de {{ persona }}</span></a></td></tr>
   {% endfor %}
   </tbody>
@@ -21,16 +21,16 @@
 
 <h2>Reportes de daños sin revisar</h2>
 {% if reportes %}
-  {% for r, sector in reportes %}
-  <section class="fila-accion" aria-label="Reporte de {{ sector }}">
-    <p><strong>{{ sector }}</strong>: {{ dano[r.nivel_dano] }}, {{ r.personas_afectadas }} persona(s) afectadas.</p>
+  {% for r, barrio in reportes %}
+  <section class="fila-accion" aria-label="Reporte de {{ barrio }}">
+    <p><strong>{{ barrio }}</strong>: {{ dano[r.nivel_dano] }}, {{ r.personas_afectadas }} persona(s) afectadas.</p>
     <form method="post" action="/verificacion/reportes/{{ r.id }}">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <div class="campo"><label for="nota-{{ r.id }}">Nota <span class="opcional">(opcional)</span></label>
         <input type="text" id="nota-{{ r.id }}" name="nota"></div>
       <div class="acciones">
-        <button class="principal" type="submit" name="resultado" value="verificado">Confirmar<span class="visually-hidden"> reporte de {{ sector }}</span></button>
-        <button class="principal" type="submit" name="resultado" value="desmentido">No es cierto<span class="visually-hidden"> reporte de {{ sector }}</span></button>
+        <button class="principal" type="submit" name="resultado" value="verificado">Confirmar<span class="visually-hidden"> reporte de {{ barrio }}</span></button>
+        <button class="principal" type="submit" name="resultado" value="desmentido">No es cierto<span class="visually-hidden"> reporte de {{ barrio }}</span></button>
       </div>
     </form>
   </section>

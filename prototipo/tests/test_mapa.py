@@ -20,7 +20,7 @@ node = pytest.mark.skipif(shutil.which("node") is None, reason="Node no está in
 
 
 @pytest.fixture()
-def con_sectores(sesiones):
+def con_barrios(sesiones):
     """Un escenario simulado pequeño con puntajes calculados, y cuentas de cada rol que ve el mapa."""
     with sesiones() as db:
         cargar_viviendas(db)
@@ -32,7 +32,7 @@ def con_sectores(sesiones):
 
 
 # ----------------------------------------------------------------------------- servidor
-def test_solo_ven_el_mapa_quienes_deciden(app_cliente, con_sectores):
+def test_solo_ven_el_mapa_quienes_deciden(app_cliente, con_barrios):
     c = app_cliente
     assert c.get("/mapa", follow_redirects=False).status_code == 303
     assert c.get("/mapa/datos.json", follow_redirects=False).status_code == 303
@@ -46,32 +46,32 @@ def test_solo_ven_el_mapa_quienes_deciden(app_cliente, con_sectores):
         salir(c)
 
 
-def test_los_datos_del_mapa_son_los_justos_y_sin_datos_personales(app_cliente, con_sectores, sesiones):
+def test_los_datos_del_mapa_son_los_justos_y_sin_datos_personales(app_cliente, con_barrios, sesiones):
     entrar(app_cliente, "3100000004")
     r = app_cliente.get("/mapa/datos.json")
     d = r.json()
     assert r.headers["cache-control"] == "no-store"
-    assert d["total"] == len(d["sectores"]) > 10
-    assert {x["nombre"].split(" - ")[0] for x in d["sectores"]} == {"Barranquilla", "Soledad"}
+    assert d["total"] == len(d["barrios"]) > 10
+    assert {x["municipio"] for x in d["barrios"]} == {"Barranquilla", "Soledad"}
     assert {mu["codigo"] for mu in d["municipios"]} == {"08001", "08758"}
     campos = {"id", "nombre", "municipio", "codigo_municipio", "lat", "lon", "personas", "prioridad", "posicion",
               "confianza", "alertas", "n_reportes", "n_solicitudes", "base_previa"}
-    assert all(set(x) == campos for x in d["sectores"])
-    assert [x["posicion"] for x in d["sectores"]] == list(range(1, d["total"] + 1))  # vienen en orden de prioridad
-    assert all(0 <= x["prioridad"] <= 1 and 0 <= x["confianza"] <= 1 for x in d["sectores"])
-    assert all(isinstance(x["alertas"], list) for x in d["sectores"])
+    assert all(set(x) == campos for x in d["barrios"])
+    assert [x["posicion"] for x in d["barrios"]] == list(range(1, d["total"] + 1))  # vienen en orden de prioridad
+    assert all(0 <= x["prioridad"] <= 1 and 0 <= x["confianza"] <= 1 for x in d["barrios"])
+    assert all(isinstance(x["alertas"], list) for x in d["barrios"])
     with sesiones() as db:  # nada de lo que aparece es un nombre, teléfono o documento de una persona
         gente = db.scalars(select(m.Usuario)).all()
         texto = r.text
         assert all(u.nombre not in texto and u.telefono not in texto for u in gente)
 
 
-def test_los_sectores_sin_reportes_se_marcan(app_cliente, con_sectores):
+def test_los_barrios_sin_reportes_se_marcan(app_cliente, con_barrios):
     entrar(app_cliente, "3100000004")
-    sectores = app_cliente.get("/mapa/datos.json").json()["sectores"]
-    sin = [s for s in sectores if "sin_reportes" in s["alertas"]]
+    barrios = app_cliente.get("/mapa/datos.json").json()["barrios"]
+    sin = [s for s in barrios if "sin_reportes" in s["alertas"]]
     assert sin and all(s["confianza"] == 0.0 and s["n_reportes"] == 0 for s in sin)
-    assert any(s["n_reportes"] > 0 and s["confianza"] > 0 for s in sectores)
+    assert any(s["n_reportes"] > 0 and s["confianza"] > 0 for s in barrios)
 
 
 def test_sin_puntajes_el_mapa_los_calcula(app_cliente, sesiones):
@@ -83,14 +83,14 @@ def test_sin_puntajes_el_mapa_los_calcula(app_cliente, sesiones):
     assert app_cliente.get("/mapa/datos.json").json()["total"] > 5
 
 
-def test_la_pagina_del_mapa_es_accesible(app_cliente, con_sectores):
+def test_la_pagina_del_mapa_es_accesible(app_cliente, con_barrios):
     entrar(app_cliente, "3100000004")
     html = app_cliente.get("/mapa").text
     revisor = _Revisor()
     revisor.feed(html)
     assert revisor.lang == "es" and revisor.ids <= revisor.para, f"campos sin etiqueta: {revisor.ids - revisor.para}"
     assert "<legend>Qué mostrar con el color</legend>" in html  # el grupo de opciones tiene nombre
-    assert 'role="region" aria-label="Mapa de los sectores' in html and 'aria-live="polite"' in html
+    assert 'role="region" aria-label="Mapa de los barrios' in html and 'aria-live="polite"' in html
     assert "<noscript>" in html and 'href="/prioridades"' in html  # alternativa sin mapa: la tabla
     assert "/static/vendor/leaflet/leaflet.js" in html and "unpkg" not in html and "cdn" not in html.lower()
 
@@ -166,12 +166,12 @@ def test_las_rampas_van_de_claro_a_oscuro():
 
 @node
 def test_filtrar_por_municipio_y_por_aviso():
-    sectores = [
+    barrios = [
         {"id": 1, "codigo_municipio": "A", "alertas": []},
         {"id": 2, "codigo_municipio": "A", "alertas": ["sin_reportes"]},
         {"id": 3, "codigo_municipio": "B", "alertas": ["baja_confianza", "contradictorio"]},
     ]
-    base = f"const S = {json.dumps(sectores)};"
+    base = f"const S = {json.dumps(barrios)};"
     def ids(filtro):
         guion = f"{base} const m = require(process.argv[1]); console.log(JSON.stringify(m.filtrar(S, {filtro}).map(s => s.id)));"
         return json.loads(subprocess.run(["node", "-e", guion, str(JS)], capture_output=True, text=True, encoding="utf-8", check=True).stdout)
@@ -196,10 +196,10 @@ def test_tamano_de_los_circulos_y_descripcion_para_lectores_de_pantalla():
     assert _js("m.tamano(0, 1000)") == 24 and _js("m.tamano(1000, 1000)") == 40
     assert _js("m.tamano(250, 1000)") < _js("m.tamano(900, 1000)")
     assert _js("m.tamano(5, 0)") == 24  # sin máximo no se rompe
-    s = {"nombre": "Soledad - Sector 04", "municipio": "Soledad", "posicion": 3, "prioridad": 0.82, "confianza": 0.41,
+    s = {"nombre": "Soledad - Barrio 04", "municipio": "Soledad", "posicion": 3, "prioridad": 0.82, "confianza": 0.41,
          "alertas": ["baja_confianza"]}
     texto = _js(f"m.resumen({json.dumps(s)}, {{baja_confianza: 'La información es poco confiable'}}, 153)")
-    assert "Soledad - Sector 04" in texto and "lugar 3 de 153" in texto and "prioridad 82 %" in texto
+    assert "Soledad - Barrio 04" in texto and "lugar 3 de 153" in texto and "prioridad 82 %" in texto
     assert "confianza 41 %" in texto and "La información es poco confiable" in texto
     assert _js(f"m.sinDatos({json.dumps({'alertas': ['sin_reportes']})})") is True
     assert _js(f"m.sinDatos({json.dumps({'alertas': []})})") is False

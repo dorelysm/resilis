@@ -51,13 +51,13 @@ def test_la_confianza_siempre_esta_entre_cero_y_uno():
                     assert 0.0 <= mo.confianza_dato(f, v, h, n) <= 1.0
 
 
-def test_confianza_del_sector():
-    assert mo.confianza_sector([], 0.0) == 0.0  # sin reportes no hay confianza
-    un_reporte = mo.confianza_sector([0.5], 0.0)
+def test_confianza_del_barrio():
+    assert mo.confianza_barrio([], 0.0) == 0.0  # sin reportes no hay confianza
+    un_reporte = mo.confianza_barrio([0.5], 0.0)
     assert un_reporte == pytest.approx(0.5)
-    assert mo.confianza_sector([0.5, 0.5], 0.0) == pytest.approx(0.75)  # varios reportes se refuerzan
-    assert mo.confianza_sector([0.5, 0.5], 1.0) == pytest.approx(0.75 * 0.5)  # la contradicción la reduce a la mitad
-    assert mo.confianza_sector([0.5, 0.5, 0.5], 0.0) > mo.confianza_sector([0.5, 0.5], 0.0)
+    assert mo.confianza_barrio([0.5, 0.5], 0.0) == pytest.approx(0.75)  # varios reportes se refuerzan
+    assert mo.confianza_barrio([0.5, 0.5], 1.0) == pytest.approx(0.75 * 0.5)  # la contradicción la reduce a la mitad
+    assert mo.confianza_barrio([0.5, 0.5, 0.5], 0.0) > mo.confianza_barrio([0.5, 0.5], 0.0)
 
 
 def test_dispersion():

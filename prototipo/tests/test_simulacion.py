@@ -16,8 +16,8 @@ def base(db):
 def _huella(db):
     """Resumen comparable de lo generado, para verificar que se repite con la misma semilla."""
     return (
-        [(s.nombre, s.viviendas, s.personas, s.vulnerabilidad_base) for s in db.scalars(select(m.Sector).order_by(m.Sector.id))],
-        [(r.sector_id, r.nivel_dano, r.personas_afectadas) for r in db.scalars(select(m.ReporteDanos).order_by(m.ReporteDanos.id))],
+        [(s.nombre, s.viviendas, s.personas, s.vulnerabilidad_base) for s in db.scalars(select(m.Barrio).order_by(m.Barrio.id))],
+        [(r.barrio_id, r.nivel_dano, r.personas_afectadas) for r in db.scalars(select(m.ReporteDanos).order_by(m.ReporteDanos.id))],
         [(s.necesidad, s.cantidad, s.urgencia) for s in db.scalars(select(m.Solicitud).order_by(m.Solicitud.id))],
         [(lote.tipo_bien, lote.cantidad_recibida) for lote in db.scalars(select(m.Lote).order_by(m.Lote.id))],
     )
@@ -42,13 +42,15 @@ def test_semillas_distintas_dan_datos_distintos(base):
     assert a != _huella(base)
 
 
-def test_las_viviendas_de_los_sectores_suman_la_cifra_municipal(base):
+def test_las_viviendas_de_los_barrios_suman_la_cifra_municipal(base):
     generar(base, semilla=3, tipo="terremoto")
     for codigo in MUNICIPIOS:
+        solo_poblados = not base.scalar(select(func.count()).select_from(m.Barrio).where(
+            m.Barrio.municipio_codigo == codigo, m.Barrio.tipo == "barrio"))
         real = base.scalar(select(m.ViviendaProyeccion.viviendas).where(
-            m.ViviendaProyeccion.municipio_codigo == codigo, m.ViviendaProyeccion.area == "Cabecera",
+            m.ViviendaProyeccion.municipio_codigo == codigo, m.ViviendaProyeccion.area == ("Total" if solo_poblados else "Cabecera"),
             m.ViviendaProyeccion.anio == 2026))
-        simulado = base.scalar(select(func.sum(m.Sector.viviendas)).where(m.Sector.municipio_codigo == codigo))
+        simulado = base.scalar(select(func.sum(m.Barrio.viviendas)).where(m.Barrio.municipio_codigo == codigo))
         assert simulado == real, codigo
 
 
@@ -78,12 +80,12 @@ def test_el_inventario_cuadra_y_deja_movimientos(base):
     assert movimientos == len(lotes)
 
 
-def test_hay_sectores_sin_reportes_y_desordenes_conocidos(base):
+def test_hay_barrios_sin_reportes_y_desordenes_conocidos(base):
     """La simulación deja información faltante, duplicados y falsos, para que el modelo los detecte."""
     generar(base, semilla=8, tipo="inundacion")
-    con_reporte = {r for (r,) in base.execute(select(m.ReporteDanos.sector_id).distinct())}
-    todos = {s for (s,) in base.execute(select(m.Sector.id))}
-    assert todos - con_reporte, "debe haber sectores sin ningún reporte"
+    con_reporte = {r for (r,) in base.execute(select(m.ReporteDanos.barrio_id).distinct())}
+    todos = {s for (s,) in base.execute(select(m.Barrio.id))}
+    assert todos - con_reporte, "debe haber barrios sin ningún reporte"
     verdad = base.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))
     assert verdad["duplicadas"] and verdad["reportes_falsos"]
 
@@ -92,9 +94,9 @@ def _correlacion(base, tipo, semilla, otra):
     generar(base, semilla=semilla, tipo=tipo)
     verdad = base.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))["dano"]
     ev = base.scalar(select(m.Evento))
-    sectores = base.scalars(select(m.Sector)).all()
-    d = np.array([verdad[str(s.id)] for s in sectores])
-    x = np.array(otra(sectores, ev))
+    barrios = base.scalars(select(m.Barrio)).all()
+    d = np.array([verdad[str(s.id)] for s in barrios])
+    x = np.array(otra(barrios, ev))
     return float(np.corrcoef(d, x)[0, 1])
 
 
@@ -104,7 +106,7 @@ def test_cada_tipo_de_evento_tiene_su_patron(base):
     assert _correlacion(base, "terremoto", 11, dist) < -0.4
     # Inundación: el daño sigue a la amenaza de base (zonas bajas)
     assert _correlacion(base, "inundacion", 12, lambda ss, ev: [s.amenaza_base for s in ss]) > 0.6
-    # Deslizamiento: localizado; muchos sectores casi sin daño
+    # Deslizamiento: localizado; muchos barrios casi sin daño
     generar(base, semilla=13, tipo="deslizamiento")
     verdad = base.scalar(select(m.Bitacora.detalle).where(m.Bitacora.accion == "simulacion_verdad"))["dano"]
     assert np.median(list(verdad.values())) < 0.1
@@ -132,7 +134,7 @@ def test_sin_viviendas_cargadas_avisa(db):
 
 
 def test_reiniciar_borra_tambien_lo_calculado(base):
-    """Los puntajes y los planes dependen de los sectores y las solicitudes: al reiniciar deben borrarse con ellos."""
+    """Los puntajes y los planes dependen de los barrios y las solicitudes: al reiniciar deben borrarse con ellos."""
     from app import plan as pl
     from app import puntaje as pj
 
@@ -140,10 +142,10 @@ def test_reiniciar_borra_tambien_lo_calculado(base):
     pj.recalcular(base)
     entidad = base.scalar(select(m.Usuario).where(m.Usuario.rol == "entidad"))
     assert pl.calcular_plan(base, entidad) is not None
-    assert base.scalar(select(func.count()).select_from(m.PuntajeSector)) > 0
+    assert base.scalar(select(func.count()).select_from(m.PuntajeBarrio)) > 0
     generar(base, semilla=22, tipo="vendaval")  # reinicia por defecto: no debe chocar con las claves foráneas
     assert base.scalar(select(func.count()).select_from(m.PlanAsignacion)) == 0
-    assert base.scalar(select(func.count()).select_from(m.PuntajeSector)) == 0
+    assert base.scalar(select(func.count()).select_from(m.PuntajeBarrio)) == 0
 
 
 def _admin_real(db, telefono="3001112233"):
@@ -171,18 +173,18 @@ def test_regenerar_conserva_la_cuenta_del_administrador_real(base):
 
 def test_regenerar_conserva_todas_las_cuentas_reales_que_todavia_no_hicieron_nada(base):
     """Una entidad, un equipo y un centro de acopio creados por el administrador, sin datos todavía: se conservan,
-    vuelven a quedar en su sector (buscado por nombre) y el centro de acopio real sigue existiendo."""
+    vuelven a quedar en su barrio (buscado por nombre) y el centro de acopio real sigue existiendo."""
     generar(base, semilla=41, tipo="inundacion")
-    sector = base.scalar(select(m.Sector).where(m.Sector.nombre == "Soledad - Sector 03"))
+    barrio = base.scalar(select(m.Barrio).where(m.Barrio.nombre == "Villa Estadio", m.Barrio.municipio_codigo == "08758"))
     admin = _admin_real(base)
     entidad = m.Usuario(nombre="Entidad Real", telefono="3002223344", rol="entidad", ficticio=False, password_hash="x")
     acopio = m.Usuario(nombre="Acopio Real", telefono="3003334455", rol="centro_acopio", ficticio=False,
-                       password_hash="x", sector_id=sector.id)
+                       password_hash="x", barrio_id=barrio.id)
     base.add_all([entidad, acopio])
     base.flush()
-    centro = m.CentroAcopio(nombre="Centro de acopio de Acopio Real", sector_id=sector.id, responsable_id=acopio.id)
+    centro = m.CentroAcopio(nombre="Centro de acopio de Acopio Real", barrio_id=barrio.id, responsable_id=acopio.id)
     base.add(centro)
-    ajustado = base.scalar(select(m.Peso).where(m.Peso.ambito == "sector", m.Peso.dimension == "gravedad"))
+    ajustado = base.scalar(select(m.Peso).where(m.Peso.ambito == "barrio", m.Peso.dimension == "gravedad"))
     ajustado.valor, ajustado.actualizado_por = 0.6, entidad.id  # la entidad cambió este peso
     base.commit()
     ids = {u.id for u in (admin, entidad, acopio)}
@@ -190,35 +192,35 @@ def test_regenerar_conserva_todas_las_cuentas_reales_que_todavia_no_hicieron_nad
     generar(base, semilla=42, tipo="inundacion", conservar_cuentas=True)
     base.expire_all()
     assert {u.id for u in base.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(False)))} == ids
-    nuevo = base.scalar(select(m.Sector).where(m.Sector.nombre == "Soledad - Sector 03"))
-    assert base.get(m.Usuario, acopio.id).sector_id == nuevo.id  # reubicado por nombre
-    assert base.get(m.CentroAcopio, centro.id).sector_id == nuevo.id and base.get(m.CentroAcopio, centro.id).responsable_id == acopio.id
+    nuevo = base.scalar(select(m.Barrio).where(m.Barrio.nombre == "Villa Estadio", m.Barrio.municipio_codigo == "08758"))
+    assert base.get(m.Usuario, acopio.id).barrio_id == nuevo.id  # reubicado por nombre
+    assert base.get(m.CentroAcopio, centro.id).barrio_id == nuevo.id and base.get(m.CentroAcopio, centro.id).responsable_id == acopio.id
     otros = base.scalars(select(m.CentroAcopio).where(m.CentroAcopio.id != centro.id)).all()
     assert otros and all(c.responsable_id != acopio.id for c in otros)  # los demás son los simulados nuevos
-    peso = base.scalar(select(m.Peso).where(m.Peso.ambito == "sector", m.Peso.dimension == "gravedad"))
+    peso = base.scalar(select(m.Peso).where(m.Peso.ambito == "barrio", m.Peso.dimension == "gravedad"))
     assert peso.valor == 0.6 and peso.actualizado_por == entidad.id  # el ajuste de la entidad no se pierde
-    assert base.scalar(select(func.count()).select_from(m.Peso).where(m.Peso.ambito == "sector",
+    assert base.scalar(select(func.count()).select_from(m.Peso).where(m.Peso.ambito == "barrio",
                                                                        m.Peso.dimension == "gravedad")) == 1
 
 
 def test_regenerar_se_niega_si_las_cuentas_reales_ya_tienen_datos_y_no_borra_nada(base):
     generar(base, semilla=33, tipo="inundacion")
     _admin_real(base)
-    sector = base.scalar(select(m.Sector))
+    barrio = base.scalar(select(m.Barrio))
     persona = m.Usuario(nombre="Persona Real", telefono="3009998877", rol="solicitante", ficticio=False,
-                        sector_id=sector.id)
+                        barrio_id=barrio.id)
     base.add(persona)
     base.flush()
-    base.add(m.Solicitud(solicitante_id=persona.id, creador_id=persona.id, sector_id=sector.id, necesidad="agua",
+    base.add(m.Solicitud(solicitante_id=persona.id, creador_id=persona.id, barrio_id=barrio.id, necesidad="agua",
                          cantidad=6))
     base.commit()
     eventos = base.scalar(select(func.count()).select_from(m.Evento))
-    sectores = base.scalar(select(func.count()).select_from(m.Sector))
+    barrios = base.scalar(select(func.count()).select_from(m.Barrio))
     with pytest.raises(RuntimeError, match="ya tienen datos.*solicitudes"):
         generar(base, semilla=34, tipo="vendaval", conservar_cuentas=True)
     base.rollback()
     assert base.scalar(select(func.count()).select_from(m.Evento)) == eventos
-    assert base.scalar(select(func.count()).select_from(m.Sector)) == sectores
+    assert base.scalar(select(func.count()).select_from(m.Barrio)) == barrios
     assert base.get(m.Usuario, persona.id) is not None
 
 

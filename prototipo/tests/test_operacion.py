@@ -21,8 +21,8 @@ def salir(c):
 def equipo_completo(sesiones, mundo):
     """Cuentas de cada rol, un centro de acopio y un donante con una donación de 100 litros por recibir."""
     ids = {
-        "solicitante": crear_usuario(sesiones, m.Rol.SOLICITANTE, "3100000001", sector_id=mundo["sector_id"]),
-        "otro": crear_usuario(sesiones, m.Rol.SOLICITANTE, "3100000002", sector_id=mundo["sector_id"]),
+        "solicitante": crear_usuario(sesiones, m.Rol.SOLICITANTE, "3100000001", barrio_id=mundo["barrio_id"]),
+        "otro": crear_usuario(sesiones, m.Rol.SOLICITANTE, "3100000002", barrio_id=mundo["barrio_id"]),
         "brigadista": crear_usuario(sesiones, m.Rol.BRIGADISTA, "3100000003"),
         "entidad": crear_usuario(sesiones, m.Rol.ENTIDAD, "3100000004"),
         "equipo": crear_usuario(sesiones, m.Rol.EQUIPO_ENTREGA, "3100000005"),
@@ -31,7 +31,7 @@ def equipo_completo(sesiones, mundo):
         "admin": crear_usuario(sesiones, m.Rol.ADMINISTRADOR, "3100000008"),
     }
     with sesiones() as db:
-        db.add(m.CentroAcopio(nombre="Centro de prueba", sector_id=mundo["sector_id"], responsable_id=ids["acopio"]))
+        db.add(m.CentroAcopio(nombre="Centro de prueba", barrio_id=mundo["barrio_id"], responsable_id=ids["acopio"]))
         d = m.Donante(nombre="Donante de prueba", tipo="persona")
         db.add(d)
         db.flush()
@@ -53,7 +53,7 @@ def recibir_inventario(c, ids, cantidad=100):
 def pedir(c, mundo, telefono="3100000001", hogar="2"):
     entrar(c, telefono)
     r = c.post("/solicitudes/nueva", follow_redirects=False, data={
-        "sector_id": str(mundo["sector_id"]), "necesidad": "agua", "personas_hogar": hogar, "urgencia": "2",
+        "barrio_id": str(mundo["barrio_id"]), "necesidad": "agua", "personas_hogar": hogar, "urgencia": "2",
         "descripcion": "No tenemos agua potable.", "direccion": "Calle 1 # 2-3", "csrf": csrf(c, "/solicitudes/nueva")})
     salir(c)
     return r

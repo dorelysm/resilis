@@ -1,7 +1,7 @@
 """Generador de datos simulados (bloque 2 del plan).
 
 Todo es ficticio y reproducible: con la misma semilla se obtienen los mismos datos. Lo único real son las
-viviendas proyectadas por municipio, que sirven de ancla: las viviendas de los sectores simulados suman la cifra
+viviendas proyectadas por municipio, que sirven de ancla: las viviendas de los barrios suman la cifra
 municipal (RD-09). Los daños, las personas, los reportes, las solicitudes, las donaciones y el inventario se
 simulan (RD-10 a RD-13, RD-22 de los requisitos).
 
@@ -16,20 +16,9 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
+from app.territorio import MUNICIPIOS, leer_barrios
 
 BASE_FECHA = datetime(2026, 10, 16, 8, 0, tzinfo=timezone.utc)  # fija, para que el resultado se repita
-
-# Centros aproximados (lat, lon, dispersión en grados). Son referencias para ubicar sectores simulados,
-# no datos oficiales.
-MUNICIPIOS = {
-    "08001": ("Barranquilla", 10.9685, -74.7813, 0.060),
-    "08758": ("Soledad", 10.9184, -74.7646, 0.040),
-    "08433": ("Malambo", 10.8596, -74.7737, 0.025),
-    "08296": ("Galapa", 10.8967, -74.8864, 0.020),
-    "08573": ("Puerto Colombia", 10.9878, -74.9547, 0.020),
-    "08078": ("Baranoa", 10.7942, -74.9158, 0.020),
-    "08638": ("Sabanalarga", 10.6317, -74.9214, 0.025),
-}
 
 NOMBRES = ["Camila", "Mateo", "Valentina", "Santiago", "Sofía", "Samuel", "Isabella", "Daniel", "Mariana", "Andrés",
            "Laura", "Julián", "Paula", "Sebastián", "Daniela", "Felipe", "Natalia", "Alejandro", "Carolina", "Camilo"]
@@ -60,9 +49,9 @@ VULNERABILIDADES = [
 ]
 
 PESOS_INICIALES = {
-    "sector": {"gravedad": 0.30, "urgencia": 0.25, "expuestas": 0.25, "accesibilidad": 0.10, "recursos": 0.10},
+    "barrio": {"gravedad": 0.30, "urgencia": 0.25, "expuestas": 0.25, "accesibilidad": 0.10, "recursos": 0.10},
     "solicitud": {"urgencia": 0.30, "vulnerabilidad": 0.25, "personas_hogar": 0.15, "tiempo_espera": 0.15,
-                  "prioridad_sector": 0.15},
+                  "prioridad_barrio": 0.15},
     "confianza": {"fuente": 0.35, "verificacion": 0.30, "vigencia": 0.15, "corroboracion": 0.20},
 }
 
@@ -106,7 +95,7 @@ def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
     Por seguridad se niega a actuar si ya hay cuentas reales: borraría sus solicitudes y sus datos.
     Con `conservar_cuentas` se permite renovar la simulación aunque haya cuentas reales, siempre que todavía no
     hayan hecho nada (ni solicitudes, ni reportes, ni donaciones, ni verificaciones, ni entregas). Las cuentas, su
-    historial, los centros de acopio que administran y los pesos que cambiaron se conservan. Devuelve en qué sector
+    historial, los centros de acopio que administran y los pesos que cambiaron se conservan. Devuelve en qué barrio
     estaba cada cuenta y cada centro, para volver a ubicarlos cuando se genere de nuevo."""
     reales = db.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(False))).all()
     if reales and not conservar_cuentas:
@@ -118,14 +107,14 @@ def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
         if hecho:
             detalle = ", ".join(f"{n} {k}" for k, n in hecho.items())
             raise RuntimeError(f"Las cuentas reales ya tienen datos ({detalle}): renovar la simulación podría borrarlos.")
-    nombre_sector = {s.id: s.nombre for s in db.scalars(select(m.Sector))}
+    nombre_barrio = {s.id: (s.municipio_codigo, s.nombre) for s in db.scalars(select(m.Barrio))}
     centros_reales = db.scalars(select(m.CentroAcopio).where(m.CentroAcopio.responsable_id.in_(ids))).all() if ids else []
-    donde = {"usuarios": {u.id: nombre_sector.get(u.sector_id) for u in reales if u.sector_id},
-             "centros": {c.id: nombre_sector.get(c.sector_id) for c in centros_reales if c.sector_id}}
-    for u in reales:  # se sueltan de los sectores que se van a borrar; luego se vuelven a ubicar por nombre
-        u.sector_id = None
+    donde = {"usuarios": {u.id: nombre_barrio.get(u.barrio_id) for u in reales if u.barrio_id},
+             "centros": {c.id: nombre_barrio.get(c.barrio_id) for c in centros_reales if c.barrio_id}}
+    for u in reales:  # se sueltan de los barrios que se van a borrar; luego se vuelven a ubicar por nombre
+        u.barrio_id = None
     for c in centros_reales:
-        c.sector_id = None
+        c.barrio_id = None
     db.flush()
 
     simulados = select(m.Usuario.id).where(m.Usuario.ficticio.is_(True))
@@ -133,7 +122,7 @@ def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
     for modelo in (
         m.MovimientoInventario, m.PlanResumen, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega,
         m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.Solicitud,
-        m.ReporteDanos, m.PuntajeSector, m.EventoAuditoria,
+        m.ReporteDanos, m.PuntajeBarrio, m.EventoAuditoria,
     ):
         db.execute(delete(modelo))
     conservados = [c.id for c in centros_reales]
@@ -142,46 +131,52 @@ def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
     db.execute(delete(m.Peso).where(m.Peso.actualizado_por.is_(None) | m.Peso.actualizado_por.in_(simulados)))
     db.execute(delete(m.Usuario).where(m.Usuario.ficticio.is_(True)))
     db.execute(delete(m.Evento))
-    db.execute(delete(m.Sector))
+    db.execute(delete(m.Barrio))
     db.flush()
     return donde
 
 
-def reubicar_cuentas(db: Session, donde: dict, sectores: list[m.Sector]) -> None:
-    """Vuelve a poner cada cuenta real y cada centro conservado en el sector que tenía, buscándolo por nombre."""
-    por_nombre = {s.nombre: s.id for s in sectores}
+def reubicar_cuentas(db: Session, donde: dict, barrios: list[m.Barrio]) -> None:
+    """Vuelve a poner cada cuenta real y cada centro conservado en el barrio que tenía, buscándolo por municipio y nombre."""
+    por_nombre = {(s.municipio_codigo, s.nombre): s.id for s in barrios}
     for uid, nombre in donde.get("usuarios", {}).items():
-        db.get(m.Usuario, uid).sector_id = por_nombre.get(nombre)
+        db.get(m.Usuario, uid).barrio_id = por_nombre.get(nombre)
     for cid, nombre in donde.get("centros", {}).items():
-        db.get(m.CentroAcopio, cid).sector_id = por_nombre.get(nombre)
+        db.get(m.CentroAcopio, cid).barrio_id = por_nombre.get(nombre)
     db.flush()
 
 
-# ----------------------------------------------------------------------------- sectores
-def crear_sectores(db: Session, rng, municipios: list[str], viviendas_por_sector: int = 5000) -> list[m.Sector]:
-    sectores: list[m.Sector] = []
+# ----------------------------------------------------------------------------- barrios
+def crear_barrios(db: Session, rng, municipios: list[str], viviendas_por_barrio: int = 5000) -> list[m.Barrio]:
+    """Crea los barrios reales de cada municipio (data/barrios_atlantico.csv). Lo que se simula es cuántas viviendas
+    tiene cada uno, su vulnerabilidad, su amenaza y su acceso; la suma de viviendas coincide con la cifra municipal."""
+    del viviendas_por_barrio  # ya no se inventan barrios: se usan los del archivo
+    del_archivo = leer_barrios()
+    barrios: list[m.Barrio] = []
     for codigo in municipios:
-        nombre, lat, lon, dispersion = MUNICIPIOS[codigo]
+        nombre = MUNICIPIOS[codigo]
+        lugares = del_archivo.get(codigo, [])
+        if not lugares:
+            raise RuntimeError(f"No hay barrios de {nombre} en data/barrios_atlantico.csv.")
+        solo_poblados = all(x["tipo"] != "barrio" for x in lugares)
         total = db.scalar(
             select(m.ViviendaProyeccion.viviendas).where(
                 m.ViviendaProyeccion.municipio_codigo == codigo,
-                m.ViviendaProyeccion.area == "Cabecera",
+                m.ViviendaProyeccion.area == ("Total" if solo_poblados else "Cabecera"),
                 m.ViviendaProyeccion.anio == 2026,
             )
         )
         if total is None:
             raise RuntimeError(f"Faltan las proyecciones de viviendas de {nombre}: cargarlas con `python -m app.cargas`.")
-        n = max(3, round(total / viviendas_por_sector))
+        n = len(lugares)
         partes = rng.dirichlet(np.full(n, 4.0)) * total
         viv = np.floor(partes).astype(int)
         viv[: total - viv.sum()] += 1  # el resto se reparte para que la suma sea exacta
-        for i in range(n):
-            la, lo = _jitter(rng, lat, lon, dispersion)
-            sectores.append(
-                m.Sector(
-                    municipio_codigo=codigo,
-                    nombre=f"{nombre} - Sector {i + 1:02d}",
-                    lat=la, lon=lo,
+        for i, lugar in enumerate(lugares):
+            barrios.append(
+                m.Barrio(
+                    municipio_codigo=codigo, nombre=lugar["nombre"], tipo=lugar["tipo"],
+                    lat=lugar["lat"], lon=lugar["lon"],
                     viviendas=int(viv[i]),
                     personas=int(viv[i] * float(np.clip(rng.normal(3.4, 0.4), 2.2, 4.5))),
                     vulnerabilidad_base=round(float(rng.beta(2, 5)), 3),
@@ -190,27 +185,27 @@ def crear_sectores(db: Session, rng, municipios: list[str], viviendas_por_sector
                     simulado=True,
                 )
             )
-    db.add_all(sectores)
+    db.add_all(barrios)
     db.flush()
-    return sectores
+    return barrios
 
 
 # ----------------------------------------------------------------------------- evento y daño verdadero
-def _dano_verdadero(tipo: str, sectores: list[m.Sector], intensidad: float, rng) -> tuple[np.ndarray, dict]:
-    """Daño real (0 a 1) de cada sector, que los reportes después observan con ruido."""
-    lat = np.array([s.lat for s in sectores])
-    lon = np.array([s.lon for s in sectores])
-    vul = np.array([s.vulnerabilidad_base for s in sectores])
-    amen = np.array([s.amenaza_base for s in sectores])
+def _dano_verdadero(tipo: str, barrios: list[m.Barrio], intensidad: float, rng) -> tuple[np.ndarray, dict]:
+    """Daño real (0 a 1) de cada barrio, que los reportes después observan con ruido."""
+    lat = np.array([s.lat for s in barrios])
+    lon = np.array([s.lon for s in barrios])
+    vul = np.array([s.vulnerabilidad_base for s in barrios])
+    amen = np.array([s.amenaza_base for s in barrios])
 
     if tipo == "terremoto":  # foco puntual con atenuación por la distancia
-        foco = rng.integers(len(sectores))
+        foco = rng.integers(len(barrios))
         r0 = rng.uniform(0.05, 0.10)
         dist = np.hypot(lat - lat[foco], lon - lon[foco])
         d = intensidad * np.exp(-dist / r0) * (0.7 + 0.6 * vul)
         zona = {"lat": float(lat[foco]), "lon": float(lon[foco]), "radio_km": float(r0 * 111)}
     elif tipo == "inundacion":  # zonas bajas: sigue a la amenaza de base
-        d = intensidad * (1.6 * amen + 0.2 * rng.normal(size=len(sectores)))
+        d = intensidad * (1.6 * amen + 0.2 * rng.normal(size=len(barrios)))
         zona = {"lat": float(lat.mean()), "lon": float(lon.mean()), "radio_km": 25.0}
     elif tipo == "vendaval":  # franja amplia que cruza el área
         theta = rng.uniform(0, math.pi)
@@ -219,33 +214,33 @@ def _dano_verdadero(tipo: str, sectores: list[m.Sector], intensidad: float, rng)
         ancho = 0.04
         d = intensidad * np.exp(-((perp / ancho) ** 2)) * (0.6 + 0.8 * vul)
         zona = {"lat": float(cy), "lon": float(cx), "radio_km": float(ancho * 111), "angulo": float(theta)}
-    elif tipo == "deslizamiento":  # focos localizados en sectores de alta amenaza
-        k = min(5, len(sectores))
+    elif tipo == "deslizamiento":  # focos localizados en barrios de alta amenaza
+        k = min(5, len(barrios))
         focos = np.argsort(-amen)[:k]
-        d = np.zeros(len(sectores))
+        d = np.zeros(len(barrios))
         for f in focos:
             d = np.maximum(d, np.exp(-np.hypot(lat - lat[f], lon - lon[f]) / 0.015))
         d = intensidad * d * (0.5 + amen)
         zona = {"lat": float(lat[focos[0]]), "lon": float(lon[focos[0]]), "radio_km": 2.0}
     else:
         raise ValueError(f"Tipo de evento desconocido: {tipo}")
-    d = np.clip(d + rng.normal(0, 0.02, len(sectores)), 0, 1)
+    d = np.clip(d + rng.normal(0, 0.02, len(barrios)), 0, 1)
     return d, zona
 
 
 # ----------------------------------------------------------------------------- usuarios
 class _Usuarios:
-    """Crea usuarios ficticios de cada rol y los reparte entre los sectores."""
+    """Crea usuarios ficticios de cada rol y los reparte entre los barrios."""
 
-    def __init__(self, db: Session, rng, sectores: list[m.Sector]):
-        self.db, self.rng, self.sectores = db, rng, sectores
+    def __init__(self, db: Session, rng, barrios: list[m.Barrio]):
+        self.db, self.rng, self.barrios = db, rng, barrios
         self.ciudadanos: dict[int, list[m.Usuario]] = {}
 
-    def nuevo(self, rol: str, sector: m.Sector | None = None, **extra) -> m.Usuario:
+    def nuevo(self, rol: str, barrio: m.Barrio | None = None, **extra) -> m.Usuario:
         u = m.Usuario(
             nombre=_persona(self.rng), telefono=_telefono(self.rng),
             documento=_documento(self.rng) if self.rng.random() < 0.6 else None,
-            rol=rol, sector_id=sector.id if sector else None,
+            rol=rol, barrio_id=barrio.id if barrio else None,
             consentimiento_datos=True, consentimiento_fecha=BASE_FECHA, ficticio=True,
             creado_en=BASE_FECHA, **extra,
         )
@@ -253,11 +248,11 @@ class _Usuarios:
         self.db.flush()
         return u
 
-    def ciudadano(self, sector: m.Sector) -> m.Usuario:
-        pool = self.ciudadanos.setdefault(sector.id, [])
+    def ciudadano(self, barrio: m.Barrio) -> m.Usuario:
+        pool = self.ciudadanos.setdefault(barrio.id, [])
         if pool and self.rng.random() < 0.5:
             return pool[self.rng.integers(len(pool))]
-        u = self.nuevo(m.Rol.SOLICITANTE, sector)
+        u = self.nuevo(m.Rol.SOLICITANTE, barrio)
         pool.append(u)
         return u
 
@@ -266,14 +261,14 @@ class _Usuarios:
 SD_RUIDO = {m.Rol.SOLICITANTE: 0.8, m.Rol.BRIGADISTA: 0.35, m.Rol.ENTIDAD: 0.25}
 
 
-def crear_reportes(db, rng, evento, sectores, dano, usuarios, brigadistas, entidades, verdad) -> int:
-    p90 = np.percentile([s.personas for s in sectores], 90)
+def crear_reportes(db, rng, evento, barrios, dano, usuarios, brigadistas, entidades, verdad) -> int:
+    p90 = np.percentile([s.personas for s in barrios], 90)
     total = 0
-    for s, d in zip(sectores, dano):
+    for s, d in zip(barrios, dano):
         # Quién reporta: más donde hay más población y daño (sesgo conocido de las fuentes ciudadanas)
         p_cobertura = float(np.clip(0.25 + 0.5 * d + 0.2 * min(1.0, s.personas / p90), 0, 0.95))
         if rng.random() > p_cobertura:
-            continue  # sector sin reportes: información faltante
+            continue  # barrio sin reportes: información faltante
         n = 1 + rng.poisson(3 * d)
         for _ in range(n):
             r = rng.random()
@@ -290,7 +285,7 @@ def crear_reportes(db, rng, evento, sectores, dano, usuarios, brigadistas, entid
             tipo_perdida = 0.7 if evento.tipo != "vendaval" else 0.3
             acceso = float(np.clip(s.acceso_base * (1 - tipo_perdida * d) + rng.normal(0, 0.05), 0, 1))
             fila = m.ReporteDanos(
-                sector_id=s.id, evento_id=evento.id, autor_id=autor.id,
+                barrio_id=s.id, evento_id=evento.id, autor_id=autor.id,
                 fuente=m.FuenteReporte.PAPEL if (rol == m.Rol.BRIGADISTA and rng.random() < 0.08) else m.FuenteReporte.APP,
                 hora_evento=evento.fecha,
                 hora_captura=evento.fecha + timedelta(hours=min(12.0, float(rng.exponential(4)))),  # primeras 12 h
@@ -306,10 +301,10 @@ def crear_reportes(db, rng, evento, sectores, dano, usuarios, brigadistas, entid
     return total
 
 
-def crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, verdad) -> int:
+def crear_solicitudes(db, rng, evento, barrios, dano, usuarios, brigadistas, verdad) -> int:
     perfil = PERFIL_NECESIDAD[evento.tipo]
     total = 0
-    for s, d in zip(sectores, dano):
+    for s, d in zip(barrios, dano):
         if d < 0.15:
             continue
         n = min(12, int(rng.poisson(d * s.personas / 1000 * 1.2)))
@@ -322,7 +317,7 @@ def crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, ve
             urgencia = 3 if falsa else int(np.clip(round(3 * d + rng.normal(0, 0.7)), 0, 3))
             la, lo = _jitter(rng, s.lat, s.lon)
             sol = m.Solicitud(
-                solicitante_id=solicitante.id, creador_id=creador.id, sector_id=s.id, evento_id=evento.id,
+                solicitante_id=solicitante.id, creador_id=creador.id, barrio_id=s.id, evento_id=evento.id,
                 necesidad=necesidad, personas_hogar=hogar,
                 cantidad=hogar * UNIDAD_POR_PERSONA[necesidad] * (3 if falsa else 1),
                 descripcion=f"Necesita {necesidad.replace('_', ' ')} para {hogar} persona(s) tras el evento.",
@@ -355,13 +350,13 @@ def crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, ve
                 otro = m.Usuario(
                     nombre=solicitante.nombre, telefono=solicitante.telefono,
                     documento=solicitante.documento or _documento(rng), rol=m.Rol.SOLICITANTE,
-                    sector_id=s.id, consentimiento_datos=True, consentimiento_fecha=BASE_FECHA, ficticio=True,
+                    barrio_id=s.id, consentimiento_datos=True, consentimiento_fecha=BASE_FECHA, ficticio=True,
                     creado_en=BASE_FECHA,
                 )
                 db.add(otro)
                 db.flush()
                 copia = m.Solicitud(
-                    solicitante_id=otro.id, creador_id=otro.id, sector_id=s.id, evento_id=evento.id,
+                    solicitante_id=otro.id, creador_id=otro.id, barrio_id=s.id, evento_id=evento.id,
                     necesidad=sol.necesidad, personas_hogar=sol.personas_hogar, cantidad=sol.cantidad,
                     descripcion=sol.descripcion, urgencia=sol.urgencia, direccion=sol.direccion,
                     lat=sol.lat, lon=sol.lon, fuente=m.FuenteReporte.APP,
@@ -376,18 +371,18 @@ def crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, ve
 
 
 # ----------------------------------------------------------------------------- donaciones e inventario
-def crear_apoyo(db, rng, evento, sectores, usuarios, verdad) -> dict:
+def crear_apoyo(db, rng, evento, barrios, usuarios, verdad) -> dict:
     """Centros de acopio, donantes, donaciones y lotes. La oferta es una fracción de la demanda simulada."""
     solicitudes = db.scalars(select(m.Solicitud)).all()
     demanda = {t: 0 for t in NECESIDADES}
     for sol in solicitudes:
         demanda[sol.necesidad] += sol.cantidad
 
-    grandes = sorted(sectores, key=lambda s: -s.viviendas)[:4]
+    grandes = sorted(barrios, key=lambda s: -s.viviendas)[:4]
     centros = []
     for i, s in enumerate(grandes):
         resp = usuarios.nuevo(m.Rol.CENTRO_ACOPIO, s)
-        c = m.CentroAcopio(nombre=f"Centro de acopio {i + 1} ({s.nombre})", sector_id=s.id, lat=s.lat, lon=s.lon,
+        c = m.CentroAcopio(nombre=f"Centro de acopio {i + 1} ({s.nombre})", barrio_id=s.id, lat=s.lat, lon=s.lon,
                            responsable_id=resp.id)
         db.add(c)
         centros.append(c)
@@ -419,12 +414,12 @@ def crear_apoyo(db, rng, evento, sectores, usuarios, verdad) -> dict:
                 dias = float(rng.uniform(2, 6)) if rng.random() < 0.15 else float(rng.uniform(30, 365))
                 venc = evento.fecha + timedelta(days=dias)
             dirigida = rng.random() < 0.10
-            destino_sector = int(rng.choice([s.id for s in sectores])) if dirigida and rng.random() < 0.5 else None
-            destino_tipo = tipo if dirigida and destino_sector is None else None
+            destino_barrio = int(rng.choice([s.id for s in barrios])) if dirigida and rng.random() < 0.5 else None
+            destino_tipo = tipo if dirigida and destino_barrio is None else None
             recibida = rng.random() > 0.08  # algunas siguen solo ofrecidas
             don = m.Donacion(
                 donante_id=donante.id, centro_id=centro.id, tipo_bien=tipo, cantidad=int(cantidad),
-                unidad=UNIDADES[tipo], vencimiento=venc, destino_sector_id=destino_sector,
+                unidad=UNIDADES[tipo], vencimiento=venc, destino_barrio_id=destino_barrio,
                 destino_tipo_necesidad=destino_tipo,
                 estado=m.EstadoDonacion.EN_INVENTARIO if recibida else m.EstadoDonacion.OFRECIDA,
                 creado_en=evento.fecha + timedelta(hours=min(24.0, float(rng.exponential(10)))),
@@ -435,7 +430,7 @@ def crear_apoyo(db, rng, evento, sectores, usuarios, verdad) -> dict:
                 lote = m.Lote(
                     donacion_id=don.id, centro_id=centro.id, tipo_bien=tipo, unidad=UNIDADES[tipo],
                     cantidad_recibida=int(cantidad), cantidad_disponible=int(cantidad), vencimiento=venc,
-                    destino_sector_id=destino_sector, destino_tipo_necesidad=destino_tipo,
+                    destino_barrio_id=destino_barrio, destino_tipo_necesidad=destino_tipo,
                 )
                 db.add(lote)
                 db.flush()
@@ -475,27 +470,27 @@ def generar(db: Session, semilla: int = 42, tipo: str = "inundacion", municipios
     municipios = municipios or list(MUNICIPIOS)
     donde = limpiar_simulacion(db, conservar_cuentas) if reiniciar else {}
 
-    sectores = crear_sectores(db, rng, municipios)
-    reubicar_cuentas(db, donde, sectores)
+    barrios = crear_barrios(db, rng, municipios)
+    reubicar_cuentas(db, donde, barrios)
     intensidad = float(rng.uniform(0.6, 1.0))
-    dano, zona = _dano_verdadero(tipo, sectores, intensidad, rng)
+    dano, zona = _dano_verdadero(tipo, barrios, intensidad, rng)
     evento = m.Evento(tipo=tipo, nombre=f"{tipo.capitalize()} simulado (semilla {semilla})", fecha=BASE_FECHA,
                       zona=zona, intensidad=round(intensidad, 3), origen=m.OrigenDato.SIMULADO, semilla=semilla)
     db.add(evento)
     db.flush()
 
-    usuarios = _Usuarios(db, rng, sectores)
+    usuarios = _Usuarios(db, rng, barrios)
     admin = usuarios.nuevo(m.Rol.ADMINISTRADOR)
     entidades = [usuarios.nuevo(m.Rol.ENTIDAD) for _ in range(2)]
-    brigadistas = [usuarios.nuevo(m.Rol.BRIGADISTA, sectores[rng.integers(len(sectores))]) for _ in range(30)]
+    brigadistas = [usuarios.nuevo(m.Rol.BRIGADISTA, barrios[rng.integers(len(barrios))]) for _ in range(30)]
     equipos = [usuarios.nuevo(m.Rol.EQUIPO_ENTREGA, es_organizacion=bool(i % 2), aprobado=(i != 5)) for i in range(6)]
 
     verdad = {"semilla": semilla, "tipo": tipo, "reportes_falsos": [], "solicitudes_falsas": [], "duplicadas": [],
-              "dano": {s.id: round(float(d), 3) for s, d in zip(sectores, dano)}}
+              "dano": {s.id: round(float(d), 3) for s, d in zip(barrios, dano)}}
 
-    n_reportes = crear_reportes(db, rng, evento, sectores, dano, usuarios, brigadistas, entidades, verdad)
-    n_solicitudes = crear_solicitudes(db, rng, evento, sectores, dano, usuarios, brigadistas, verdad)
-    apoyo = crear_apoyo(db, rng, evento, sectores, usuarios, verdad)
+    n_reportes = crear_reportes(db, rng, evento, barrios, dano, usuarios, brigadistas, entidades, verdad)
+    n_solicitudes = crear_solicitudes(db, rng, evento, barrios, dano, usuarios, brigadistas, verdad)
+    apoyo = crear_apoyo(db, rng, evento, barrios, usuarios, verdad)
     n_pesos = sembrar_pesos(db)
 
     # La verdad del escenario queda guardada para poder medir luego qué tan bien se recupera (validación sintética)
@@ -503,8 +498,8 @@ def generar(db: Session, semilla: int = 42, tipo: str = "inundacion", municipios
                       hora=BASE_FECHA))
     db.commit()
     return {
-        "semilla": semilla, "tipo": tipo, "evento_id": evento.id, "sectores": len(sectores),
-        "viviendas": sum(s.viviendas for s in sectores), "reportes": n_reportes, "solicitudes": n_solicitudes,
+        "semilla": semilla, "tipo": tipo, "evento_id": evento.id, "barrios": len(barrios),
+        "viviendas": sum(s.viviendas for s in barrios), "reportes": n_reportes, "solicitudes": n_solicitudes,
         "equipos": len(equipos), "brigadistas": len(brigadistas), "pesos": n_pesos, **apoyo,
     }
 

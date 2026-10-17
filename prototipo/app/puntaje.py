@@ -1,7 +1,7 @@
-"""Calcula con los datos de la base la confianza y la prioridad de cada sector y de cada solicitud (bloque 5).
+"""Calcula con los datos de la base la confianza y la prioridad de cada barrio y de cada solicitud (bloque 5).
 
 Para cada reporte y solicitud: confianza c (fuente, verificación, vigencia y corroboración).
-Para cada sector: confianza C, dispersión D, las cinco dimensiones, la prioridad P (TOPSIS) y las alertas
+Para cada barrio: confianza C, dispersión D, las cinco dimensiones, la prioridad P (TOPSIS) y las alertas
 de información faltante. Para cada solicitud pendiente: prioridad P con sus cinco criterios.
 
 La hora de referencia es la actual, salvo en un evento simulado: ahí es la del último reporte recibido, para que
@@ -29,7 +29,7 @@ PESO_VULNERABILIDAD = {"discapacidad": 0.8, "adulto_mayor": 0.7, "menor": 0.7, "
                        "otra": 0.5}
 ESTADOS_PENDIENTES = (m.EstadoSolicitud.REGISTRADA, m.EstadoSolicitud.VERIFICADA)
 ESTADOS_ABIERTOS = ESTADOS_PENDIENTES + (m.EstadoSolicitud.ASIGNADA, m.EstadoSolicitud.EN_CAMINO)
-HORAS_ESPERA_MAXIMA = 48.0  # a partir de aquí, esperar más ya no sube la urgencia del sector
+HORAS_ESPERA_MAXIMA = 48.0  # a partir de aquí, esperar más ya no sube la urgencia del barrio
 
 
 # ----------------------------------------------------------------------------- pesos
@@ -45,13 +45,13 @@ def leer_pesos(db: Session) -> dict[str, dict[str, float]]:
     for fila in db.scalars(select(m.Peso)):
         if fila.ambito in pesos:
             pesos[fila.ambito][fila.dimension] = fila.valor
-    pesos["sector"] = motor.normalizar_pesos(pesos["sector"], motor.CRITERIOS_SECTOR)
+    pesos["barrio"] = motor.normalizar_pesos(pesos["barrio"], motor.CRITERIOS_BARRIO)
     pesos["solicitud"] = motor.normalizar_pesos(pesos["solicitud"], motor.CRITERIOS_SOLICITUD)
     return pesos
 
 
 def guardar_pesos(db: Session, ambito: str, valores: dict[str, float], usuario: m.Usuario | None) -> dict[str, float]:
-    criterios = motor.CRITERIOS_SECTOR if ambito == "sector" else motor.CRITERIOS_SOLICITUD
+    criterios = motor.CRITERIOS_BARRIO if ambito == "barrio" else motor.CRITERIOS_SOLICITUD
     normalizados = motor.normalizar_pesos(valores, criterios)
     existentes = {p.dimension: p for p in db.scalars(select(m.Peso).where(m.Peso.ambito == ambito))}
     for dim, valor in normalizados.items():
@@ -96,9 +96,9 @@ def _fuente(rol: str | None, fuente: str, es_organizacion: bool = False) -> floa
 def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
     """Recalcula todo para el evento más reciente. Devuelve un resumen. Hace commit."""
     evento = evento or db.scalar(select(m.Evento).order_by(m.Evento.fecha.desc(), m.Evento.id.desc()).limit(1))
-    sectores = list(db.scalars(select(m.Sector).order_by(m.Sector.id)))
-    if not sectores:
-        return {"sectores": 0, "solicitudes": 0}
+    barrios = list(db.scalars(select(m.Barrio).order_by(m.Barrio.id)))
+    if not barrios:
+        return {"barrios": 0, "solicitudes": 0}
     pesos = leer_pesos(db)
     ahora_ = referencia(db, evento)
     usuarios = {u.id: u for u in db.scalars(select(m.Usuario))}
@@ -113,10 +113,10 @@ def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
     # ---- reportes: confianza de cada uno
     reportes = list(db.scalars(select(m.ReporteDanos).where(m.ReporteDanos.estado == "activo")
                                .where(m.ReporteDanos.evento_id == evento.id if evento else True)))
-    por_sector: dict[int, list[m.ReporteDanos]] = defaultdict(list)
+    por_barrio: dict[int, list[m.ReporteDanos]] = defaultdict(list)
     for r in reportes:
-        por_sector[r.sector_id].append(r)
-    for rs in por_sector.values():
+        por_barrio[r.barrio_id].append(r)
+    for rs in por_barrio.values():
         for r in rs:
             autor = usuarios.get(r.autor_id)
             coinciden = len({o.autor_id for o in rs if o is not r and o.autor_id != r.autor_id
@@ -127,30 +127,30 @@ def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
                 _fuente(autor.rol if autor else None, r.fuente, bool(autor and autor.es_organizacion)),
                 estado_v, _horas(r.hora_captura, ahora_), coinciden)  # vigencia: cuánto hace que se recibió el dato
 
-    # ---- solicitudes de cada sector
+    # ---- solicitudes de cada barrio
     solicitudes = list(db.scalars(select(m.Solicitud).where(m.Solicitud.estado.in_(ESTADOS_ABIERTOS))))
-    sol_por_sector: dict[int, list[m.Solicitud]] = defaultdict(list)
+    sol_por_barrio: dict[int, list[m.Solicitud]] = defaultdict(list)
     for s in solicitudes:
-        sol_por_sector[s.sector_id].append(s)
+        sol_por_barrio[s.barrio_id].append(s)
     vulnerables = {v.solicitud_id: v for v in db.scalars(select(m.Vulnerabilidad))}
 
-    # ---- inventario disponible por sector (centros de acopio ubicados en él)
+    # ---- inventario disponible por barrio (centros de acopio ubicados en él)
     inventario: dict[int, int] = defaultdict(int)
     centros = {c.id: c for c in db.scalars(select(m.CentroAcopio))}
     for lote in db.scalars(select(m.Lote).where(m.Lote.cantidad_disponible > 0)):
         centro = centros.get(lote.centro_id)
-        if centro and centro.sector_id:
-            inventario[centro.sector_id] += lote.cantidad_disponible
+        if centro and centro.barrio_id:
+            inventario[centro.barrio_id] += lote.cantidad_disponible
 
-    # ---- indicadores de cada sector (0 a 1)
+    # ---- indicadores de cada barrio (0 a 1)
     filas, datos = [], []
-    for s in sectores:
-        rs = [r for r in por_sector.get(s.id, []) if r.confianza and r.confianza > 0]  # los desmentidos no cuentan
+    for s in barrios:
+        rs = [r for r in por_barrio.get(s.id, []) if r.confianza and r.confianza > 0]  # los desmentidos no cuentan
         confs = [r.confianza for r in rs]
         niveles = [r.nivel_dano for r in rs]
         disp = motor.dispersion(niveles)
-        c_sector = motor.confianza_sector(confs, disp)
-        sols = sol_por_sector.get(s.id, [])
+        c_barrio = motor.confianza_barrio(confs, disp)
+        sols = sol_por_barrio.get(s.id, [])
         base_previa = not rs
 
         if rs:
@@ -169,7 +169,7 @@ def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
         demanda = sum(x.cantidad for x in sols)
         brecha = 0.0 if demanda == 0 else 1.0 - min(1.0, inventario.get(s.id, 0) / demanda)
         expuestas = afectadas + 3.0 * vuln_sol + sum(x.personas_hogar for x in sols) * 0.5
-        # La accesibilidad NO penaliza: un sector aislado sube un poco (riesgo de olvido), nunca baja.
+        # La accesibilidad NO penaliza: un barrio aislado sube un poco (riesgo de olvido), nunca baja.
         filas.append([gravedad, urgencia, expuestas, 1.0 - acceso, brecha])
         horas_ult = min((_horas(r.hora_captura, ahora_) for r in rs), default=None)  # antigüedad del último reporte
         alertas = []
@@ -178,25 +178,25 @@ def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
         else:
             if horas_ult > 2 * motor.TAU_HORAS:
                 alertas.append("desactualizado")
-            if c_sector < motor.UMBRAL_CONFIANZA:
+            if c_barrio < motor.UMBRAL_CONFIANZA:
                 alertas.append("baja_confianza")
             if disp > motor.UMBRAL_DISPERSION:
                 alertas.append("contradictorio")
-        datos.append((s, c_sector, disp, len(rs), len(sols), horas_ult, base_previa, alertas))
+        datos.append((s, c_barrio, disp, len(rs), len(sols), horas_ult, base_previa, alertas))
 
-    resultado = motor.topsis(filas, motor.CRITERIOS_SECTOR, pesos["sector"])
-    orden = sorted(range(len(sectores)), key=lambda i: (-resultado.prioridad[i], sectores[i].id))
-    posicion = {sectores[i].id: n + 1 for n, i in enumerate(orden)}
-    prioridad_sector = {sectores[i].id: resultado.prioridad[i] for i in range(len(sectores))}
+    resultado = motor.topsis(filas, motor.CRITERIOS_BARRIO, pesos["barrio"])
+    orden = sorted(range(len(barrios)), key=lambda i: (-resultado.prioridad[i], barrios[i].id))
+    posicion = {barrios[i].id: n + 1 for n, i in enumerate(orden)}
+    prioridad_barrio = {barrios[i].id: resultado.prioridad[i] for i in range(len(barrios))}
 
-    existentes = {p.sector_id: p for p in db.scalars(select(m.PuntajeSector))}
+    existentes = {p.barrio_id: p for p in db.scalars(select(m.PuntajeBarrio))}
     for i, (s, c_s, disp, n_rep, n_sol, horas_ult, base_previa, alertas) in enumerate(datos):
-        p = existentes.get(s.id) or m.PuntajeSector(sector_id=s.id)
+        p = existentes.get(s.id) or m.PuntajeBarrio(barrio_id=s.id)
         p.evento_id = evento.id if evento else None
         p.prioridad, p.posicion = round(resultado.prioridad[i], 6), posicion[s.id]
         p.confianza, p.dispersion = round(c_s, 6), round(disp, 6)
         p.n_reportes, p.n_solicitudes, p.horas_ultimo_reporte, p.base_previa = n_rep, n_sol, horas_ult, base_previa
-        p.indicadores = {c: round(float(filas[i][j]), 4) for j, c in enumerate(motor.CRITERIOS_SECTOR)}
+        p.indicadores = {c: round(float(filas[i][j]), 4) for j, c in enumerate(motor.CRITERIOS_BARRIO)}
         p.aportes = {c: round(v, 4) for c, v in resultado.aportes[i].items()}
         p.alertas = alertas
         p.calculado_en = ahora()
@@ -209,7 +209,7 @@ def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
         v_sol = {"verificado": "verificado", "desmentido": "desmentido"}.get(verif.get(("solicitud", sol.id)),
                                                                            "sin_verificar")
         ultima = hora_verif.get(sol.id) or sol.creado_en
-        coinciden = sum(1 for r in por_sector.get(sol.sector_id, []) if r.nivel_dano >= 1)
+        coinciden = sum(1 for r in por_barrio.get(sol.barrio_id, []) if r.nivel_dano >= 1)
         sol.confianza = round(motor.confianza_dato(
             _fuente(creador.rol if creador else None, sol.fuente, bool(creador and creador.es_organizacion)),
             v_sol, _horas(ultima, ahora_), min(coinciden, 10)), 6)
@@ -217,10 +217,10 @@ def recalcular(db: Session, evento: m.Evento | None = None) -> dict:
     for sol in pendientes:
         v = vulnerables.get(sol.id)
         filas_s.append([sol.urgencia / 3.0, PESO_VULNERABILIDAD.get(v.tipo, 0.5) if v else 0.0, float(sol.personas_hogar),
-                        _horas(sol.creado_en, ahora_), prioridad_sector.get(sol.sector_id, 0.0)])
+                        _horas(sol.creado_en, ahora_), prioridad_barrio.get(sol.barrio_id, 0.0)])
     res_s = motor.topsis(filas_s, motor.CRITERIOS_SOLICITUD, pesos["solicitud"])
     for sol, p in zip(pendientes, res_s.prioridad):
         sol.prioridad = round(p, 6)
     db.commit()
-    return {"sectores": len(sectores), "solicitudes": len(pendientes), "evento_id": evento.id if evento else None,
+    return {"barrios": len(barrios), "solicitudes": len(pendientes), "evento_id": evento.id if evento else None,
             "referencia": ahora_.isoformat()}

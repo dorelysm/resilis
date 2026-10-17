@@ -17,7 +17,7 @@ from app import servicios as sv
 from app.models import ahora
 
 PARAMETROS = {"kappa": op.KAPPA, "lambda": op.LAMBDA, "theta": op.THETA}
-UMBRAL_ACCESO_BLOQUEADO = 0.85  # 1 - acceso: por encima de esto, el sector se considera aislado
+UMBRAL_ACCESO_BLOQUEADO = 0.85  # 1 - acceso: por encima de esto, el barrio se considera aislado
 
 
 # ----------------------------------------------------------------------------- parámetros
@@ -96,15 +96,15 @@ def calcular_plan(db: Session, usuario: m.Usuario) -> m.PlanAsignacion | None:
         return None
 
     centros = {c.id: c for c in db.scalars(select(m.CentroAcopio))}
-    sectores = {s.id: s for s in db.scalars(select(m.Sector))}
+    barrios = {s.id: s for s in db.scalars(select(m.Barrio))}
 
     def ubicacion_lote(lote):
         c = centros.get(lote.centro_id)
-        s = sectores.get(c.sector_id) if c and c.sector_id else None
+        s = barrios.get(c.barrio_id) if c and c.barrio_id else None
         return (c.lat, c.lon) if c and c.lat is not None else ((s.lat, s.lon) if s else (None, None))
 
     def ubicacion_sol(sol):
-        s = sectores.get(sol.sector_id)
+        s = barrios.get(sol.barrio_id)
         return (sol.lat, sol.lon) if sol.lat is not None else ((s.lat, s.lon) if s else (None, None))
 
     lotes = [op.Lote(l.id, l.tipo_bien, l.cantidad_disponible, urgencia_de_uso(l.vencimiento, ahora_)) for l in lotes_db]
@@ -180,9 +180,9 @@ def calcular_plan(db: Session, usuario: m.Usuario) -> m.PlanAsignacion | None:
         por_tipo[tipo] = {"demanda": sum(s.cantidad for s in solicitudes if s.necesidad == tipo),
                           "disponible": sum(l.cantidad_disponible for l in lotes_db if l.tipo_bien == tipo),
                           "asignado": sum(q for (i, _), q in x.items() if por_lote[i].tipo_bien == tipo)}
-    indicadores = {p.sector_id: p.indicadores for p in db.scalars(select(m.PuntajeSector))}
+    indicadores = {p.barrio_id: p.indicadores for p in db.scalars(select(m.PuntajeBarrio))}
     aislados = [s.id for s in solicitudes if s.id in cubierto and
-                (indicadores.get(s.sector_id) or {}).get("accesibilidad", 0.0) >= UMBRAL_ACCESO_BLOQUEADO]
+                (indicadores.get(s.barrio_id) or {}).get("accesibilidad", 0.0) >= UMBRAL_ACCESO_BLOQUEADO]
 
     db.add(m.PlanResumen(plan_id=plan.id, datos={
         "parametros": parametros, "solicitudes": len(solicitudes), "lotes": len(lotes_db),

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block titulo %}{{ sector.nombre }}{% endblock %}
+{% block titulo %}{{ barrio.etiqueta }}{% endblock %}
 {% block contenido %}
-<h1>{{ sector.nombre }}</h1>
+<h1>{{ barrio.etiqueta }}</h1>
 <p><a href="/prioridades">Volver a las prioridades</a></p>
 
 <p>Ocupa el lugar <strong>{{ p.posicion }} de {{ total }}</strong>. Prioridad: <strong>{{ pct(p.prioridad) }}</strong>. Confianza en la información: <strong>{{ pct(p.confianza) }}</strong>.</p>
-{% if p.base_previa %}<p class="mensaje">Este sector no tiene reportes confiables. Su lugar se calculó solo con la información previa (amenaza, vulnerabilidad y acceso de siempre). <strong>Conviene enviar a alguien a verificar.</strong></p>{% endif %}
+{% if p.base_previa %}<p class="mensaje">Este barrio no tiene reportes confiables. Su lugar se calculó solo con la información previa (amenaza, vulnerabilidad y acceso de siempre). <strong>Conviene enviar a alguien a verificar.</strong></p>{% endif %}
 {% if p.alertas %}
 <section aria-labelledby="avisos">
   <h2 id="avisos">Avisos de información faltante</h2>
@@ -26,9 +26,9 @@
   </tbody>
 </table>
 </div>
-<p class="ayuda">La accesibilidad no penaliza: un sector difícil de alcanzar nunca baja en la lista.{% if puede_pesos %} <a href="/pesos">Ajustar los pesos</a>.{% endif %}</p>
+<p class="ayuda">La accesibilidad no penaliza: un barrio difícil de alcanzar nunca baja en la lista.{% if puede_pesos %} <a href="/pesos">Ajustar los pesos</a>.{% endif %}</p>
 
-<h2>Reportes de este sector ({{ p.n_reportes }})</h2>
+<h2>Reportes de este barrio ({{ p.n_reportes }})</h2>
 {% if reportes %}
 <div class="tabla-scroll">
 <table>

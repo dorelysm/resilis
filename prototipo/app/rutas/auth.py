@@ -7,9 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Donante, Rol, Sector, Usuario, ahora
+from app.models import Donante, Rol, Barrio, Usuario, ahora
 from app.seguridad import hash_password, verificar_password
-from app.web import UsuarioOpcional, chequear_csrf, entero, mensaje, opciones_sectores, render, solo_digitos
+from app.web import UsuarioOpcional, chequear_csrf, entero, mensaje, opciones_barrios, render, solo_digitos
 
 router = APIRouter()
 Db = Annotated[Session, Depends(get_db)]
@@ -19,8 +19,8 @@ CUENTAS_PUBLICAS = {"solicitante": Rol.SOLICITANTE, "donante": Rol.DONANTE}
 TIPOS_DONANTE = ("persona", "organizacion", "empresa")
 
 
-def _sectores(db: Session) -> list[tuple[int, str]]:
-    return opciones_sectores(db)
+def _barrios(db: Session) -> list[tuple[int, str]]:
+    return opciones_barrios(db)
 
 
 @router.get("/")
@@ -30,20 +30,20 @@ def inicio(request: Request, usuario: UsuarioOpcional):
 
 @router.get("/registro")
 def registro_form(request: Request, db: Db, usuario: UsuarioOpcional):
-    return render(request, "registro.html", usuario, sectores=_sectores(db), datos={}, errores={})
+    return render(request, "registro.html", usuario, barrios=_barrios(db), datos={}, errores={})
 
 
 @router.post("/registro")
 def registro(
     request: Request, db: Db, usuario: UsuarioOpcional,
     nombre: Annotated[str, Form()] = "", telefono: Annotated[str, Form()] = "",
-    sector_id: Annotated[str, Form()] = "", documento: Annotated[str, Form()] = "",
+    barrio_id: Annotated[str, Form()] = "", documento: Annotated[str, Form()] = "",
     tipo_cuenta: Annotated[str, Form()] = "solicitante", tipo_donante: Annotated[str, Form()] = "persona",
     password: Annotated[str, Form()] = "", password2: Annotated[str, Form()] = "",
     consentimiento: Annotated[str, Form()] = "", csrf: Annotated[str, Form()] = "",
 ):
     chequear_csrf(request, csrf)
-    datos = {"nombre": nombre.strip(), "telefono": telefono.strip(), "sector_id": sector_id,
+    datos = {"nombre": nombre.strip(), "telefono": telefono.strip(), "barrio_id": barrio_id,
              "documento": documento.strip(), "tipo_cuenta": tipo_cuenta, "tipo_donante": tipo_donante}
     errores: dict[str, str] = {}
 
@@ -56,9 +56,9 @@ def registro(
         errores["telefono"] = "Ya existe una cuenta con este teléfono. Use la opción Entrar."
     if tipo_cuenta not in CUENTAS_PUBLICAS:
         errores["tipo_cuenta"] = "Elija un tipo de cuenta."
-    sid = entero(sector_id, 1, 10**9)
-    if tipo_cuenta == "solicitante" and (sid is None or db.get(Sector, sid) is None):
-        errores["sector_id"] = "Elija el sector donde vive."
+    sid = entero(barrio_id, 1, 10**9)
+    if tipo_cuenta == "solicitante" and (sid is None or db.get(Barrio, sid) is None):
+        errores["barrio_id"] = "Elija el barrio donde vive."
     if len(password) < 8:
         errores["password"] = "La contraseña debe tener al menos 8 caracteres."
     elif password != password2:
@@ -69,12 +69,12 @@ def registro(
         errores["tipo_donante"] = "Elija el tipo de donante."
 
     if errores:
-        return render(request, "registro.html", usuario, estado=422, sectores=_sectores(db), datos=datos,
+        return render(request, "registro.html", usuario, estado=422, barrios=_barrios(db), datos=datos,
                       errores=errores)
 
     nuevo = Usuario(
         nombre=datos["nombre"], telefono=tel, documento=datos["documento"] or None, rol=CUENTAS_PUBLICAS[tipo_cuenta],
-        sector_id=sid if db.get(Sector, sid or 0) else None, password_hash=hash_password(password),
+        barrio_id=sid if db.get(Barrio, sid or 0) else None, password_hash=hash_password(password),
         consentimiento_datos=True, consentimiento_fecha=ahora(), ficticio=False,
     )
     db.add(nuevo)

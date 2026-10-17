@@ -52,28 +52,28 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 
 ## Prioridad y confianza (bloque 5)
 
-`app/motor.py` tiene las fórmulas (funciones puras, sin base de datos) y `app/puntaje.py` las aplica a los datos y guarda el resultado en `puntaje_sector` y en cada solicitud. Se recalcula solo después de cada reporte, solicitud, verificación, recepción, asignación y entrega (unos 0,15 s con 153 sectores y 1.000 solicitudes).
+`app/motor.py` tiene las fórmulas (funciones puras, sin base de datos) y `app/puntaje.py` las aplica a los datos y guarda el resultado en `puntaje_barrio` y en cada solicitud. Se recalcula solo después de cada reporte, solicitud, verificación, recepción, asignación y entrega (unos 0,4 s con 600 barrios y 1.000 solicitudes).
 
 - **Confianza de un dato:** `c = 0,35 F + 0,30 V + 0,15 A + 0,20 K` (fuente, verificación, vigencia, corroboración). Un dato desmentido vale 0.
-- **Confianza de un sector:** `C = [1 - prod(1 - c)] (1 - 0,5 D)`; sin reportes vale 0 y el sector se ordena solo con la línea base ("hora cero") y con aviso.
-- **Prioridad:** TOPSIS con cinco dimensiones para sectores y cinco criterios para solicitudes. Los pesos se ajustan en `/pesos` (entidad y administrador) y se normalizan a 100 %.
-- **Accesibilidad:** no penaliza; un sector aislado sube un poco, nunca baja.
+- **Confianza de un barrio:** `C = [1 - prod(1 - c)] (1 - 0,5 D)`; sin reportes vale 0 y el barrio se ordena solo con la línea base ("hora cero") y con aviso.
+- **Prioridad:** TOPSIS con cinco dimensiones para barrios y cinco criterios para solicitudes. Los pesos se ajustan en `/pesos` (entidad y administrador) y se normalizan a 100 %.
+- **Accesibilidad:** no penaliza; un barrio aislado sube un poco, nunca baja.
 - **Avisos:** sin reportes, desactualizado (más de 24 h), baja confianza (menos de 0,4) y reportes que se contradicen.
 - **Hora de referencia:** la actual; en un evento simulado, la del último reporte, para que la demostración no "envejezca".
-- **Páginas:** `/prioridades` (listas), `/prioridades/sectores/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
+- **Páginas:** `/prioridades` (listas), `/prioridades/barrios/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
 - `motor.ahp_pesos` (AHP: devuelve los pesos y la razón de consistencia CR, que debe ser menor que 0,1) existe y tiene pruebas, pero todavía no hay una pantalla de comparación por pares: `/pesos` recibe los pesos directamente.
 
 ## Mapa (bloque 7)
 
-`/mapa` (entidad, brigadista y administrador) dibuja los sectores con Leaflet 1.9.4, que viene incluido en `app/static/vendor/leaflet/` (sin CDN; licencia BSD en el mismo directorio). Los datos salen de `/mapa/datos.json`: un renglón por sector, **sin datos de personas**.
+`/mapa` (entidad, brigadista y administrador) dibuja los barrios con Leaflet 1.9.4, que viene incluido en `app/static/vendor/leaflet/` (sin CDN; licencia BSD en el mismo directorio). Los datos salen de `/mapa/datos.json`: un renglón por barrio, **sin datos de personas**.
 
 - **Color:** el conmutador alterna entre prioridad y confianza. Las clases son quintiles de lo que se muestra, para que haya contraste aunque los valores se parezcan. Las rampas salen de los colores del logo y el número de cada círculo tiene contraste AA sobre su color.
-- **Sin reportes:** el círculo va rayado y con borde de trazos, para no confundirlo con un sector tranquilo.
+- **Sin reportes:** el círculo va rayado y con borde de trazos, para no confundirlo con un barrio tranquilo.
 - **El color no es lo único:** el número dentro del círculo es el lugar en la lista y el tamaño crece con la población. Cada círculo se enfoca con el teclado (Enter abre su ventana) y tiene una descripción completa para lectores de pantalla. La misma información está en la tabla de `/prioridades`, que el mapa enlaza.
-- **Filtros:** por municipio y por aviso de información faltante. Un aviso en la página anuncia cuántos sectores se muestran.
+- **Filtros:** por municipio y por aviso de información faltante. Un aviso en la página anuncia cuántos barrios se muestran.
 - **Zoom:** los círculos se achican al alejar y los números aparecen al acercar.
 - **Datos:** el JavaScript y los estilos de la página pesan unos 51 KB comprimidos, sin contar los mosaicos. Los mosaicos de fondo vienen de OpenStreetMap, así que sin internet se ven los círculos sobre un fondo vacío.
-- **Límite:** los sectores solo tienen un punto (latitud y longitud), no un contorno; por eso son círculos y no zonas.
+- **Límite:** los barrios solo tienen un punto (latitud y longitud), no un contorno; por eso son círculos y no zonas.
 
 ## Plan de asignación (bloque 6)
 
@@ -86,7 +86,7 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Explicación:** cada línea dice la prioridad, la confianza, el vencimiento del lote, el centro y la distancia; el plan lista lo que queda sin cubrir y por qué.
 - **Aprobar:** reserva el inventario y asigna un equipo con su código, por solicitud. La entidad puede cambiar el equipo de cada una o dejarla fuera. Si el inventario cambió desde que se calculó, esa solicitud se omite y se informa. Se muestran las 40 más prioritarias; las demás se aprueban con el equipo propuesto.
 - **Entrega parcial:** si el inventario solo alcanza para una parte, se entrega esa parte y la solicitud vuelve a estar verificada con lo que falta.
-- **Límite conocido:** la compatibilidad entre el tipo de recurso y el acceso del sector (una lancha para un sector aislado) no se modela porque los lotes no tienen ese dato. El plan solo avisa que el sector está aislado.
+- **Límite conocido:** la compatibilidad entre el tipo de recurso y el acceso del barrio (una lancha para un barrio aislado) no se modela porque los lotes no tienen ese dato. El plan solo avisa que el barrio está aislado.
 - **Datos de ejemplo:** con 1.047 solicitudes verificadas que piden 13.236 unidades y 9.097 disponibles, el plan se resuelve en 0,4 s y cubre un 10,1 % más de necesidad ponderada que la referencia voraz. Con inventario suficiente para todo, la mejora es mínima.
 
 ## Logo y diseño
@@ -105,18 +105,27 @@ Los colores del logo claros (verde azulado y naranja) no tienen contraste sufici
 
 Del logo se usa solo el dibujo, sin su lema. El lema del sistema es "Decisiones inteligentes, recursos optimizados, vidas protegidas".
 
+## Municipios y barrios
+
+El territorio son los **23 municipios del Atlántico y sus barrios**. Los nombres y las coordenadas de los barrios son reales: vienen de OpenStreetMap (© colaboradores de OpenStreetMap, licencia ODbL) y están en `data/barrios_atlantico.csv` (600 lugares: 542 barrios y 58 centros poblados). Se obtuvieron con `scripts/construir_barrios.py`, que consulta la API Overpass y asigna cada lugar al municipio que lo contiene.
+
+- **Municipios sin barrios en OpenStreetMap:** donde no hay barrios mapeados (por ejemplo Sabanalarga, Campo de la Cruz o Suan) se usan los centros poblados, y se marcan como tales. Palmar de Varela, Sabanagrande y Suan solo tienen una unidad. Para afinar un municipio basta con agregar renglones al CSV.
+- **Lo que NO es real:** cuántas viviendas tiene cada barrio. La cifra oficial es por municipio (proyección 2026); el reparto entre sus barrios es simulado, de modo que la suma de los barrios coincide con el municipio. Igual son simuladas la vulnerabilidad, la amenaza y el acceso de cada barrio.
+- **Pantallas:** los formularios eligen primero el municipio y luego el barrio (sin JavaScript se ve la lista completa agrupada por municipio). `/prioridades` resume cada municipio (barrio más prioritario, promedio, avisos, solicitudes por atender) y se puede filtrar por uno. Los nombres de barrio se repiten entre municipios, así que se muestran siempre como "Barrio, Municipio".
+- **Cambio desde sectores:** la versión anterior dividía cada municipio en "sectores" inventados. Al arrancar sobre una base de ese esquema, `app/migracion.py` los reemplaza por barrios, una sola vez: borra lo que dependía de ellos (reportes, solicitudes, puntajes, planes, entregas, donaciones, lotes y eventos) y conserva cuentas, perfiles de donante, centros de acopio, pesos y bitácora; a las cuentas y centros solo se les quita el sector.
+
 ## Datos simulados
 
-Genera un escenario completo y reproducible (sectores anclados en las viviendas reales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):
+Genera un escenario completo y reproducible (barrios reales con viviendas simuladas ancladas en las cifras municipales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):
 
 ```bash
 uv run python -m app.cargas                                  # antes: las viviendas deben estar cargadas
 uv run python -m app.simulacion --seed 42 --tipo inundacion  # terremoto | inundacion | vendaval | deslizamiento
 ```
 
-**Renovar la demostración en producción:** con `REINICIAR_DEMO=true` en el servicio, al arrancar se genera de nuevo el escenario (semilla 42, inundación). **Conserva todas las cuentas reales**, su historial, los centros de acopio que administran y los pesos que cambiaron, y vuelve a ubicarlas en su sector (buscado por nombre). **Se niega** (sin tumbar la aplicación) si esas cuentas ya hicieron algo: solicitudes, reportes, perfiles de donante, verificaciones, entregas, planes aprobados o movimientos de inventario, porque eso podría borrarse. Todo ocurre en una sola transacción: si algo falla, queda lo anterior. Es de un solo uso: hay que quitar la variable después.
+**Renovar la demostración en producción:** con `REINICIAR_DEMO=true` en el servicio, al arrancar se genera de nuevo el escenario (semilla 42, inundación). **Conserva todas las cuentas reales**, su historial, los centros de acopio que administran y los pesos que cambiaron, y vuelve a ubicarlas en su barrio (buscado por municipio y nombre). **Se niega** (sin tumbar la aplicación) si esas cuentas ya hicieron algo: solicitudes, reportes, perfiles de donante, verificaciones, entregas, planes aprobados o movimientos de inventario, porque eso podría borrarse. Todo ocurre en una sola transacción: si algo falla, queda lo anterior. Es de un solo uso: hay que quitar la variable después.
 
-Con la misma semilla se obtienen los mismos datos. Cada ejecución borra la simulación anterior (no toca las viviendas). La "verdad" del escenario (el daño real de cada sector, los reportes falsos y las solicitudes duplicadas) queda en la tabla `bitacora` (acción `simulacion_verdad`) para medir después qué tan bien se detectan.
+Con la misma semilla se obtienen los mismos datos. Cada ejecución borra la simulación anterior (no toca las viviendas ni los barrios del archivo). La "verdad" del escenario (el daño real de cada barrio, los reportes falsos y las solicitudes duplicadas) queda en la tabla `bitacora` (acción `simulacion_verdad`) para medir después qué tan bien se detectan.
 
 ## Pruebas
 

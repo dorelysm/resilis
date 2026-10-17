@@ -63,19 +63,19 @@
       <input type="hidden" name="csrf" value="{{ csrf }}">
     {% endif %}
     {% for g in vista.grupos %}
-      <section class="fila-accion" aria-label="Solicitud en {{ g.sector }}">
-        <p><strong>{{ necesidad[g.sol.necesidad] }}</strong> en {{ g.sector }}: recibe <strong>{{ g.asignado }} de {{ g.sol.cantidad }}</strong>.
+      <section class="fila-accion" aria-label="Solicitud en {{ g.barrio }}">
+        <p><strong>{{ necesidad[g.sol.necesidad] }}</strong> en {{ g.barrio }}: recibe <strong>{{ g.asignado }} de {{ g.sol.cantidad }}</strong>.
           Prioridad {{ (g.sol.prioridad * 100)|round|int if g.sol.prioridad is not none else '—' }} %.</p>
         <ul>{% for l in g.lineas %}<li>{{ l.cantidad }} del lote {{ l.lote_id }}. {{ l.razon }}</li>{% endfor %}</ul>
-        {% if g.aislado %}<p class="mensaje mensaje-error" role="note">Este sector está aislado: confirme que hay una ruta antes de enviar la entrega.</p>{% endif %}
+        {% if g.aislado %}<p class="mensaje mensaje-error" role="note">Este barrio está aislado: confirme que hay una ruta antes de enviar la entrega.</p>{% endif %}
         {% if p.estado == 'propuesto' %}
-        <div class="campo"><label for="equipo-{{ g.sol.id }}">Equipo de entrega<span class="visually-hidden"> para la solicitud en {{ g.sector }}</span></label>
+        <div class="campo"><label for="equipo-{{ g.sol.id }}">Equipo de entrega<span class="visually-hidden"> para la solicitud en {{ g.barrio }}</span></label>
           <select id="equipo-{{ g.sol.id }}" name="equipo_{{ g.sol.id }}">
             {% for id, nombre in equipos %}<option value="{{ id }}"{% if id == g.equipo_id %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
             {% if not equipos %}<option value="">No hay equipos</option>{% endif %}
           </select></div>
         <div class="opcion"><input type="checkbox" id="excluir-{{ g.sol.id }}" name="excluir_{{ g.sol.id }}" value="si">
-          <label for="excluir-{{ g.sol.id }}">Dejar fuera del plan<span class="visually-hidden"> la solicitud en {{ g.sector }}</span></label></div>
+          <label for="excluir-{{ g.sol.id }}">Dejar fuera del plan<span class="visually-hidden"> la solicitud en {{ g.barrio }}</span></label></div>
         {% elif g.equipo_id %}<p>Equipo: {{ (equipos|selectattr(0, 'equalto', g.equipo_id)|map(attribute=1)|first) or 'asignado' }}.</p>{% endif %}
       </section>
     {% endfor %}
