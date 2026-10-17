@@ -350,13 +350,30 @@ def test_renovar_la_demostracion_conserva_al_administrador(sesiones, monkeypatch
         assert db.scalar(select(func.count()).select_from(Sector)) > 100
 
 
-def test_renovar_la_demostracion_se_niega_si_hay_otras_cuentas_reales(sesiones, monkeypatch, capsys):
+def test_renovar_la_demostracion_conserva_cuentas_sin_datos_y_se_niega_si_ya_hicieron_algo(sesiones, monkeypatch, capsys):
     monkeypatch.setattr(main, "SessionLocal", sesiones)
     with sesiones() as db:
         cargar_viviendas(db)
-        db.add(Usuario(nombre="Persona Real", telefono="3009998877", rol=Rol.SOLICITANTE, ficticio=False))
+        db.add(Municipio(codigo="99999", nombre="Prueba")) if db.get(Municipio, "99999") is None else None
+        db.flush()
+        sector = Sector(municipio_codigo="08001", nombre="Sector real de prueba")
+        db.add(sector)
+        db.flush()
+        persona = Usuario(nombre="Persona Real", telefono="3009998877", rol=Rol.SOLICITANTE, ficticio=False,
+                          sector_id=sector.id)
+        db.add(persona)
         db.commit()
-    main.reiniciar_demo()  # no lanza: la aplicación sigue arrancando
-    assert "DEMO no renovada" in capsys.readouterr().out
+        persona_id = persona.id
+    main.reiniciar_demo()  # la cuenta existe pero no ha hecho nada: se conserva y la simulación se renueva
+    assert "DEMO renovada" in capsys.readouterr().out
     with sesiones() as db:
-        assert db.scalar(select(func.count()).select_from(Sector)) == 0 and db.scalar(select(func.count()).select_from(Usuario)) == 1
+        assert db.get(Usuario, persona_id) is not None and db.scalar(select(func.count()).select_from(Sector)) > 100
+        db.add(Solicitud(solicitante_id=persona_id, creador_id=persona_id,
+                         sector_id=db.scalar(select(Sector.id).limit(1)), necesidad="agua", cantidad=6))
+        db.commit()
+        antes = db.scalar(select(func.count()).select_from(Sector))
+    main.reiniciar_demo()  # ahora sí hizo algo: se niega, sin tumbar la aplicación
+    salida = capsys.readouterr().out
+    assert "DEMO no renovada" in salida and "solicitudes" in salida
+    with sesiones() as db:
+        assert db.scalar(select(func.count()).select_from(Sector)) == antes

@@ -12,7 +12,7 @@ import math
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
@@ -84,28 +84,76 @@ def _jitter(rng, lat, lon, grados=0.004):
     return float(lat + rng.normal(0, grados)), float(lon + rng.normal(0, grados))
 
 
-def limpiar_simulacion(db: Session, conservar_administradores: bool = False) -> None:
+def _datos_de_cuentas_reales(db: Session, ids: list[int]) -> dict[str, int]:
+    """Cuántos registros hicieron las cuentas reales. Si hay alguno, renovar la simulación podría dañarlos."""
+    def contar(consulta) -> int:
+        return db.scalar(select(func.count()).select_from(consulta.subquery())) or 0
+
+    return {k: v for k, v in {
+        "solicitudes": contar(select(m.Solicitud.id).where(m.Solicitud.solicitante_id.in_(ids) | m.Solicitud.creador_id.in_(ids))),
+        "reportes de daños": contar(select(m.ReporteDanos.id).where(m.ReporteDanos.autor_id.in_(ids))),
+        "perfiles de donante": contar(select(m.Donante.id).where(m.Donante.usuario_id.in_(ids))),
+        "verificaciones": contar(select(m.Verificacion.id).where(m.Verificacion.verificador_id.in_(ids))),
+        "entregas": contar(select(m.Entrega.id).where(m.Entrega.equipo_id.in_(ids))),
+        "planes aprobados": contar(select(m.PlanAsignacion.id).where(m.PlanAsignacion.aprobado_por.in_(ids))),
+        "movimientos de inventario": contar(select(m.MovimientoInventario.id).where(m.MovimientoInventario.usuario_id.in_(ids))),
+    }.items() if v}
+
+
+def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
     """Borra todo lo simulado (RF-50), menos los municipios, las proyecciones y los datos oficiales.
 
     Por seguridad se niega a actuar si ya hay cuentas reales: borraría sus solicitudes y sus datos.
-    Con `conservar_administradores` se permite una sola excepción: que las únicas cuentas reales sean de
-    administradores. Esas cuentas y su historial se conservan (sirve para renovar la demostración en producción
-    después de crear el primer administrador, y antes de crear otras cuentas)."""
+    Con `conservar_cuentas` se permite renovar la simulación aunque haya cuentas reales, siempre que todavía no
+    hayan hecho nada (ni solicitudes, ni reportes, ni donaciones, ni verificaciones, ni entregas). Las cuentas, su
+    historial, los centros de acopio que administran y los pesos que cambiaron se conservan. Devuelve en qué sector
+    estaba cada cuenta y cada centro, para volver a ubicarlos cuando se genere de nuevo."""
     reales = db.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(False))).all()
-    if reales and not (conservar_administradores and all(u.rol == m.Rol.ADMINISTRADOR for u in reales)):
+    if reales and not conservar_cuentas:
         raise RuntimeError("Hay cuentas reales: reiniciar la simulación borraría datos de personas. "
                            "Use generar(..., reiniciar=False) o limpie la base de desarrollo.")
+    ids = [u.id for u in reales]
+    if ids:
+        hecho = _datos_de_cuentas_reales(db, ids)
+        if hecho:
+            detalle = ", ".join(f"{n} {k}" for k, n in hecho.items())
+            raise RuntimeError(f"Las cuentas reales ya tienen datos ({detalle}): renovar la simulación podría borrarlos.")
+    nombre_sector = {s.id: s.nombre for s in db.scalars(select(m.Sector))}
+    centros_reales = db.scalars(select(m.CentroAcopio).where(m.CentroAcopio.responsable_id.in_(ids))).all() if ids else []
+    donde = {"usuarios": {u.id: nombre_sector.get(u.sector_id) for u in reales if u.sector_id},
+             "centros": {c.id: nombre_sector.get(c.sector_id) for c in centros_reales if c.sector_id}}
+    for u in reales:  # se sueltan de los sectores que se van a borrar; luego se vuelven a ubicar por nombre
+        u.sector_id = None
+    for c in centros_reales:
+        c.sector_id = None
+    db.flush()
+
     simulados = select(m.Usuario.id).where(m.Usuario.ficticio.is_(True))
     db.execute(delete(m.Bitacora).where(m.Bitacora.usuario_id.is_(None) | m.Bitacora.usuario_id.in_(simulados)))
     for modelo in (
         m.MovimientoInventario, m.PlanResumen, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega,
-        m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.CentroAcopio, m.Solicitud,
-        m.ReporteDanos, m.PuntajeSector, m.EventoAuditoria, m.Peso,
+        m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.Solicitud,
+        m.ReporteDanos, m.PuntajeSector, m.EventoAuditoria,
     ):
         db.execute(delete(modelo))
+    conservados = [c.id for c in centros_reales]
+    db.execute(delete(m.CentroAcopio).where(m.CentroAcopio.id.not_in(conservados)) if conservados
+               else delete(m.CentroAcopio))
+    db.execute(delete(m.Peso).where(m.Peso.actualizado_por.is_(None) | m.Peso.actualizado_por.in_(simulados)))
     db.execute(delete(m.Usuario).where(m.Usuario.ficticio.is_(True)))
     db.execute(delete(m.Evento))
     db.execute(delete(m.Sector))
+    db.flush()
+    return donde
+
+
+def reubicar_cuentas(db: Session, donde: dict, sectores: list[m.Sector]) -> None:
+    """Vuelve a poner cada cuenta real y cada centro conservado en el sector que tenía, buscándolo por nombre."""
+    por_nombre = {s.nombre: s.id for s in sectores}
+    for uid, nombre in donde.get("usuarios", {}).items():
+        db.get(m.Usuario, uid).sector_id = por_nombre.get(nombre)
+    for cid, nombre in donde.get("centros", {}).items():
+        db.get(m.CentroAcopio, cid).sector_id = por_nombre.get(nombre)
     db.flush()
 
 
@@ -406,9 +454,13 @@ def crear_apoyo(db, rng, evento, sectores, usuarios, verdad) -> dict:
 
 
 def sembrar_pesos(db: Session) -> int:
+    """Pesos iniciales. Los que ya existan (por ejemplo, los que cambió una cuenta real) no se tocan."""
+    existentes = {(p.ambito, p.dimension) for p in db.scalars(select(m.Peso))}
     n = 0
     for ambito, dims in PESOS_INICIALES.items():
         for dimension, valor in dims.items():
+            if (ambito, dimension) in existentes:
+                continue
             db.add(m.Peso(ambito=ambito, dimension=dimension, valor=valor))
             n += 1
     db.flush()
@@ -417,14 +469,14 @@ def sembrar_pesos(db: Session) -> int:
 
 # ----------------------------------------------------------------------------- orquestación
 def generar(db: Session, semilla: int = 42, tipo: str = "inundacion", municipios: list[str] | None = None,
-            reiniciar: bool = True, conservar_administradores: bool = False) -> dict:
+            reiniciar: bool = True, conservar_cuentas: bool = False) -> dict:
     """Genera un escenario completo. Devuelve un resumen con los conteos."""
     rng = np.random.default_rng(semilla)
     municipios = municipios or list(MUNICIPIOS)
-    if reiniciar:
-        limpiar_simulacion(db, conservar_administradores)
+    donde = limpiar_simulacion(db, conservar_cuentas) if reiniciar else {}
 
     sectores = crear_sectores(db, rng, municipios)
+    reubicar_cuentas(db, donde, sectores)
     intensidad = float(rng.uniform(0.6, 1.0))
     dano, zona = _dano_verdadero(tipo, sectores, intensidad, rng)
     evento = m.Evento(tipo=tipo, nombre=f"{tipo.capitalize()} simulado (semilla {semilla})", fecha=BASE_FECHA,

@@ -46,12 +46,12 @@ def sembrar_demo() -> None:
 
 
 def reiniciar_demo() -> None:
-    """Renueva el escenario simulado (semilla 42, inundación). Conserva las cuentas de administrador y se niega,
-    sin tumbar la aplicación, si ya hay otras cuentas reales. Todo ocurre en una sola transacción: si algo falla,
-    queda lo anterior."""
+    """Renueva el escenario simulado (semilla 42, inundación). Conserva todas las cuentas reales y se niega, sin
+    tumbar la aplicación, si esas cuentas ya hicieron algo (solicitudes, reportes, donaciones...). Todo ocurre en
+    una sola transacción: si algo falla, queda lo anterior."""
     try:
         with SessionLocal() as db:
-            r = generar(db, semilla=42, tipo="inundacion", reiniciar=True, conservar_administradores=True)
+            r = generar(db, semilla=42, tipo="inundacion", reiniciar=True, conservar_cuentas=True)
         print(f"DEMO renovada: {r['sectores']} sectores, {r['reportes']} reportes, {r['solicitudes']} solicitudes, "
               f"{r['lotes']} lotes", flush=True)
     except RuntimeError as e:

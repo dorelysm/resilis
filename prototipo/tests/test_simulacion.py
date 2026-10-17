@@ -160,7 +160,7 @@ def test_regenerar_conserva_la_cuenta_del_administrador_real(base):
     generar(base, semilla=31, tipo="inundacion")
     admin = _admin_real(base)
     viejos = {u.id for u in base.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(True)))}
-    generar(base, semilla=32, tipo="vendaval", conservar_administradores=True)
+    generar(base, semilla=32, tipo="vendaval", conservar_cuentas=True)
     assert base.get(m.Usuario, admin.id) is not None and base.get(m.Usuario, admin.id).password_hash == "hash-de-prueba"
     nuevos = {u.id for u in base.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(True)))}
     assert nuevos and not (viejos & nuevos)  # los simulados son otros
@@ -169,18 +169,57 @@ def test_regenerar_conserva_la_cuenta_del_administrador_real(base):
     assert base.scalar(select(func.count()).select_from(m.Municipio)) == 23  # lo real no se toca
 
 
-def test_regenerar_se_niega_si_hay_otras_cuentas_reales_y_no_borra_nada(base):
+def test_regenerar_conserva_todas_las_cuentas_reales_que_todavia_no_hicieron_nada(base):
+    """Una entidad, un equipo y un centro de acopio creados por el administrador, sin datos todavía: se conservan,
+    vuelven a quedar en su sector (buscado por nombre) y el centro de acopio real sigue existiendo."""
+    generar(base, semilla=41, tipo="inundacion")
+    sector = base.scalar(select(m.Sector).where(m.Sector.nombre == "Soledad - Sector 03"))
+    admin = _admin_real(base)
+    entidad = m.Usuario(nombre="Entidad Real", telefono="3002223344", rol="entidad", ficticio=False, password_hash="x")
+    acopio = m.Usuario(nombre="Acopio Real", telefono="3003334455", rol="centro_acopio", ficticio=False,
+                       password_hash="x", sector_id=sector.id)
+    base.add_all([entidad, acopio])
+    base.flush()
+    centro = m.CentroAcopio(nombre="Centro de acopio de Acopio Real", sector_id=sector.id, responsable_id=acopio.id)
+    base.add(centro)
+    ajustado = base.scalar(select(m.Peso).where(m.Peso.ambito == "sector", m.Peso.dimension == "gravedad"))
+    ajustado.valor, ajustado.actualizado_por = 0.6, entidad.id  # la entidad cambió este peso
+    base.commit()
+    ids = {u.id for u in (admin, entidad, acopio)}
+
+    generar(base, semilla=42, tipo="inundacion", conservar_cuentas=True)
+    base.expire_all()
+    assert {u.id for u in base.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(False)))} == ids
+    nuevo = base.scalar(select(m.Sector).where(m.Sector.nombre == "Soledad - Sector 03"))
+    assert base.get(m.Usuario, acopio.id).sector_id == nuevo.id  # reubicado por nombre
+    assert base.get(m.CentroAcopio, centro.id).sector_id == nuevo.id and base.get(m.CentroAcopio, centro.id).responsable_id == acopio.id
+    otros = base.scalars(select(m.CentroAcopio).where(m.CentroAcopio.id != centro.id)).all()
+    assert otros and all(c.responsable_id != acopio.id for c in otros)  # los demás son los simulados nuevos
+    peso = base.scalar(select(m.Peso).where(m.Peso.ambito == "sector", m.Peso.dimension == "gravedad"))
+    assert peso.valor == 0.6 and peso.actualizado_por == entidad.id  # el ajuste de la entidad no se pierde
+    assert base.scalar(select(func.count()).select_from(m.Peso).where(m.Peso.ambito == "sector",
+                                                                       m.Peso.dimension == "gravedad")) == 1
+
+
+def test_regenerar_se_niega_si_las_cuentas_reales_ya_tienen_datos_y_no_borra_nada(base):
     generar(base, semilla=33, tipo="inundacion")
     _admin_real(base)
-    base.add(m.Usuario(nombre="Persona Real", telefono="3009998877", rol="solicitante", ficticio=False))
+    sector = base.scalar(select(m.Sector))
+    persona = m.Usuario(nombre="Persona Real", telefono="3009998877", rol="solicitante", ficticio=False,
+                        sector_id=sector.id)
+    base.add(persona)
+    base.flush()
+    base.add(m.Solicitud(solicitante_id=persona.id, creador_id=persona.id, sector_id=sector.id, necesidad="agua",
+                         cantidad=6))
     base.commit()
     eventos = base.scalar(select(func.count()).select_from(m.Evento))
     sectores = base.scalar(select(func.count()).select_from(m.Sector))
-    with pytest.raises(RuntimeError, match="cuentas reales"):
-        generar(base, semilla=34, tipo="vendaval", conservar_administradores=True)
+    with pytest.raises(RuntimeError, match="ya tienen datos.*solicitudes"):
+        generar(base, semilla=34, tipo="vendaval", conservar_cuentas=True)
     base.rollback()
     assert base.scalar(select(func.count()).select_from(m.Evento)) == eventos
     assert base.scalar(select(func.count()).select_from(m.Sector)) == sectores
+    assert base.get(m.Usuario, persona.id) is not None
 
 
 def test_sin_la_opcion_un_administrador_real_tambien_bloquea(base):
@@ -196,6 +235,6 @@ def test_si_regenerar_falla_a_la_mitad_no_se_pierde_lo_anterior(base):
     _admin_real(base)
     antes = base.scalar(select(func.count()).select_from(m.Solicitud))
     with pytest.raises(KeyError):
-        generar(base, semilla=38, tipo="inundacion", municipios=["99999"], conservar_administradores=True)
+        generar(base, semilla=38, tipo="inundacion", municipios=["99999"], conservar_cuentas=True)
     base.rollback()
     assert base.scalar(select(func.count()).select_from(m.Solicitud)) == antes > 0
