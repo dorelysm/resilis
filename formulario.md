@@ -37,13 +37,52 @@ Además lleva la lógica de seguimiento de una aplicación de pedidos a la ayuda
 
 PRE FACTIBILIDAD ECONÓMICA, SOCIAL Y SUSTENTABILIDAD AMBIENTAL (1500 caracteres)
 Describa brevemente las razones que hacen de esta propuesta una propuesta sostenible en el tiempo. Fundamente por qué considera que esta propuesta es presupuestariamente abordable, por qué es viable o aceptable socialmente 
-Económica: el prototipo se construye con software abierto y se aloja en la nube, sin licencias ni equipos especializados. Los costos de operación son bajos: hospedaje, mantenimiento y capacitación de brigadistas y organizaciones. Podrían financiarse con las oficinas de gestión del riesgo de municipios y departamento y con cooperación humanitaria. Al ser abierto, otras ciudades pueden replicarlo sin pagar licencias.
+Viabilidad técnica: el prototipo ya funciona en línea (resilis.dorelys.dev), con 338 pruebas automáticas y accesibilidad WCAG 2.2 AA. Usa software abierto y se adapta a otro territorio cambiando solo los barrios y los pesos.
 
-Social: se usa desde el celular que ya tiene la gente, con lenguaje sencillo y accesibilidad WCAG 2.2 AA. Quien no tiene celular a mano puede imprimir una ficha con su código de entrega. Para dar seguimiento hay que identificar a cada solicitante, por eso se piden solo los datos necesarios: nombre, teléfono y barrio (este último solo si pide ayuda); el documento solo para entregas de mayor valor. Los datos de vulnerabilidad se piden con consentimiento expreso y cada rol ve solo lo que necesita, en línea con la Ley 1581 de 2012. El registro de auditoría no contiene datos personales.
+Económica: el prototipo cuesta menos de COP 50.000 al mes. Un piloto de 6 meses con una entidad, con mantenimiento, capacitación y revisión jurídica, cuesta unos COP 17 millones, y operarlo después, unos COP 8 millones al año (presupuesto adjunto). No requiere licencias ni equipos especializados. Podría financiarse con las oficinas de gestión del riesgo de municipios y departamento, cooperación humanitaria y convocatorias de innovación pública. Al ser abierto, otras ciudades pueden replicarlo sin pagar licencias.
 
-Ambiental: bajo consumo de datos y menos desplazamientos innecesarios de ayuda.
+Social: se usa desde el celular que ya tiene la gente; quien no lo tiene a mano imprime una ficha con su código. Se piden solo los datos necesarios (nombre, teléfono y barrio si pide ayuda; el documento solo en entregas de mayor valor), con consentimiento expreso, y cada rol ve solo lo que necesita, según la Ley 1581 de 2012. La auditoría no contiene datos personales.
 
-Límites: el prototipo usa datos simulados con identidades ficticias, y la ruta del equipo en el mapa es simulada. Falta conseguir datos oficiales por barrio, revisar jurídicamente el manejo de datos personales, validar los pesos con una entidad de gestión del riesgo y agregar la detección automática de duplicados y reportes sospechosos.
+Ambiental: bajo consumo de datos y menos desplazamientos y desperdicio: lo que vence antes sale primero y las entregas se agrupan por municipio.
+
+Próximos pasos: en el piloto se reemplazan los datos simulados por datos oficiales por barrio, se valida la prioridad con una entidad de gestión del riesgo y se completa la revisión jurídica de datos personales.
+
+
+PRESUPUESTO
+Estimación de referencia en pesos colombianos (COP). Supuestos: 1 USD = COP 4.000; hora de trabajo técnico a COP 25.000 y de estudiante a COP 20.000; precios sujetos a cotización.
+
+1. Prototipo (ya construido en el Rally)
+| Concepto | Detalle | Costo |
+|---|---|---|
+| Hospedaje en la nube (aplicación y base de datos PostgreSQL, Railway) | US$5 a US$10 al mes | COP 20.000 a 40.000 al mes |
+| Dominio | subdominio de un dominio ya existente | COP 0 |
+| Software y datos | Python, FastAPI, PostgreSQL, SciPy, Leaflet, OpenStreetMap y datos abiertos | COP 0 |
+| Trabajo del equipo (aporte en especie) | 7 integrantes x 28 horas x COP 20.000 | COP 3.920.000 |
+
+2. Piloto de 6 meses con una entidad de gestión del riesgo (1 a 3 municipios)
+| Concepto | Cálculo | Costo (COP) |
+|---|---|---|
+| Hospedaje con respaldos y monitoreo | US$30 al mes x 6 | 720.000 |
+| Mantenimiento y soporte técnico | 10 horas por semana x 26 semanas x 25.000 | 6.500.000 |
+| Capacitación de brigadistas y organizaciones | 3 talleres de 20 personas (material, refrigerios y transporte) | 1.800.000 |
+| Fichas impresas con código | 2.000 fichas x 200 | 400.000 |
+| Revisión jurídica (Ley 1581 de 2012, política de datos y términos de uso) | servicio profesional | 2.500.000 |
+| Validación de la prioridad con una persona experta en gestión del riesgo | 3 sesiones x 500.000 | 1.500.000 |
+| Integración de datos oficiales por barrio | 40 horas x 25.000 | 1.000.000 |
+| Divulgación y material de apoyo | volantes y video de capacitación | 1.000.000 |
+| Subtotal | | 15.420.000 |
+| Imprevistos (10 %) | | 1.542.000 |
+| Total del piloto | | 16.962.000 |
+
+3. Operación anual después del piloto (por entidad)
+| Concepto | Cálculo | Costo (COP) |
+|---|---|---|
+| Hospedaje | US$30 a US$50 al mes x 12 | 1.440.000 a 2.400.000 |
+| Mantenimiento y soporte | 4 horas por semana x 52 x 25.000 | 5.200.000 |
+| Capacitación de refuerzo | 2 talleres al año | 1.200.000 |
+| Total por año | | 7.840.000 a 8.800.000 |
+
+Fuentes de financiación posibles: oficinas de gestión del riesgo de municipios y del departamento, cooperación humanitaria y convocatorias de innovación pública. Como el sistema es de software abierto, cada nueva entidad solo asume el hospedaje, el soporte y la capacitación; no paga licencias.
 
 
 PROPUESTAS QUE DESCARTARON
