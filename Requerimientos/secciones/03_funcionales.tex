@@ -14,14 +14,14 @@ Cada requisito tiene un identificador, una prioridad MoSCoW (\Must{} debe, \Shou
 \subsection{Acceso y usuarios}
 \rftabla
 RF-01 & El sistema autentica a los usuarios y limita las funciones según su rol (solicitante, brigadista, equipo de entrega, entidad, administrador). & \Must & Un usuario no puede abrir pantallas de otro rol. \\
-RF-02 & Registrar a un solicitante con nombre, teléfono y sector obligatorios. El documento de identidad es opcional y obligatorio solo para entregas de mayor valor. El registro exige aceptar el tratamiento de datos. & \Must & No se crea la cuenta sin la autorización de datos. \\
+RF-02 & Registrar a un solicitante con nombre, teléfono y barrio obligatorios (se elige primero el municipio y luego el barrio). El documento de identidad es opcional y obligatorio solo para entregas de mayor valor. El registro exige aceptar el tratamiento de datos. & \Must & No se crea la cuenta sin la autorización de datos. \\
 RF-03 & El administrador crea cuentas de brigadistas, entidades y organizaciones, y asigna roles. Las organizaciones se registran con aprobación. & \Must & Una organización sin aprobar no recibe entregas. \\
 RF-04 & No existen reportes ni solicitudes anónimas: todo se asocia a un usuario registrado. & \Must & Sin sesión no se puede enviar nada. \\
 \rffin
 
 \subsection{Reportes de daños}
 \rftabla
-RF-05 & Crear un reporte de daños con sector (por GPS o elegido en el mapa), tipo de evento, nivel de daño, personas afectadas estimadas y estado del acceso. & \Must & Un reporte completo se guarda en menos de 3 pasos. \\
+RF-05 & Crear un reporte de daños con barrio (elegido por municipio), tipo de evento, nivel de daño, personas afectadas estimadas y estado del acceso. & \Must & Un reporte completo se guarda en menos de 3 pasos. \\
 RF-06 & Registrar la hora del evento y la hora de captura por separado. & \Must & Ambos campos aparecen en el detalle. \\
 RF-07 & Anular un reporte con motivo, sin borrarlo. & \Should & El reporte anulado no cuenta en el cálculo y queda en la bitácora. \\
 RF-08 & Generar un formulario impreso equivalente al digital, para uso sin electricidad. & \Should & El formulario se imprime en una hoja con los mismos campos. \\
@@ -32,7 +32,7 @@ RF-11 & Adjuntar una foto opcional, comprimida antes del envío. & \Could & La f
 
 \subsection{Solicitudes de ayuda}
 \rftabla
-RF-12 & Crear una solicitud con la necesidad (alimentación, agua, vivienda o reubicación, salud, otra), personas en el hogar, descripción de la situación, urgencia declarada y ubicación (dirección o punto de referencia y sector). & \Must & La solicitud queda ligada al usuario y aparece en su seguimiento. \\
+RF-12 & Crear una solicitud con la necesidad (alimentos, agua, medicamentos, higiene, abrigo y vivienda, otro), personas en el hogar, descripción de la situación, urgencia declarada y ubicación (dirección o punto de referencia y barrio). & \Must & La solicitud queda ligada al usuario y aparece en su seguimiento. \\
 RF-13 & Indicar si la persona es vulnerable (discapacidad, adulto mayor, menor, embarazo, enfermedad crónica u otra), con la descripción de su situación y la necesidad específica. Requiere consentimiento expreso. & \Must & No se guarda sin la casilla de consentimiento. \\
 RF-14 & Un brigadista puede crear una solicitud en nombre de otra persona (por ejemplo, sin celular), dejando constancia de quién la creó. & \Should & La solicitud muestra al solicitante y al brigadista. \\
 RF-15 & Detectar posibles duplicados (mismo documento, teléfono o dirección en una ventana de tiempo) y marcarlos para revisión. & \Should & Dos solicitudes con el mismo documento quedan marcadas. \\
@@ -41,9 +41,9 @@ RF-16 & Anular una solicitud con motivo, por el solicitante o la entidad. & \Sho
 
 \subsection{Verificación}
 \rftabla
-RF-17 & Verificar la identidad y la necesidad de una solicitud, con nota. Pueden hacerlo brigadistas y entidades. & \Must & Una solicitud verificada cambia su confianza y puede asignarse. \\
+RF-17 & Verificar la identidad y la necesidad de una solicitud, con nota. Pueden hacerlo brigadistas y entidades, de cualquier municipio: la zona de trabajo del brigadista solo ordena la lista, con las de su zona primero. & \Must & Una solicitud verificada cambia su confianza y puede asignarse. \\
 RF-18 & Verificar o desmentir un reporte de daños, con nota. & \Must & Un reporte verificado cambia su confianza. \\
-RF-19 & Solicitar la verificación de un sector con poca información o baja confianza. & \Should & La solicitud aparece en la lista de tareas de campo. \\
+RF-19 & Solicitar la verificación de un barrio con poca información o baja confianza. & \Should & La solicitud aparece en la lista de tareas de campo. \\
 RF-20 & Mostrar quién, cuándo y por qué verificó cada reporte o solicitud. & \Should & El detalle muestra el historial. \\
 \rffin
 
@@ -54,7 +54,7 @@ RF-22 & El equipo de entrega ve solo sus entregas asignadas, con nombre, direcci
 RF-23 & Generar un código de entrega de un solo uso al asignar la solicitud. El solicitante lo ve en pantalla, en una ficha impresa o como código QR. & \Must & Cada asignación produce un código distinto. \\
 RF-24 & El equipo valida el código al entregar y registra la entrega, \textbf{sin conexión} y sincroniza después. & \Must & Con el dispositivo sin red, un código correcto confirma la entrega. \\
 RF-25 & El código solo sirve para el equipo asignado y una vez. Un código repetido, vencido o de otro equipo se rechaza. & \Must & Un segundo uso del mismo código es rechazado. \\
-RF-26 & Seguimiento: el solicitante ve el estado de su solicitud (registrada, verificada, asignada, en camino, entregada, cerrada) con su historial. & \Must & Cada cambio de estado aparece al actualizar. \\
+RF-26 & Seguimiento: el solicitante ve el estado de su solicitud (registrada, verificada, asignada, en camino, entregada, cerrada) como un recorrido por etapas, con su historial. & \Must & Cada cambio de estado aparece al actualizar. \\
 RF-27 & Registrar incidencias de entrega: persona no encontrada, entrega parcial, rechazo, ayuda que no llegó. & \Should & La incidencia reabre la solicitud. \\
 RF-28 & El solicitante confirma la recepción de la ayuda. & \Should & La solicitud pasa a cerrada. \\
 RF-29 & Reasignar una solicitud a otro equipo, generando un código nuevo e invalidando el anterior. & \Should & El código anterior ya no funciona. \\
@@ -63,23 +63,23 @@ RF-30 & Registrar cada evento de una solicitud en un registro encadenado por has
 
 \subsection{Mapa y visualización}
 \rftabla
-RF-31 & Mostrar un mapa de sectores coloreados por prioridad, con un conmutador para verlos por confianza. & \Must & Un cambio de datos modifica los colores en menos de 5 s. \\
-RF-32 & Mostrar el detalle de un sector: puntaje, aporte de cada dimensión, confianza, reportes, solicitudes y antigüedad, y la razón de su posición. & \Must & El detalle explica por qué el sector ocupa su lugar. \\
-RF-33 & Mostrar listas priorizadas de sectores y de solicitudes. & \Must & Las listas coinciden con el orden calculado. \\
-RF-34 & Generar alertas de información faltante: sectores sin reportes, desactualizados, con baja confianza o con reportes contradictorios. Los sectores sin datos se marcan distinto de los ``sin problema''. & \Must & Un sector sin reportes aparece con una alerta y un patrón propio. \\
-RF-35 & Filtrar por municipio, tipo de evento, necesidad, estado de la solicitud y rango de tiempo. & \Should & El filtro actualiza mapa y listas. \\
+RF-31 & Mostrar un mapa de barrios coloreados por prioridad, con un conmutador para verlos por confianza. Por defecto solo se ven los barrios con reportes o solicitudes, con una casilla para ver también los demás. & \Must & Un cambio de datos modifica los colores en menos de 5 s. \\
+RF-32 & Mostrar el detalle de un barrio: puntaje, aporte de cada dimensión, confianza, reportes, solicitudes y antigüedad, y la razón de su posición. & \Must & El detalle explica por qué el barrio ocupa su lugar. \\
+RF-33 & Mostrar listas priorizadas de barrios y de solicitudes, con un resumen por municipio. & \Must & Las listas coinciden con el orden calculado. \\
+RF-34 & Generar alertas de información faltante: barrios sin reportes, desactualizados, con baja confianza o con reportes contradictorios. Los barrios sin datos se marcan distinto de los ``sin problema''. & \Must & Un barrio sin reportes aparece con una alerta y un patrón propio. \\
+RF-35 & Filtrar por municipio, tipo de necesidad, aviso de información faltante y, en listas, estado de la solicitud. & \Should & El filtro actualiza mapa y listas. \\
 RF-36 & Exportar las listas priorizadas en CSV o PDF. & \Could & El archivo coincide con la lista en pantalla. \\
 \rffin
 
 \subsection{Modelo y asignación de recursos}
 \rftabla
-RF-37 & Calcular el índice de prioridad por sector con el método TOPSIS (sección~\ref{sec:topsis}). & \Must & El resultado coincide con un cálculo manual de ejemplo. \\
+RF-37 & Calcular el índice de prioridad por barrio con el método TOPSIS (sección~\ref{sec:topsis}). & \Must & El resultado coincide con un cálculo manual de ejemplo. \\
 RF-38 & Calcular la prioridad de cada solicitud (sección~\ref{sec:solicitudes}). & \Must & Una solicitud urgente y vulnerable queda por encima de una que no lo es. \\
 RF-39 & Permitir a la entidad y al administrador ajustar los pesos de las dimensiones, con verificación de consistencia. & \Must & Un cambio de pesos reordena las listas. \\
-RF-40 & Calcular la confianza de cada reporte, solicitud y sector (sección~\ref{sec:confianza}). & \Must & Un reporte verificado tiene mayor confianza que uno igual sin verificar. \\
+RF-40 & Calcular la confianza de cada reporte, solicitud y barrio (sección~\ref{sec:confianza}). & \Must & Un reporte verificado tiene mayor confianza que uno igual sin verificar. \\
 RF-41 & Los recursos disponibles provienen del inventario de donaciones por centro de acopio (sección~\ref{sec:donaciones}). & \Must & El inventario muestra lo disponible por tipo y centro. \\
 RF-42 & Calcular un plan de asignación optimizado de los recursos a las solicitudes (sección~\ref{sec:plan_asignacion}). & \Must & La suma asignada no supera lo disponible. \\
-RF-43 & Agrupar sectores en perfiles similares (K-means o mezcla gaussiana). & \Could & Cada sector muestra su perfil. \\
+RF-43 & Agrupar barrios en perfiles similares (K-means o mezcla gaussiana). & \Could & Cada barrio muestra su perfil. \\
 RF-44 & Detectar solicitudes duplicadas y reportes anómalos, y marcarlos para verificación. & \Should & Una solicitud falsa inyectada en la simulación queda marcada. \\
 \rffin
 
@@ -110,14 +110,29 @@ RF-52 & Registrar una donación: donante, tipo (alimentos, agua, medicamentos, h
 RF-53 & El centro de acopio registra la recepción verificando cantidad, estado y vencimiento. La donación pasa al inventario con la cantidad realmente recibida. & \Must & Si la cantidad recibida difiere de la ofrecida, queda anotada. \\
 RF-54 & Llevar el inventario por centro de acopio, tipo y lote, con cantidad disponible, reservada y entregada. & \Must & Disponible, reservada y entregada suman lo recibido. \\
 RF-55 & Registrar la entrega de recursos del inventario a una solicitud, descontándolos al confirmar la entrega con el código. & \Must & Una entrega confirmada reduce el inventario. \\
-RF-56 & El donante ve el estado de su donación (ofrecida, recibida, en inventario, asignada, entregada) y su destino agregado (sector y tipo de necesidad), sin datos personales del beneficiario. & \Must & El donante no ve nombres de beneficiarios. \\
-RF-57 & Donación dirigida: el donante puede destinar su donación a un sector, a un tipo de necesidad o a una solicitud, y la asignación lo respeta. & \Should & Un lote dirigido no se asigna fuera de su destino. \\
+RF-56 & El donante ve el estado de su donación (ofrecida, recibida, en inventario, asignada, entregada) y su destino agregado (barrio y tipo de necesidad), sin datos personales del beneficiario. & \Must & El donante no ve nombres de beneficiarios. \\
+RF-57 & Donación dirigida: el donante puede destinar su donación a un barrio, a un tipo de necesidad o a una solicitud, y la asignación lo respeta. & \Should & Un lote dirigido no se asigna fuera de su destino. \\
 RF-58 & Alertas de inventario: productos próximos a vencer, productos escasos frente a la demanda y centros sin existencias. & \Should & Un lote próximo a vencer genera una alerta. \\
-RF-59 & Tablero de necesidades no cubiertas: la brecha entre las solicitudes verificadas y el inventario, por tipo y sector, visible para las entidades y los donantes, para orientar nuevas donaciones. & \Should & La brecha es la demanda menos el inventario. \\
+RF-59 & Tablero de necesidades no cubiertas: la brecha entre las solicitudes verificadas y el inventario, por tipo y barrio, visible para las entidades y los donantes, para orientar nuevas donaciones. & \Should & La brecha es la demanda menos el inventario. \\
 RF-60 & Registrar donaciones monetarias solo como constancia del monto, el donante y el destino. El sistema no procesa pagos. & \Should & Se guarda el monto sin ningún cobro. \\
 RF-61 & Comprobante imprimible de la donación. & \Could & El comprobante muestra la donación y su fecha. \\
 \rffin
 
+\Needspace{14\baselineskip}
+\subsection{Recorrido, ruta y mapas de seguimiento}\label{sec:seguimiento}
+\rftabla
+RF-69 & Mostrar el recorrido por etapas de cada solicitud (registrada, verificada, equipo asignado, en camino, entregada, recibida), donación (ofrecida, recibida, en inventario, reservada, entregada) y reporte (enviado, revisado, cuenta para la prioridad) a su dueño. Cada etapa dice si está lista, en curso, pendiente o con problema con texto y símbolo, no solo con color, y al abrirla explica qué significa. & \Must & Una solicitud verificada y asignada muestra las dos primeras etapas como listas y la siguiente como en curso. \\
+RF-70 & Panel de recorrido para la entidad, los brigadistas y el administrador: cuántas solicitudes, donaciones y reportes hay en cada etapa, cuánto lleva esperando la más antigua (con aviso si supera 6 horas) y la lista de lo que hay en cada etapa, sin datos personales. & \Should & Una solicitud que lleva 10 horas sin verificar marca su etapa como espera larga. \\
+RF-71 & Mostrar, en las listas del personal, \emph{qué pidió} cada solicitud: el tipo con lo específico (por ejemplo, ``Otro: silla de ruedas''), la cantidad y lo que escribió la persona. De la información de vulnerabilidad solo se usa lo que necesita en especial. & \Must & Verificar, asignar, prioridades, plan, entregas, recorrido y la página de un barrio muestran el detalle de cada solicitud. \\
+RF-72 & Mapa de la ruta de una entrega para quien pidió la ayuda: centro de acopio, su destino exacto, el equipo (con su nombre) acercándose, tiempo estimado y un aviso en pantalla cuando esté a menos de 500~m. Se actualiza cada 15 segundos con la pantalla abierta y todo lo que muestra también está escrito. & \Should & Con el equipo en camino, el texto dice cuántos kilómetros faltan y en cuánto llega. \\
+RF-73 & Quien dona ve por dónde va su ayuda como una zona aproximada (círculo de 500~m sobre una cuadrícula de unos 440~m, con el avance en pasos de 10~\%) y los barrios de destino con un círculo de unos 300~m, nunca la ruta ni el punto exacto, y sin direcciones ni nombres. & \Should & La respuesta del servidor no contiene coordenadas de viviendas ni la posición exacta del equipo. \\
+RF-74 & Control logístico: la entidad y el administrador ven en un mapa y en una lista escrita todas las entregas en marcha (de dónde a dónde, cuánto falta y qué equipo las lleva). Cada equipo de entrega ve el mapa de las suyas. & \Should & Un equipo no ve entregas de otro; la entidad ve todas. \\
+RF-75 & En esta versión la posición del equipo es simulada (línea recta entre el centro y el destino, con el tiempo acelerado). Cada mapa lo avisa. Si el centro de acopio no tiene ubicación, el punto de salida también se simula y se avisa. & \Must & Todo mapa de ruta muestra el aviso de simulación. \\
+RF-76 & Mostrar en el mapa de barrios lo que se necesita en cada uno: al abrir un barrio, lo que piden (tipo, cantidad y descripción); casillas para filtrar por tipo de necesidad; y un resumen en texto de los totales por tipo en los barrios que se ven. Las necesidades van por barrio, sin el punto de las viviendas. & \Should & Al marcar ``Otro'' queda solo el barrio donde piden una silla de ruedas. \\
+RF-77 & Un centro de acopio se crea con el barrio donde queda, y de ahí sale su ubicación para dibujar de dónde sale la ayuda. & \Should & No se crea un centro de acopio sin barrio. \\
+\rffin
+
+\Needspace{14\baselineskip}
 \subsection{Plan de asignación optimizado}\label{sec:plan_asignacion}
 \rftabla
 RF-62 & Generar un plan que asigne lotes del inventario a las solicitudes verificadas, maximizando la necesidad cubierta ponderada por prioridad y confianza (sección~\ref{sec:optimizacion}). & \Must & El plan cumple inventario, tipo y destino de cada lote. \\
@@ -127,4 +142,5 @@ RF-65 & Recalcular el plan cuando cambian el inventario, las solicitudes o los a
 RF-66 & Comparar el plan optimizado con una asignación voraz simple, mostrando la necesidad cubierta de cada uno. & \Should & Se muestran ambos resultados. \\
 RF-67 & Proponer qué equipo hace cada entrega, según cercanía y capacidad. & \Should & Ningún equipo supera su capacidad. \\
 RF-68 & Estimar cuánta necesidad adicional cubriría una donación hipotética. & \Could & Se muestra la necesidad adicional cubierta. \\
+RF-78 & Dividir el plan en paquetes pequeños para revisarlos y aprobarlos de uno en uno: hasta 6 entregas de un mismo municipio, de la más prioritaria a la menos, con un solo equipo. Cada línea dice qué, dónde, para cuántas personas y qué tan urgente, sin porcentajes; la cobertura, la comparación con la referencia y los parámetros quedan plegados. La entidad puede dejar fuera una entrega del paquete. El plan se cierra cuando todos sus paquetes están resueltos. & \Must & Un plan de 45 solicitudes se muestra de a 6; aprobar un paquete asigna solo sus entregas y no cierra el plan. \\
 \rffin

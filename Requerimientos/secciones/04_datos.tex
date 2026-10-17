@@ -8,11 +8,11 @@
 \toprule
 \textbf{Entidad} & \textbf{Contenido principal} \\
 \midrule
-Usuario & Nombre, teléfono, sector, documento (opcional), rol, autorización de tratamiento de datos. \\
+Usuario & Nombre, teléfono, barrio, documento (opcional), rol, autorización de tratamiento de datos. \\
 Municipio & Código DANE, nombre y viviendas proyectadas por año. \\
-Sector & Municipio, nombre, geometría, viviendas y personas estimadas, vulnerabilidad de base, amenaza y acceso de base. \\
+Barrio & Municipio, nombre, tipo (barrio o centro poblado), coordenadas (de OpenStreetMap), viviendas y personas estimadas (simuladas), vulnerabilidad de base, amenaza y acceso de base. \\
 Evento & Tipo, fecha, zona, intensidad y si es simulado u oficial. \\
-Reporte de daños & Sector, evento, autor, fuente (aplicación, papel, Estado), hora del evento, hora de captura, daño, personas afectadas, acceso y estado (activo, anulado). \\
+Reporte de daños & Barrio, evento, autor, fuente (aplicación, papel, Estado), hora del evento, hora de captura, daño, personas afectadas, acceso y estado (activo, anulado). \\
 Solicitud & Solicitante, creador, necesidad, personas en el hogar, descripción de la situación, urgencia, ubicación, indicador de vulnerabilidad, estado y prioridad. \\
 Vulnerabilidad & Tipo, descripción de la situación, necesidad específica y consentimiento. Dato sensible. \\
 Verificación & Reporte o solicitud, verificador, resultado, nota y hora. \\
@@ -21,7 +21,7 @@ Recurso y asignación & Tipo, cantidad, ubicación base, y a qué solicitud o eq
 Evento de auditoría & Tipo de evento, identificador de la solicitud, hora, huella del evento anterior. Sin datos personales. \\
 Donante y donación & Donante (nombre, tipo, contacto), tipo de bien o monetaria, cantidad, unidad, estado, vencimiento, centro de acopio, destino si es dirigida y estado (ofrecida, recibida, en inventario, asignada, entregada). \\
 Centro de acopio e inventario & Centro (nombre, ubicación) y lotes con cantidad disponible, reservada y entregada. \\
-Plan de asignación & Lotes asignados a solicitudes, cantidades, equipo de entrega, razón de cada asignación, necesidad sin cubrir y estado (propuesto, aprobado, rechazado). \\
+Plan de asignación & Lotes asignados a solicitudes, cantidades, equipo de entrega, razón de cada asignación, necesidad sin cubrir, solicitudes ya resueltas (para el avance por paquetes) y estado (propuesto, aprobado, rechazado). \\
 Dato oficial & Origen, fecha, tipo (evento, daño, amenaza), y registros cargados desde archivos abiertos. \\
 Pesos y bitácora & Peso de cada dimensión y registro de cambios con usuario y hora. \\
 \bottomrule
@@ -30,8 +30,8 @@ Pesos y bitácora & Peso de cada dimensión y registro de cambios con usuario y 
 
 \subsection{Datos de base}
 \begin{description}[leftmargin=0pt]
-  \item[RD-01 (\Must).] El sistema carga las proyecciones de viviendas por municipio del Atlántico, a partir del conjunto de datos abiertos, y genera sectores simulados cuyo total de viviendas coincide con la cifra municipal.
-  \item[RD-02 (\Should).] Cuando se consigan datos de barrios del Atlántico, el sistema permite reemplazar los sectores simulados por sectores reales mediante un archivo CSV o GeoJSON.
+  \item[RD-01 (\Must).] El sistema carga las proyecciones de viviendas por municipio del Atlántico, a partir del conjunto de datos abiertos, y los barrios reales de los 23 municipios (nombre y coordenadas, de OpenStreetMap). Reparte las viviendas del municipio entre sus barrios de forma simulada, de modo que la suma coincide con la cifra municipal.
+  \item[RD-02 (\Should).] Cuando se consigan datos oficiales de barrios del Atlántico (con su límite y sus viviendas), el sistema permite reemplazar los de OpenStreetMap mediante un archivo CSV o GeoJSON.
   \item[RD-03 (\Could).] El registro de propiedad horizontal de Barranquilla puede usarse como ejemplo del formato de carga, sin ser requisito.
 \end{description}
 
@@ -39,7 +39,7 @@ Pesos y bitácora & Peso de cada dimensión y registro de cambios con usuario y 
 El sistema incorpora datos que publican las entidades del Estado sobre eventos y daños en catástrofes. Las fuentes concretas están por identificar y confirmar; los candidatos son la UNGRD, el IDEAM, el Servicio Geológico Colombiano, el DANE, el portal de datos abiertos del Estado y las entidades del departamento y los municipios.
 \begin{description}[leftmargin=0pt]
   \item[RD-04 (\Should).] Cargar archivos abiertos de eventos y reportes de daños (RF-45) y registrar su origen y fecha.
-  \item[RD-05 (\Should).] Usar los eventos históricos y las amenazas oficiales para completar la línea base de amenaza y vulnerabilidad de cada sector.
+  \item[RD-05 (\Should).] Usar los eventos históricos y las amenazas oficiales para completar la línea base de amenaza y vulnerabilidad de cada barrio.
   \item[RD-06 (\Should).] Usar los reportes históricos de daños para calibrar las distribuciones de la simulación, de modo que se parezcan a eventos reales.
   \item[RD-07 (\Should).] Tratar un reporte oficial como una fuente propia (``Estado''), con peso inicial 0,85 y con su vigencia, porque suele llegar con retraso o con menor detalle. No reemplaza la verificación en campo.
   \item[RD-08 (\Must).] Todo dato oficial conserva su origen y fecha de publicación, y se identifica como tal en la interfaz.
@@ -48,7 +48,7 @@ El sistema incorpora datos que publican las entidades del Estado sobre eventos y
 \subsection{Datos simulados}
 Los daños, las necesidades y las personas no existen como datos reales y se generan. Para que la simulación sea creíble:
 \begin{description}[leftmargin=0pt]
-  \item[RD-09 (\Must).] La simulación parte de las viviendas y la población reales proyectadas. Solo se simulan daños, necesidades, personas y reportes.
+  \item[RD-09 (\Must).] La simulación parte de las viviendas reales proyectadas por municipio y de los barrios reales. Solo se simulan el reparto de viviendas entre barrios, los daños, las necesidades, las personas y los reportes.
   \item[RD-10 (\Must).] Las personas y solicitudes del prototipo tienen identidades ficticias. No se almacenan datos reales de personas.
   \item[RD-11 (\Must).] Cada tipo de evento usa su propia distribución de daños (por ejemplo, terremoto con foco puntual y atenuación con la distancia; inundación asociada a zonas bajas; vendaval con franjas amplias; deslizamiento localizado en pendientes).
   \item[RD-12 (\Must).] Los reportes y solicitudes sintéticos incluyen ruido, valores faltantes, duplicados y contradicciones, con proporciones configurables.
@@ -76,14 +76,22 @@ Al identificar a cada solicitante el sistema maneja datos personales. Se aplica 
 \midrule
 Solicitante & Solo sus propios datos, su solicitud, su estado y su código. \\
 Equipo de entrega & Nombre, dirección, necesidad e indicación de vulnerabilidad de las solicitudes que le asignaron. \\
-Brigadista & Reportes y solicitudes de su zona de trabajo, para verificarlas. \\
-Entidad coordinadora & Todos los reportes y solicitudes, incluidos los datos de vulnerabilidad. \\
-Donante & Solo sus propias donaciones, con su estado y destino agregado (sector y tipo de necesidad), sin datos personales de beneficiarios. \\
+Brigadista & Reportes y solicitudes de cualquier municipio, para verificarlas (su zona de trabajo solo ordena la lista), y los mapas y listas de prioridad. \\
+Entidad coordinadora & Todos los reportes y solicitudes, incluidos los datos de vulnerabilidad, y todas las entregas en marcha en un mapa. \\
+Donante & Solo sus propias donaciones, con su estado, su destino agregado (barrio y tipo de necesidad) y una zona aproximada de por dónde van, sin datos personales de beneficiarios. \\
 Centro de acopio & Las donaciones que recibe y su inventario. \\
 Administrador & Cuentas, roles y parámetros. No ve los datos de vulnerabilidad. \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\subsection{Territorio y mapas}
+\begin{description}[leftmargin=0pt]
+  \item[RD-24 (\Must).] Los nombres y las coordenadas de los barrios provienen de OpenStreetMap (licencia ODbL), con su atribución. Donde OpenStreetMap no tiene barrios mapeados se usan los centros poblados, marcados como tales. Quedan 600 lugares en los 23 municipios: 542 barrios y 58 centros poblados. Tres municipios solo tienen una unidad.
+  \item[RD-25 (\Must).] El conteo de viviendas de cada barrio no es oficial: la cifra oficial es por municipio y el reparto entre barrios es simulado.
+  \item[RD-26 (\Must).] Los mapas no muestran nombres, teléfonos, direcciones ni el punto de las viviendas. Las necesidades se muestran por barrio, y quien dona ve solo zonas aproximadas. El destino exacto lo ven únicamente la persona que pidió la ayuda y el equipo que la lleva.
+  \item[RD-27 (\Should).] Los datos de las rutas (posición del equipo, avance, tiempo estimado) se calculan en el servidor y se envían sin caché.
+\end{description}
 
 \subsection{Donaciones e inventario}
 \begin{description}[leftmargin=0pt]

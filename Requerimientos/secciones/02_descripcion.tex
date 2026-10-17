@@ -1,9 +1,9 @@
 \section{Descripción general}
 
 \subsection{Perspectiva del producto}
-Resilis es una aplicación web, accesible desde el celular, que acompaña la ayuda humanitaria desde que una persona la pide hasta que la recibe. Funciona en dos niveles. En el nivel de \emph{sectores} decide dónde concentrar los esfuerzos. En el nivel de \emph{solicitudes} identifica a cada persona que necesita algo, la prioriza, verifica su situación, asigna la entrega y confirma que la ayuda llegó, como en una aplicación de pedidos: el solicitante ve el estado de su solicitud y recibe un código que debe mostrar al equipo de entrega para recibir la ayuda. Del lado de la oferta, registra las donaciones y el inventario, y calcula cómo repartir los recursos disponibles entre las solicitudes para cubrir la mayor necesidad posible con lo que hay.
+Resilis es una aplicación web, accesible desde el celular, que acompaña la ayuda humanitaria desde que una persona la pide hasta que la recibe. Funciona en dos niveles. En el nivel de \emph{barrios} (agrupados por municipio) decide dónde concentrar los esfuerzos. En el nivel de \emph{solicitudes} identifica a cada persona que necesita algo, la prioriza, verifica su situación, asigna la entrega y confirma que la ayuda llegó, como en una aplicación de pedidos: el solicitante ve el estado de su solicitud, sigue en un mapa por dónde va su ayuda y recibe un código que debe mostrar al equipo de entrega para recibirla. Del lado de la oferta, registra las donaciones y el inventario, y calcula cómo repartir los recursos disponibles entre las solicitudes para cubrir la mayor necesidad posible con lo que hay.
 
-Antes del desastre el sistema guarda una \emph{línea base} por sector (viviendas, población, vulnerabilidad), construida con datos proyectados y con datos oficiales abiertos del Estado. Después del desastre recibe reportes de daños y solicitudes de ayuda, y recalcula la prioridad y la confianza. Los datos de personas, daños y necesidades del prototipo son simulados, anclados en cifras reales.
+Antes del desastre el sistema guarda una \emph{línea base} por barrio (viviendas, población, vulnerabilidad), construida con las proyecciones de viviendas por municipio y con los barrios reales de OpenStreetMap. Después del desastre recibe reportes de daños y solicitudes de ayuda, y recalcula la prioridad y la confianza. Los datos de personas, daños y necesidades del prototipo son simulados, anclados en cifras y barrios reales.
 
 \subsection{Usuarios y roles}
 Todas las personas que reportan o piden ayuda tienen un usuario registrado, porque el sistema debe poder dar seguimiento y verificar. El peso de un reporte depende de quién lo envía: una persona natural tiene un peso bajo y un brigadista un peso alto, porque su cargo le exige reportar.
@@ -15,12 +15,12 @@ Todas las personas que reportan o piden ayuda tienen un usuario registrado, porq
 \toprule
 \textbf{Rol} & \textbf{Descripción y permisos principales} & \textbf{Peso de fuente $F$} \\
 \midrule
-Solicitante (ciudadano) & Persona registrada de la comunidad. Envía reportes de daños y solicitudes de ayuda, ve solo sus propios datos, el estado de su solicitud y su código de entrega. & 0,40 \\
-Brigadista & Personal de campo con obligación de reportar. Envía y verifica reportes y solicitudes, crea solicitudes en nombre de otras personas y puede actuar como equipo de entrega. & 0,90 \\
-Equipo de entrega & Brigadistas y organizaciones registradas. Ven solo las entregas que les asignaron, validan el código y registran la entrega. & 0,90 brigadista; 0,70 organización \\
-Donante & Persona, organización o empresa registrada. Registra donaciones, puede dirigirlas, y ve el estado y el destino agregado de cada una, sin datos personales de los beneficiarios. & no reporta \\
+Solicitante (ciudadano) & Persona registrada de la comunidad. Envía reportes de daños y solicitudes de ayuda, ve solo sus propios datos, el estado de su solicitud, el mapa de su entrega y su código. & 0,40 \\
+Brigadista & Personal de campo con obligación de reportar. Envía y verifica reportes y solicitudes de cualquier municipio (las de su zona de trabajo salen primero), crea solicitudes en nombre de otras personas y puede actuar como equipo de entrega. & 0,90 \\
+Equipo de entrega & Brigadistas y organizaciones registradas. Ven solo las entregas que les asignaron (también en un mapa), validan el código y registran la entrega. & 0,90 brigadista; 0,70 organización \\
+Donante & Persona, organización o empresa registrada. Registra donaciones, puede dirigirlas, y ve el estado y el destino agregado de cada una, y una zona aproximada de por dónde va, sin datos personales de los beneficiarios. & no reporta \\
 Centro de acopio & Organización registrada que recibe donaciones, verifica su cantidad y estado, y gestiona el inventario. & 0,70 \\
-Entidad coordinadora &Organismos encargados de organizar la respuesta. Ven todo, ajustan pesos, aprueban el plan de asignación de recursos y asignan entregas. & 0,95 \\
+Entidad coordinadora &Organismos encargados de organizar la respuesta. Ven todo, ajustan pesos, aprueban el plan de asignación por paquetes, asignan entregas y llevan el control logístico de las que están en marcha. & 0,95 \\
 Administrador & Gestiona usuarios, roles, datos base y parámetros. No ve los datos de vulnerabilidad de las personas. & no reporta \\
 \bottomrule
 \end{tabularx}
@@ -29,7 +29,7 @@ Administrador & Gestiona usuarios, roles, datos base y parámetros. No ve los da
 Los \emph{datos oficiales del Estado} (reportes de eventos y de daños) no son un usuario, sino una fuente con peso propio, propuesto en 0,85. Los valores de $F$ son una propuesta inicial y se pueden ajustar (sección~\ref{sec:confianza}).
 
 \subsection{Entorno de operación}
-Los usuarios de campo usan celulares con conexión móvil limitada o intermitente. Las entregas deben poder confirmarse \textbf{sin conexión}: el equipo de entrega valida el código en su dispositivo y sincroniza después. Quien no tiene celular recibe una ficha impresa con su código, y si no hay electricidad el reporte o la solicitud se hace en papel y un brigadista la digitaliza. Los usuarios de coordinación trabajan en un computador o tableta. El sistema se despliega en la nube en Railway.
+Los usuarios de campo usan celulares con conexión móvil limitada o intermitente. Las entregas deben poder confirmarse \textbf{sin conexión}: el equipo de entrega valida el código en su dispositivo y sincroniza después. Quien no tiene celular recibe una ficha impresa con su código, y si no hay electricidad el reporte o la solicitud se hace en papel y un brigadista la digitaliza. Los usuarios de coordinación trabajan en un computador o tableta. Los mapas usan mosaicos de OpenStreetMap, que necesitan internet; sin conexión el mapa no se dibuja, pero todo lo que muestra también está escrito en texto. El sistema se despliega en la nube en Railway.
 
 \subsection{Restricciones}
 \begin{itemize}
@@ -43,7 +43,7 @@ Los usuarios de campo usan celulares con conexión móvil limitada o intermitent
 
 \subsection{Supuestos y dependencias}
 \begin{itemize}
-  \item Las proyecciones de viviendas por municipio del Atlántico sirven como base para generar sectores simulados. Aún se están recopilando los datos del departamento.
+  \item Las proyecciones de viviendas por municipio del Atlántico y los nombres y coordenadas de 600 barrios y centros poblados de los 23 municipios (OpenStreetMap, licencia ODbL) sirven de base. El reparto de las viviendas entre los barrios de un municipio es simulado. Aún se están recopilando datos oficiales por barrio.
   \item Existen datos abiertos oficiales de eventos y daños que se pueden cargar como archivos. Las fuentes concretas están por identificar y confirmar.
   \item Se dispone de mapas abiertos (OpenStreetMap) para la visualización.
   \item El servicio de Railway está disponible durante la demostración.
@@ -55,7 +55,7 @@ Durante el diseño se analizaron y descartaron estas alternativas:
   \item \textbf{Depender de satélites, drones, redes sociales y sensores.} Quedan como mejora futura y opcional, porque el reto parte de comunicaciones caídas.
   \item \textbf{Limitarse a un solo desastre y zona} (inundación en Barranquilla, o vendavales en Malambo y Soledad). Se amplió a los desastres naturales del Atlántico, porque lo único que cambia entre eventos son los pesos y los escenarios.
   \item \textbf{Un modelo opaco} que entregue solo un resultado. Se eligió un índice multicriterio explicable.
-  \item \textbf{Bajar la prioridad de los sectores de difícil acceso.} Se tratan como alerta para no dejar atrás a las comunidades más aisladas.
+  \item \textbf{Bajar la prioridad de los barrios de difícil acceso.} Se tratan como alerta para no dejar atrás a las comunidades más aisladas.
   \item \textbf{Reportes anónimos.} Se descartaron porque no permiten dar seguimiento ni verificar. Todo reporte y toda solicitud se asocian a un usuario registrado.
 \end{itemize}
 

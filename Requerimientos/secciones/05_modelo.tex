@@ -1,6 +1,6 @@
 \section{Requisitos del modelo analítico}
 
-El modelo tiene dos capas que se complementan. El \textbf{índice multicriterio} da la prioridad de los sectores y de cada solicitud, y es explicable. El \textbf{aprendizaje no supervisado} descubre perfiles de sectores y detecta reportes y solicitudes sospechosas. Las cifras de esta sección son una propuesta inicial, marcada para validar con expertos en gestión del riesgo.
+El modelo tiene dos capas que se complementan. El \textbf{índice multicriterio} da la prioridad de los barrios y de cada solicitud, y es explicable. El \textbf{aprendizaje no supervisado} descubre perfiles de barrios y detecta reportes y solicitudes sospechosas. Las cifras de esta sección son una propuesta inicial, marcada para validar con expertos en gestión del riesgo.
 
 \subsection{Dimensiones e indicadores}
 El reto plantea seis dimensiones. Cinco determinan la necesidad de atención y entran al índice de prioridad. La sexta, la confiabilidad, se calcula aparte como confianza $C$ y se muestra junto a la prioridad, no mezclada con ella.
@@ -16,29 +16,29 @@ Gravedad de la afectación & Nivel de daño reportado (escala de 0 a 3) y propor
 Urgencia de la atención & Riesgo para la vida (heridos, atrapados, sin agua) y tiempo transcurrido sin atención. & 0,25 \\
 Personas expuestas y necesidades especiales & Personas afectadas estimadas, más presencia de menores, adultos mayores, discapacidad y enfermos crónicos. & 0,25 \\
 Accesibilidad de las rutas & Estado del acceso: de 0 (bloqueado) a 1 (libre). Ver la nota siguiente. & 0,10 \\
-Recursos humanitarios disponibles & Brecha entre la necesidad estimada y los recursos ya presentes en el sector. & 0,10 \\
+Recursos humanitarios disponibles & Brecha entre la necesidad estimada y los recursos ya presentes en el barrio. & 0,10 \\
 \midrule
 Confiabilidad de la información & Se calcula como confianza $C$ (sección~\ref{sec:confianza}). & aparte \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\textbf{Nota sobre la accesibilidad.} Penalizar a los sectores aislados los dejaría al final de la lista, que es lo contrario de lo que se busca. Por eso la baja accesibilidad \emph{no} baja la prioridad: se marca como alerta y define qué tipo de recurso enviar (por ejemplo, lancha o vía alterna). Esta fue una decisión del autor (sección~\ref{sec:pendientes}).
+\textbf{Nota sobre la accesibilidad.} Penalizar a los barrios aislados los dejaría al final de la lista, que es lo contrario de lo que se busca. Por eso la baja accesibilidad \emph{no} baja la prioridad: se marca como alerta y define qué tipo de recurso enviar (por ejemplo, lancha o vía alterna). Esta fue una decisión del autor (sección~\ref{sec:pendientes}).
 
 \subsection{Índice de prioridad (TOPSIS)}\label{sec:topsis}
 \begin{description}[leftmargin=0pt]
-  \item[RM-01 (\Must).] Para cada sector $i$ y dimensión $j$ se obtiene un valor $x_{ij}$. Los valores se normalizan por vector: $r_{ij}=x_{ij}/\sqrt{\sum_i x_{ij}^2}$.
+  \item[RM-01 (\Must).] Para cada barrio $i$ y dimensión $j$ se obtiene un valor $x_{ij}$. Los valores se normalizan por vector: $r_{ij}=x_{ij}/\sqrt{\sum_i x_{ij}^2}$.
   \item[RM-02 (\Must).] Se calcula la matriz ponderada $v_{ij}=w_j r_{ij}$, con $\sum_j w_j=1$.
-  \item[RM-03 (\Must).] Se obtienen la solución ideal $A^+$ y la anti-ideal $A^-$, y las distancias $D_i^+$ y $D_i^-$ de cada sector a cada una.
-  \item[RM-04 (\Must).] La prioridad es $P_i = D_i^-/(D_i^+ + D_i^-)$, con valor entre 0 y 1. Los sectores se ordenan de mayor a menor.
-  \item[RM-05 (\Must).] El sistema muestra el aporte de cada dimensión a $P_i$, para justificar la posición del sector.
+  \item[RM-03 (\Must).] Se obtienen la solución ideal $A^+$ y la anti-ideal $A^-$, y las distancias $D_i^+$ y $D_i^-$ de cada barrio a cada una.
+  \item[RM-04 (\Must).] La prioridad es $P_i = D_i^-/(D_i^+ + D_i^-)$, con valor entre 0 y 1. Los barrios se ordenan de mayor a menor.
+  \item[RM-05 (\Must).] El sistema muestra el aporte de cada dimensión a $P_i$, para justificar la posición del barrio.
 \end{description}
 
 \subsection{Pesos}
 \begin{description}[leftmargin=0pt]
   \item[RM-06 (\Must).] Los pesos se obtienen por AHP a partir de una matriz de comparación por pares, y se exige una razón de consistencia $\text{CR}<0{,}1$.
   \item[RM-07 (\Must).] El sistema parte de un perfil general de pesos, el de la tabla anterior, que la entidad puede ajustar. Los perfiles propios para cada tipo de evento (terremoto, inundación, vendaval, deslizamiento) quedan fuera de esta versión.
-  \item[RM-08 (\Should).] El sistema ofrece un análisis de sensibilidad: variar cada peso en $\pm 20\%$ y mostrar qué sectores cambian de posición.
+  \item[RM-08 (\Should).] El sistema ofrece un análisis de sensibilidad: variar cada peso en $\pm 20\%$ y mostrar qué barrios cambian de posición.
 \end{description}
 
 Los pesos iniciales se definieron con apoyo de la literatura de priorización posdesastre~\cite{Sahin2023314,Chakraborty2016308} y quedan ajustables en la aplicación. Son \emph{provisionales} hasta que un actor de gestión del riesgo los valide.
@@ -54,9 +54,9 @@ Los pesos iniciales se definieron con apoyo de la literatura de priorización po
     \item $F$ es el peso de la fuente según el rol (tabla del capítulo~2), o 0,85 si el dato es oficial;
     \item $V$ es la verificación: 1 si fue verificado, 0,4 si no ha sido verificado y 0 si fue desmentido (en ese caso $c_r=0$);
     \item $A=e^{-\Delta t/\tau}$ es la vigencia, con $\Delta t$ el tiempo desde que se recibió el reporte y $\tau$ un parámetro por tipo de evento (propuesta: 12 horas). Se mide desde la recepción y no desde el evento: un reporte hecho hace una hora sobre algo ocurrido ayer es información fresca;
-    \item $K$ es la corroboración: $K=1-e^{-n/2}$, con $n$ el número de reportes independientes del mismo sector que coinciden en el daño.
+    \item $K$ es la corroboración: $K=1-e^{-n/2}$, con $n$ el número de reportes independientes del mismo barrio que coinciden en el daño.
   \end{itemize}
-  \item[RM-10 (\Must).] La confianza de un sector combina sus reportes: $C_s=\bigl[1-\prod_r (1-c_r)\bigr]\,(1-0{,}5\,D_s)$, con $D_s$ entre 0 y 1 la dispersión (contradicción) entre los reportes. Si no hay reportes, $C_s=0$.
+  \item[RM-10 (\Must).] La confianza de un barrio combina sus reportes: $C_b=\bigl[1-\prod_r (1-c_r)\bigr]\,(1-0{,}5\,D_b)$, con $D_b$ entre 0 y 1 la dispersión (contradicción) entre los reportes. Si no hay reportes, $C_b=0$.
   \item[RM-11 (\Must).] Los coeficientes (0,35; 0,30; 0,15; 0,20), los valores de $F$ y $\tau$ son parámetros configurables.
 \end{description}
 Esta definición responde a que un reporte sin confirmar debe pesar menos que uno confirmado por una brigada, y a que los datos de redes o de fuentes ciudadanas pueden concentrarse donde hay más población~\cite{Fan2020}.
@@ -75,7 +75,7 @@ Urgencia & Riesgo para la vida o la salud declarado y verificado. & 0,30 \\
 Vulnerabilidad & Tipo de vulnerabilidad (discapacidad, adulto mayor, menor, embarazo, enfermedad crónica) y gravedad de la situación descrita. & 0,25 \\
 Personas en el hogar & Número de personas que dependen de la ayuda. & 0,15 \\
 Tiempo de espera & Tiempo transcurrido desde que se registró la solicitud. & 0,15 \\
-Prioridad del sector & Puntaje $P$ del sector donde vive la persona. & 0,15 \\
+Prioridad del barrio & Puntaje $P$ del barrio donde vive la persona. & 0,15 \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -83,19 +83,24 @@ Prioridad del sector & Puntaje $P$ del sector donde vive la persona. & 0,15 \\
 \begin{description}[leftmargin=0pt]
   \item[RM-23 (\Must).] La prioridad de cada solicitud se calcula con TOPSIS y los criterios de la tabla anterior. Los pesos son provisionales y ajustables.
   \item[RM-24 (\Must).] La confianza de una solicitud usa la misma fórmula que la de un reporte (RM-09). En el factor de verificación $V$ cuentan la identidad y la necesidad verificadas.
-  \item[RM-25 (\Should).] Dentro de un mismo sector, las solicitudes se ordenan por prioridad, y el tiempo de espera sube la posición de las que llevan más tiempo sin atención, para evitar que una solicitud quede olvidada.
+  \item[RM-25 (\Should).] Dentro de un mismo barrio, las solicitudes se ordenan por prioridad, y el tiempo de espera sube la posición de las que llevan más tiempo sin atención, para evitar que una solicitud quede olvidada.
   \item[RM-26 (\Should).] Una solicitud sin verificar aparece en la lista, pero se marca como pendiente de verificación y no se asigna hasta verificarla.
+\end{description}
+
+\subsection{Resumen por municipio}
+\begin{description}[leftmargin=0pt]
+  \item[RM-32 (\Should).] La prioridad de un municipio se resume como la de su barrio más prioritario, junto con el promedio de sus barrios, cuántos tienen avisos y cuántas solicitudes quedan por atender. El municipio no tiene un cálculo propio: es una vista de sus barrios.
 \end{description}
 
 \subsection{Información faltante}
 \begin{description}[leftmargin=0pt]
-  \item[RM-12 (\Must).] Se genera una alerta para un sector si ocurre alguna de estas condiciones: no tiene reportes; su último reporte supera $2\tau$ de antigüedad; $C_s<0{,}4$; o la dispersión $D_s>0{,}5$.
-  \item[RM-13 (\Should).] El sistema calcula la cobertura del sector, como la proporción de viviendas esperadas frente a las que aparecen en los reportes, y la muestra como un indicador de falta de información.
+  \item[RM-12 (\Must).] Se genera una alerta para un barrio si ocurre alguna de estas condiciones: no tiene reportes; su último reporte supera $2\tau$ de antigüedad; $C_b<0{,}4$; o la dispersión $D_b>0{,}5$.
+  \item[RM-13 (\Should).] El sistema calcula la cobertura del barrio, como la proporción de viviendas esperadas frente a las que aparecen en los reportes, y la muestra como un indicador de falta de información.
 \end{description}
 
 \subsection{Aprendizaje no supervisado}
 \begin{description}[leftmargin=0pt]
-  \item[RM-14 (\Could).] Agrupar los sectores en perfiles con K-means o con una mezcla gaussiana (GMM). La GMM entrega probabilidades de pertenencia, que pueden alimentar la confianza.
+  \item[RM-14 (\Could).] Agrupar los barrios en perfiles con K-means o con una mezcla gaussiana (GMM). La GMM entrega probabilidades de pertenencia, que pueden alimentar la confianza.
   \item[RM-15 (\Should).] Detectar reportes y solicitudes anómalas con Isolation Forest o LOF, y marcarlos para verificación. A esto se suman reglas para duplicados (mismo documento, teléfono o dirección). Un registro marcado no se descarta.
   \item[RM-16 (\Could).] Usar DBSCAN para identificar zonas críticas contiguas.
   \item[RM-17 (\Could).] Visualizar los grupos con PCA.
@@ -114,19 +119,20 @@ con $x_{ij}=0$ si el tipo del lote no corresponde a la necesidad, si el lote est
 \begin{itemize}
   \item $w_j=P_j\,(0{,}5+0{,}5\,C_j)$ es el peso de la solicitud: su prioridad, moderada por su confianza (una confianza baja reduce el peso, pero no lo anula);
   \item $u_i$ es la urgencia de uso del lote por su vencimiento (mayor cuanto menos tiempo le queda), que aplica el criterio FEFO;
-  \item $c_{ij}$ es el costo de llevar el lote $i$ a la solicitud $j$, estimado con la distancia entre el centro de acopio y el sector;
+  \item $c_{ij}$ es el costo de llevar el lote $i$ a la solicitud $j$, estimado con la distancia entre el centro de acopio y el barrio;
   \item $\kappa$ y $\lambda$ son parámetros configurables. Los valores de $w_j$, $\kappa$ y $\lambda$ son provisionales.
 \end{itemize}
 El problema se resuelve con la rutina de programación lineal entera de SciPy (\texttt{milp}, basada en HiGHS).
 \begin{description}[leftmargin=0pt]
   \item[RM-18 (\Must).] Dado el inventario y las solicitudes verificadas, el sistema calcula el plan de asignación que maximiza el objetivo de la sección anterior, con la rutina de programación lineal entera.
-  \item[RM-19 (\Must).] El plan respeta siempre el inventario, la demanda, el tipo de recurso, el destino de las donaciones dirigidas y la accesibilidad: un sector con acceso bloqueado solo recibe recursos compatibles con su situación.
+  \item[RM-19 (\Must).] El plan respeta siempre el inventario, la demanda, el tipo de recurso, el destino de las donaciones dirigidas y la accesibilidad: un barrio con acceso bloqueado solo recibe recursos compatibles con su situación.
   \item[RM-20 (\Should).] Una asignación voraz de referencia (recorre las solicitudes de mayor a menor prioridad y asigna hasta cubrir la necesidad o agotar el lote). Sirve para comparar con el plan optimizado y como respaldo si el cálculo no termina a tiempo.
   \item[RM-27 (\Must).] Cada línea del plan explica su razón (prioridad, lote, vencimiento, distancia) y el plan lista la necesidad que quedó sin cubrir.
   \item[RM-28 (\Should).] Equidad: antes de completar una solicitud se cubre una fracción mínima $\theta$ de las demás solicitudes de prioridad alta, para que unas pocas no consuman todo el inventario.
   \item[RM-29 (\Should).] Primero en vencer, primero en salir (FEFO): a igual necesidad se usan antes los lotes que vencen antes.
   \item[RM-30 (\Should).] Las donaciones dirigidas se respetan, y lo que sobra de un destino dirigido no se reasigna sin autorización del donante o de la entidad.
   \item[RM-31 (\Could).] Estimar la necesidad adicional que cubriría una donación hipotética, resolviendo el plan con esa donación añadida.
+  \item[RM-33 (\Must).] Paquetes: el plan se calcula completo, pero se presenta dividido. Cada paquete reúne hasta 6 solicitudes de un mismo municipio, ordenadas de la más a la menos prioritaria, y los paquetes salen en orden de prioridad (primero el del municipio con la solicitud más prioritaria). La división solo depende del plan. Aprobar un paquete reserva y asigna solo sus solicitudes; las demás siguen pendientes.
 \end{description}
 
 \subsection{Escenarios}

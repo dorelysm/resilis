@@ -11,19 +11,21 @@ Resilis ayuda a decidir a quién atender primero, dónde concentrar los esfuerzo
 La solución se apoya en tres funciones centrales:
 \begin{enumerate}
   \item \textbf{Registrar las donaciones} y llevar el inventario de lo que hay disponible, con trazabilidad hasta el destino.
-  \item \textbf{Priorizar las necesidades} de sectores y de personas, con su nivel de confianza.
+  \item \textbf{Priorizar las necesidades} de barrios y de personas, con su nivel de confianza.
   \item \textbf{Optimizar los recursos humanitarios}: calcular cómo repartir lo disponible entre las necesidades para cubrir la mayor necesidad posible, con la aprobación de la entidad.
 \end{enumerate}
 
 El prototipo cubre:
 \begin{itemize}
   \item el registro de usuarios identificados, con sus reportes de daños y sus solicitudes de ayuda;
-  \item el cálculo de un puntaje de prioridad y un nivel de confianza por sector y por solicitud;
-  \item un mapa con alertas de información faltante;
+  \item el cálculo de un puntaje de prioridad y un nivel de confianza por barrio y por solicitud;
+  \item un mapa de barrios con la prioridad, la confianza y lo que se necesita en cada uno, con alertas de información faltante;
   \item la verificación de reportes y de solicitudes;
   \item el seguimiento de cada solicitud hasta la entrega, con un código de un solo uso que se valida sin conexión;
   \item el registro de donaciones y de inventario por centro de acopio;
-  \item un plan de asignación optimizado de los recursos a las solicitudes, que la entidad aprueba;
+  \item un plan de asignación optimizado de los recursos a las solicitudes, dividido en paquetes pequeños que la entidad revisa y aprueba de uno en uno;
+  \item un recorrido por etapas de cada reporte, solicitud y donación, y un panel que muestra dónde se acumula el trabajo;
+  \item un mapa de la ruta de cada entrega, que ven la persona que pidió la ayuda, quien dona (de forma aproximada), el equipo de entrega y la entidad (control logístico). En esta versión la posición del equipo es \emph{simulada};
   \item la carga de datos oficiales abiertos sobre eventos y daños en catástrofes;
   \item un generador de escenarios simulados de varios tipos de desastre.
 \end{itemize}
@@ -38,10 +40,11 @@ El reto plantea que, tras un evento catastrófico, hay cortes de comunicación, 
 \toprule
 \textbf{Término} & \textbf{Significado} \\
 \midrule
-Sector & Unidad espacial de análisis: un barrio o un área equivalente. \\
-Reporte & Observación enviada por una persona sobre el estado de un sector. \\
-Prioridad ($P$) & Puntaje de 0 a 1 que ordena los sectores según su necesidad de atención. \\
-Confianza ($C$) & Valor de 0 a 1 que indica cuánto se puede confiar en la información de un sector. \\
+Municipio & Unidad administrativa del Atlántico (23 en total). \\
+Barrio & Unidad espacial de análisis dentro de un municipio. En los municipios donde no hay barrios mapeados se usan los centros poblados. \\
+Reporte & Observación enviada por una persona sobre el estado de un barrio. \\
+Prioridad ($P$) & Puntaje de 0 a 1 que ordena los barrios según su necesidad de atención. \\
+Confianza ($C$) & Valor de 0 a 1 que indica cuánto se puede confiar en la información de un barrio. \\
 TOPSIS & Método multicriterio que ordena alternativas por su cercanía a la mejor solución. \\
 AHP & Proceso analítico jerárquico, usado para obtener los pesos de los criterios. \\
 MoSCoW & Priorización de requisitos: \Must{} (debe), \Should{} (debería), \Could{} (podría), \Wont{} (no en esta versión). \\
@@ -50,6 +53,8 @@ RF / RNF & Requisito funcional / requisito no funcional. \\
 Donación & Bien (o monto, si es monetaria) que una persona, organización o empresa ofrece para la respuesta. \\
 Lote & Cantidad de un mismo bien, con el mismo estado y vencimiento, guardada en un centro de acopio. \\
 Plan de asignación & Propuesta de qué lote se entrega a qué solicitud y en qué cantidad. \\
+Paquete & Parte pequeña de un plan (hasta 6 entregas de un mismo municipio, con un solo equipo) que la entidad revisa y aprueba de una vez. \\
+Recorrido & Las etapas por las que pasa un reporte, una solicitud o una donación, y en cuál va. \\
 FEFO & ``Primero en vencer, primero en salir'': se entregan antes los lotes que vencen antes. \\
 \bottomrule
 \end{tabularx}

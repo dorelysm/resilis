@@ -13,10 +13,10 @@ La metodología se prueba con datos simulados, anclados en las viviendas proyect
 \toprule
 \textbf{Prueba} & \textbf{Qué se hace} & \textbf{Medida} \\
 \midrule
-Recuperación de perfiles & Se siembran grupos de sectores conocidos (por ejemplo, crítico aislado, muchos vulnerables con buen acceso, leve) y se mide si el algoritmo los vuelve a encontrar. & ARI y silueta. \\
+Recuperación de perfiles & Se siembran grupos de barrios conocidos (por ejemplo, crítico aislado, muchos vulnerables con buen acceso, leve) y se mide si el algoritmo los vuelve a encontrar. & ARI y silueta. \\
 Robustez a datos imperfectos & Se aumentan el ruido, los datos faltantes y las contradicciones, y se mide cuánto cambia el orden de prioridad. & Correlación de Spearman con el orden sin ruido. \\
 Detección de reportes falsos & Se inyectan reportes falsos en proporciones conocidas. & Sensibilidad y precisión de la detección. \\
-Sensibilidad a los pesos & Se varían los pesos en $\pm 20\%$. & Número de sectores que cambian de posición. \\
+Sensibilidad a los pesos & Se varían los pesos en $\pm 20\%$. & Número de barrios que cambian de posición. \\
 Reproducibilidad & Se ejecuta dos veces con la misma semilla. & Resultados idénticos. \\
 Códigos de entrega & Se intenta usar un código dos veces, con otro equipo y vencido, y se valida con el dispositivo sin conexión. & Todos los usos indebidos son rechazados. \\
 Registro encadenado & Se altera un evento antiguo de la cadena. & La alteración se detecta. \\
@@ -28,6 +28,14 @@ Donaciones dirigidas y FEFO & Se cargan lotes dirigidos y lotes próximos a venc
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\subsection{Pruebas automáticas y simulación de punta a punta}
+El prototipo tiene 277 pruebas automáticas (seguridad y permisos por rol, código de un solo uso, cadena de auditoría, inventario, modelo, plan, paquetes, recorrido, mapas y accesibilidad de la paleta). Además, una simulación recorre el ciclo completo sobre escenarios generados de los cuatro tipos de desastre: verificación en campo (con solicitudes falsas), recepción de donaciones, plan optimizado, aprobación, entrega con código (con códigos equivocados y reusos), incidencias y revisión del inventario y de la cadena. En todos los escenarios la cadena de auditoría queda íntegra, los saldos del inventario cuadran y los códigos equivocados o repetidos son rechazados. El plan optimizado cubre entre 0,3~\% (inventario abundante) y 8,5~\% (inventario escaso) más de necesidad ponderada que la asignación voraz de referencia. Son resultados sobre datos simulados.
+
+Las páginas del sistema se revisaron con una herramienta automática de accesibilidad (axe-core, reglas de WCAG 2.2 AA) en los seis roles, con anchos de celular y de computador. La única falla encontrada, las tablas con desplazamiento que no se podían usar con teclado, se corrigió.
+
+\subsection{Escenario de demostración: vendaval en Malambo}
+Para la demostración se preparó un escenario guionado, aparte del generador general. Un vendaval afecta a \emph{cinco} barrios de Malambo, todos a menos de 250~m del centro: El Edén (el epicentro, con daño de 0,90), El Edén II, Villa Campo, Los Mangos y Cristo Rey (el daño baja a 0,33). Solo esos barrios tienen reportes (unos 17, con ruido, de ciudadanos, brigadistas y una entidad). Llegan 10 solicitudes de ayuda, todas de esos barrios: 8 para reparar viviendas (láminas, clavos y lonas), una de medicamentos de uso diario perdidos en el desastre y una de una silla de ruedas destruida, estas dos con información de vulnerabilidad y consentimiento. El inventario cubre casi todo, pero no hay ninguna silla de ruedas: el plan cubre 9 de 10 solicitudes y dice que la silla queda sin cubrir porque no hay inventario compatible. Las personas son ficticias; las cuentas reales verifican, planifican, entregan y confirman. La prioridad que resulta no siempre pone el epicentro primero, porque pondera también la población expuesta y la vulnerabilidad del barrio, no solo el daño.
 
 \subsection{Validación pendiente con actores reales}
 Todavía no se ha acordado una validación con una entidad de gestión del riesgo. Está identificada como el paso siguiente más importante, porque los pesos del modelo y el diseño de la interfaz necesitan la opinión de quienes toman las decisiones.

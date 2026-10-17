@@ -7,7 +7,7 @@ Las cifras que aparecen son valores de partida. Las de rendimiento no se fijan e
 \textbf{ID} & \textbf{Requisito} & \textbf{P} & \textbf{Verificación} \\
 \midrule
 \endhead
-RNF-01 & \textbf{Accesibilidad.} La interfaz cumple el nivel AA de WCAG 2.1: contraste suficiente, uso con teclado, etiquetas en formularios y texto alternativo. Los colores del mapa no son el único medio para transmitir la prioridad (se añaden números o patrones). & \Must & Revisión con una herramienta de accesibilidad y prueba manual. \\
+RNF-01 & \textbf{Accesibilidad.} La interfaz cumple el nivel AA de WCAG 2.1: contraste suficiente, uso con teclado, etiquetas en formularios y texto alternativo. Los colores del mapa no son el único medio para transmitir la prioridad (se añaden números o patrones). & \Must & Revisión automática (axe-core, reglas de WCAG 2.2 AA) de 25 páginas en los 6 roles, a 390 y 1100~px, y prueba manual con teclado. \\
 RNF-02 & \textbf{Lenguaje sencillo.} Los textos usan frases cortas y palabras comunes. Las siglas se explican la primera vez que aparecen. & \Must & Revisión de textos de la interfaz. \\
 RNF-03 & \textbf{Bajo consumo de datos.} La primera carga pesa menos de 300 KB comprimida, sin contar los mosaicos del mapa. Las imágenes se comprimen. El mapa guarda en caché los mosaicos ya vistos. \textit{(provisional)} & \Must & Medición en el navegador. \\
 RNF-04 & \textbf{Uso en celular.} La aplicación se adapta a pantallas desde 360 px de ancho y funciona en navegadores móviles recientes. Se diseña primero para el celular. & \Must & Prueba en un celular y en emulación. \\
@@ -25,6 +25,7 @@ RNF-15 & \textbf{Integridad de la entrega.} Un código solo puede usarse una vez
 RNF-16 & \textbf{Dignidad y trato.} Los datos que se piden son los mínimos necesarios para verificar y entregar la ayuda, y el documento de identidad solo es obligatorio para entregas de mayor valor. & \Should & Revisión de los campos obligatorios. \\
 RNF-17 & \textbf{Conservación del inventario.} Nunca se asigna ni se entrega más de lo disponible, incluso con operaciones simultáneas o sin conexión. Cada movimiento del inventario deja registro. & \Must & Prueba con asignaciones simultáneas y comprobación de saldos. \\
 RNF-18 & \textbf{Tiempo del plan.} El plan de asignación se calcula en un tiempo útil para la demostración, y si el cálculo exacto no termina, el sistema usa la asignación de referencia. & \Should & Prueba con datos simulados de tamaño medio. \\
+RNF-19 & \textbf{Mapas sin depender del mapa.} Todo lo que muestra un mapa (prioridad, necesidades, ruta, control logístico) también está escrito en texto, y los mapas avisan cuando la posición es simulada. Los mosaicos de OpenStreetMap necesitan internet. & \Must & Revisión de cada página con mapa: tiene texto equivalente. \\
 \bottomrule
 \end{longtable}
 \addtocounter{table}{-1}

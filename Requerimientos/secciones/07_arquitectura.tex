@@ -5,14 +5,14 @@ La arquitectura es deliberadamente sencilla, porque una sola persona debe constr
 \begin{figure}[H]
 \centering
 \resizebox{\textwidth}{!}{\input{figuras/arquitectura}}
-\caption{Arquitectura propuesta del prototipo.}
+\caption{Arquitectura del prototipo.}
 \label{fig:arquitectura}
 \end{figure}
 
-\subsection{Tecnología propuesta}
+\subsection{Tecnología utilizada}
 \begin{table}[H]
 \centering
-\caption{Tecnología propuesta (todo de código abierto).}
+\caption{Tecnología utilizada (todo de código abierto).}
 \begin{tabularx}{\textwidth}{@{}p{3.6cm}X@{}}
 \toprule
 \textbf{Componente} & \textbf{Propuesta} \\
@@ -22,17 +22,17 @@ Servicio web & FastAPI, con plantillas HTML en el servidor. \\
 Base de datos & PostgreSQL de Railway (el sistema de archivos de Railway no es persistente, por lo que no se usa SQLite). \\
 Análisis de datos & NumPy, pandas, SciPy y scikit-learn (K-means, GMM, Isolation Forest). TOPSIS y AHP se implementan directamente. \\
 Optimización & Programación lineal entera con \texttt{scipy.optimize.milp} (HiGHS). \\
-Mapa & Leaflet con datos de OpenStreetMap. \\
+Mapa & Leaflet 1.9.4, incluido en la aplicación (sin depender de un CDN), con mosaicos de OpenStreetMap. Los barrios y sus coordenadas también vienen de OpenStreetMap. \\
 Uso sin conexión & Funciones de aplicación web progresiva (service worker) y almacenamiento local del dispositivo para guardar registros pendientes y validar códigos. \\
 Código de entrega & Código aleatorio de un solo uso. El servidor guarda solo su huella con sal (por ejemplo, SHA-256) y el dispositivo del equipo asignado recibe esa huella al asignar la entrega. \\
 Registro de auditoría & Eventos encadenados por hash (SHA-256): cada evento incluye la huella del anterior. \\
 Datos oficiales & Carga de archivos abiertos CSV o GeoJSON. \\
-Despliegue & Railway. \\
+Despliegue & Railway, con despliegue automático desde el repositorio de GitHub y un dominio propio. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Las librerías de ciencia de datos y la elección de FastAPI con plantillas son propuestas y se pueden cambiar sin alterar los requisitos. La restricción firme es que sea Python y se despliegue en Railway.
+Las librerías de ciencia de datos y la elección de FastAPI con plantillas se pueden cambiar sin alterar los requisitos. La restricción firme es que sea Python y se despliegue en Railway. El prototipo está desplegado en \texttt{resilis.dorelys.dev}.
 
 \subsection{Código de entrega}
 El código funciona de la siguiente manera:
@@ -48,6 +48,12 @@ Con la conexión caída no es posible impedir que dos equipos distintos reclamen
 
 \subsection{Registro encadenado por hash}
 Cada evento de una solicitud (registrada, verificada, asignada, entregada, incidencia, cierre) se guarda con la huella del evento anterior. Si alguien altera un evento pasado, la cadena se rompe y se detecta. Es una estructura \emph{estilo cadena de bloques} que no necesita una red distribuida y no contiene datos personales, de modo que no entra en conflicto con el derecho a corregir o suprimir datos de la Ley 1581 de 2012. Se eligió esta solución en lugar de una cadena de bloques pública porque el sistema ya tiene un coordinador de confianza, funciona sin conexión, tiene costo cero y es mucho más sencilla de construir en 12 horas. El equipo confirmó esta decisión (sección~\ref{sec:pendientes}).
+
+\subsection{Plan por paquetes}
+El plan completo se calcula una vez con programación lineal entera y se presenta dividido en paquetes pequeños, porque una persona en medio de una emergencia no puede revisar de una vez decenas de asignaciones. Cada paquete agrupa hasta seis entregas de un mismo municipio, ordenadas por prioridad, con un solo equipo de entrega; la pantalla muestra el siguiente paquete, su avance y, plegado, lo técnico (cobertura, comparación con la asignación de referencia, lo que quedó sin cubrir y los parámetros). Aprobar un paquete reserva el inventario y genera los códigos solo de sus entregas; el plan pasa a aprobado cuando todos sus paquetes están resueltos.
+
+\subsection{Recorrido y mapa de ruta}
+Cada reporte, solicitud y donación tiene un recorrido calculado a partir de su estado y de los eventos registrados. El mapa de ruta de una entrega dibuja el centro de acopio, el destino y la posición del equipo. \textbf{La posición es simulada}: se calcula sobre la línea recta entre el centro y el destino, desde la hora en que el equipo marcó ``en camino'', con el tiempo acelerado (entre 40 segundos y 4 minutos por viaje) para que se vea en una demostración. Para usar posiciones reales bastaría con reemplazar esa función por la que lea el GPS del equipo, lo que exige antes una decisión de privacidad (sección~\ref{sec:pendientes}). La información se ajusta según quién mira: la persona que pidió la ayuda ve su destino exacto; quien dona, una zona aproximada; el personal, el centro del barrio; y el equipo de entrega, sus propios destinos.
 
 \subsection{Ciclo de una solicitud}
 \begin{figure}[H]
