@@ -34,7 +34,7 @@ def _paso(clave: str, titulo: str, ayuda: str, estado: str, hora: datetime | Non
 
 def _marcar_actual(pasos: list[dict]) -> list[dict]:
     """El primer paso que falta es el que 'va ahora', salvo que el recorrido ya terminó o tuvo un problema."""
-    if any(p["estado"] == PROBLEMA for p in pasos):
+    if any(p["estado"] in (PROBLEMA, ACTUAL) for p in pasos):
         return pasos
     for p in pasos:
         if p["estado"] == PENDIENTE:
@@ -82,6 +82,8 @@ def pasos_solicitud(db: Session, sol: m.Solicitud, mostrar_equipo: bool = True) 
     ]
     if anulada and "desmentida" not in ultimo:
         pasos[1]["estado"], pasos[1]["estado_texto"], pasos[1]["nota"] = PROBLEMA, ESTADO_TEXTO[PROBLEMA], "La solicitud se anuló."
+    if sol.estado == m.EstadoSolicitud.EN_CAMINO:  # el equipo va en camino: ese paso está pasando, no terminó
+        pasos[3]["estado"], pasos[3]["estado_texto"] = ACTUAL, ESTADO_TEXTO[ACTUAL]
     incidencia = ultimo.get("incidencia")
     if incidencia and (ultimo.get("asignada") is None or _utc(incidencia) >= _utc(ultimo["asignada"])) and rango < 3:
         pasos[2]["nota"] = "La entrega anterior no se pudo hacer; se asignará de nuevo."

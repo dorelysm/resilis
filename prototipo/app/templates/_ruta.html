@@ -1,0 +1,21 @@
+{# Mapa de ruta de una entrega. La posición del equipo es simulada y la pantalla lo dice. #}
+{% macro mapa_ruta(url, modo, titulo) %}
+<section class="ruta" aria-labelledby="titulo-ruta">
+  <h2 id="titulo-ruta">{{ titulo }}</h2>
+  <p class="mensaje" role="note"><strong>Ruta simulada para la demostración:</strong> el movimiento va acelerado y no es la posición real de nadie.</p>
+  <p id="estado-ruta" class="estado-ruta" role="status" aria-live="polite">Cargando el mapa…</p>
+  <p id="aviso-cerca" class="mensaje mensaje-error" role="alert" hidden></p>
+  <div id="mapa-ruta" class="mapa mapa-ruta" role="region" aria-label="Mapa de la ruta de la entrega" data-url="{{ url }}" data-modo="{{ modo }}"></div>
+  <noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. El estado de la entrega está escrito arriba y en el recorrido.</p></noscript>
+  {% if modo == 'donante' %}
+  <h3>Dónde llegó su ayuda</h3>
+  <p class="ayuda">Se muestra el barrio con un círculo aproximado, sin direcciones ni nombres.</p>
+  <ul id="lista-destinos"><li>Cargando…</li></ul>
+  {% endif %}
+  <p class="no-imprimir"><button type="button" id="actualizar-ruta" class="principal">Actualizar ahora</button>
+    <span class="ayuda">Se actualiza solo cada 15 segundos mientras esta pantalla está abierta.</span></p>
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/ruta.js" defer></script>
+</section>
+{% endmacro %}

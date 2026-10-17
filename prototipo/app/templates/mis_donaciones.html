@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% from "_recorrido.html" import recorrido %}
+{% from "_ruta.html" import mapa_ruta %}
 {% block titulo %}Mis donaciones{% endblock %}
 {% block contenido %}
 <h1>Mis donaciones</h1>
 <p>Siga el camino de cada donación, desde que la ofrece hasta que llega a las personas. Toque una etapa para ver qué significa.</p>
 {% if filas %}
+  {{ mapa_ruta('/donaciones/ruta.json', 'donante', 'Por dónde va su ayuda') }}
+  <h2>Cada donación</h2>
   {% for d in filas %}
   <section class="tarjeta-recorrido" aria-labelledby="don-{{ d.id }}">
     <h2 id="don-{{ d.id }}">{% if d.monetaria %}Dinero: ${{ '{:,}'.format(d.monto or 0).replace(',', '.') }}{% else %}{{ d.cantidad }} {{ d.unidad }} de {{ tipos[d.tipo_bien]|lower }}{% endif %}

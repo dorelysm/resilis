@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_recorrido.html" import recorrido %}
+{% from "_ruta.html" import mapa_ruta %}
 {% block titulo %}Mi solicitud{% endblock %}
 {% block contenido %}
 <h1>Mi solicitud</h1>
@@ -21,6 +22,10 @@
 
 <h2>Cómo va</h2>
 {{ recorrido(pasos, 'Recorrido de mi solicitud') }}
+
+{% if sol.estado in ('asignada', 'en_camino', 'entregada', 'cerrada') %}
+{{ mapa_ruta('/solicitudes/' ~ sol.id ~ '/ruta.json', 'solicitud', 'Por dónde va su ayuda') }}
+{% endif %}
 
 {% if sol.estado == 'entregada' %}
 <form method="post" action="/solicitudes/{{ sol.id }}/confirmar">

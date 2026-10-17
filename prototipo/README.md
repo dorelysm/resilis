@@ -68,6 +68,14 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Plan en paquetes pequeños:** el plan se calcula completo, pero se revisa y se aprueba de a un paquete: hasta 6 entregas de un mismo municipio, de la más prioritaria a la menos, con un solo equipo, y letra y botón grandes. Cada línea dice qué, dónde, para cuántas personas y qué tan urgente, sin porcentajes. Cuánto cubre, la comparación con la referencia, lo que queda sin cubrir y los parámetros quedan plegados. "Aprobar todo de una vez" sigue existiendo, pero escondido. El plan se cierra solo cuando se resuelven todos sus paquetes. (`app/plan.py`: `armar_paquetes`, `aprobar_paquete`.)
 - **Recorrido visual:** cada solicitud, donación y reporte muestra sus etapas (hecho, aquí va, falta, problema) con texto y símbolo, no solo color; al tocar una etapa se explica qué significa. Lo ven la persona que pidió la ayuda, el donante y quien reportó. `/recorrido` (entidad, brigadista y administrador) cuenta cuántas cosas hay en cada etapa, marca las que llevan más de 6 horas esperando y deja entrar a ver qué hay en cada una, sin datos personales. (`app/recorrido.py`.)
 
+## Mapa de la ruta de una entrega
+
+La persona que recibe (en "Mi solicitud"), quien dona (en "Mis donaciones") y el personal (en `/recorrido/solicitudes/{id}`) ven por dónde va una entrega sobre un mapa con Leaflet: centro de acopio, destino y equipo. Se actualiza solo cada 15 segundos mientras la pantalla está abierta, tiene botón "Actualizar ahora", y todo lo del mapa está escrito también en texto (`#estado-ruta`, `#lista-destinos`).
+
+- **La posición del equipo es SIMULADA** (`app/ruta.py`): sobre la línea recta entre el centro y el destino, desde la hora en que el equipo marcó "en camino", y con el tiempo acelerado (unas 20 veces; entre 40 s y 4 min) para que se vea en una demostración. Las pantallas lo avisan. No hay GPS real; para usar posiciones reales bastaría con reemplazar `_posicion_simulada`.
+- **Privacidad:** quien recibe ve el destino exacto de su solicitud y recibe un aviso en pantalla (con vibración si el teléfono lo permite) cuando el equipo está a menos de 500 m. Quien dona ve solo el barrio, con un círculo aproximado de 300 m, sin direcciones, nombres ni teléfonos. El personal ve el centro del barrio.
+- **Datos:** `/solicitudes/{id}/ruta.json` (solo su dueño), `/donaciones/ruta.json` (donante) y `/recorrido/solicitudes/{id}/ruta.json` (personal), sin caché.
+
 ## Mapa (bloque 7)
 
 `/mapa` (entidad, brigadista y administrador) dibuja los barrios con Leaflet 1.9.4, que viene incluido en `app/static/vendor/leaflet/` (sin CDN; licencia BSD en el mismo directorio). Los datos salen de `/mapa/datos.json`: un renglón por barrio, **sin datos de personas**.

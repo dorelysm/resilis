@@ -1,0 +1,194 @@
+"""Mapa de la ruta de una entrega: posición simulada, privacidad según quién mira y permisos."""
+import json
+import shutil
+import subprocess
+from datetime import timedelta
+from pathlib import Path
+
+import pytest
+from sqlalchemy import select
+
+from app import models as m
+from app import ruta as rt
+from tests.test_operacion import (  # noqa: F401
+    _Revisor, app_cliente, asignar, crear_usuario, csrf, entrar, equipo_completo, flujo_hasta_asignar, mundo, pedir,
+    recibir_inventario, salir, sesiones,
+)
+
+JS = Path(__file__).resolve().parent.parent / "app" / "static" / "ruta.js"
+node = pytest.mark.skipif(shutil.which("node") is None, reason="Node no está instalado")
+
+
+@pytest.fixture()
+def con_ruta(app_cliente, sesiones, equipo_completo, mundo):
+    """Una solicitud asignada: el centro de acopio está a unos 8 km del barrio y la vivienda a unos metros de su centro."""
+    with sesiones() as db:
+        barrio = db.get(m.Barrio, mundo["barrio_id"])
+        barrio.lat, barrio.lon = 10.9600, -74.8000
+        centro = db.scalar(select(m.CentroAcopio))
+        centro.lat, centro.lon = 10.9000, -74.8500
+        donante = db.scalar(select(m.Donante))
+        donante.usuario_id = crear_usuario(sesiones, m.Rol.DONANTE, "3100000009")
+        db.commit()
+    flujo_hasta_asignar(app_cliente, equipo_completo, mundo)
+    with sesiones() as db:
+        sol = db.get(m.Solicitud, 1)
+        sol.lat, sol.lon = 10.9605, -74.8005
+        db.commit()
+    return app_cliente
+
+
+def salir_en_camino(c):
+    entrar(c, "3100000005")
+    c.post("/entregas/1/en-camino", data={"csrf": csrf(c, "/entregas")})
+    salir(c)
+
+
+def salida_del_equipo(db):
+    return db.scalar(select(m.EventoAuditoria.hora).where(m.EventoAuditoria.tipo == "en_camino"))
+
+
+def test_antes_de_salir_el_equipo_esta_en_el_centro(con_ruta, sesiones):
+    with sesiones() as db:
+        r = rt.ruta_de_solicitud(db, db.get(m.Solicitud, 1), exacta=True)
+    assert r["etapa"] == "asignada" and r["progreso"] == 0.0 and r["eta_segundos"] is None
+    assert (r["posicion"]["lat"], r["posicion"]["lon"]) == (10.9, -74.85)
+    assert r["origen"]["nombre"] == "Centro de prueba" and "todavía no ha salido" in r["texto"]
+    assert r["simulada"] is True and "simulada" in r["aviso"]
+
+
+def test_el_equipo_avanza_en_linea_recta_y_llega(con_ruta, sesiones):
+    salir_en_camino(con_ruta)
+    with sesiones() as db:
+        salida = salida_del_equipo(db)
+        sol = db.get(m.Solicitud, 1)
+        duracion = rt.duracion_demo(rt.kilometros((10.9, -74.85), (10.9605, -74.8005)))
+        medio = rt.ruta_de_solicitud(db, sol, True, ahora=salida + timedelta(seconds=duracion / 2))
+        llego = rt.ruta_de_solicitud(db, sol, True, ahora=salida + timedelta(seconds=duracion + 5))
+    assert medio["etapa"] == "en_camino" and 0.45 < medio["progreso"] < 0.55
+    assert 10.92 < medio["posicion"]["lat"] < 10.94 and "va en camino" in medio["texto"] and not medio["cerca"]
+    assert medio["restante_km"] < medio["km"] and 0 < medio["eta_segundos"] < duracion
+    assert llego["progreso"] == 1.0 and llego["cerca"] and "llegó" in llego["texto"]
+    assert (llego["posicion"]["lat"], llego["posicion"]["lon"]) == pytest.approx((10.9605, -74.8005))
+
+
+def test_avisa_cuando_el_equipo_esta_cerca(con_ruta, sesiones):
+    salir_en_camino(con_ruta)
+    with sesiones() as db:
+        salida = salida_del_equipo(db)
+        km = rt.kilometros((10.9, -74.85), (10.9605, -74.8005))
+        duracion = rt.duracion_demo(km)
+        # Cuando faltan 0,4 km: progreso = 1 - 0,4 / km
+        cerca = rt.ruta_de_solicitud(db, db.get(m.Solicitud, 1), True, ahora=salida + timedelta(seconds=duracion * (1 - 0.4 / km)))
+        lejos = rt.ruta_de_solicitud(db, db.get(m.Solicitud, 1), True, ahora=salida + timedelta(seconds=duracion * 0.3))
+    assert cerca["cerca"] and "código de entrega" in cerca["texto"] and not lejos["cerca"]
+
+
+def test_sin_entrega_el_mapa_lo_dice(app_cliente, sesiones, equipo_completo, mundo):
+    pedir(app_cliente, mundo)
+    with sesiones() as db:
+        r = rt.ruta_de_solicitud(db, db.get(m.Solicitud, 1), exacta=True)
+    assert r["etapa"] == "sin_entrega" and r["posicion"] is None and "Todavía no hay una entrega" in r["texto"]
+
+
+def test_la_persona_ve_su_destino_exacto_y_el_personal_solo_el_barrio(con_ruta, sesiones):
+    with sesiones() as db:
+        sol = db.get(m.Solicitud, 1)
+        propia = rt.ruta_de_solicitud(db, sol, exacta=True)
+        personal = rt.ruta_de_solicitud(db, sol, exacta=False)
+    assert (propia["destino"]["lat"], propia["destino"]["lon"]) == (10.9605, -74.8005) and propia["destino"]["nombre"] == "Su dirección"
+    assert (personal["destino"]["lat"], personal["destino"]["lon"]) == (10.96, -74.8) and "Barrio de prueba" in personal["destino"]["nombre"]
+
+
+def test_el_donante_ve_barrios_con_circulo_y_no_personas(con_ruta, sesiones):
+    salir_en_camino(con_ruta)
+    entrar(con_ruta, "3100000009")
+    r = con_ruta.get("/donaciones/ruta.json")
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    d = r.json()
+    assert len(d["origenes"]) == 1 and d["origenes"][0]["nombre"] == "Centro de prueba"
+    assert len(d["destinos"]) == 1
+    destino = d["destinos"][0]
+    assert destino["radio_m"] == 300 and destino["en_camino"] == 1 and "Barrio de prueba" in destino["barrio"]
+    assert (destino["lat"], destino["lon"]) == (10.96, -74.8)  # el centro del barrio, no la vivienda (10.9605, -74.8005)
+    texto = r.text
+    for secreto in ("10.9605", "-74.8005", "Calle 1", "3100000001", "solicitante", "solicitud_id", "nombre_persona"):
+        assert secreto not in texto, secreto
+    assert len(d["en_camino"]) == 1 and d["en_camino"][0]["hacia"].startswith("Barrio de prueba")
+    assert "1 entrega(s) en 1 barrio(s)" in d["texto"]
+
+
+def test_un_donante_sin_entregas_ve_el_mapa_vacio(con_ruta, sesiones):
+    with sesiones() as db:
+        otro = crear_usuario(sesiones, m.Rol.DONANTE, "3100000010")
+        db.add(m.Donante(usuario_id=otro, nombre="Otro donante", tipo="persona"))
+        db.commit()
+    entrar(con_ruta, "3100000010")
+    d = con_ruta.get("/donaciones/ruta.json").json()
+    assert d["destinos"] == [] and d["origenes"] == [] and "Todavía no hay entregas" in d["texto"]
+
+
+def test_permisos_de_los_datos_de_ruta(con_ruta):
+    c = con_ruta
+    assert c.get("/solicitudes/1/ruta.json", follow_redirects=False).status_code == 303  # sin sesión
+    entrar(c, "3100000002")  # otra persona: no es su solicitud
+    assert c.get("/solicitudes/1/ruta.json").status_code == 404
+    salir(c)
+    entrar(c, "3100000001")
+    assert c.get("/solicitudes/1/ruta.json").status_code == 200
+    assert c.get("/recorrido/solicitudes/1/ruta.json").status_code == 403  # eso es del personal
+    assert c.get("/donaciones/ruta.json").status_code == 403
+    salir(c)
+    entrar(c, "3100000004")
+    assert c.get("/recorrido/solicitudes/1/ruta.json").status_code == 200
+    assert c.get("/recorrido/solicitudes/999/ruta.json").status_code == 404
+    assert c.get("/solicitudes/1/ruta.json").status_code == 403
+    salir(c)
+    entrar(c, "3100000005")  # el equipo de entrega no ve mapas de ruta por esta vía
+    assert c.get("/donaciones/ruta.json").status_code == 403
+
+
+def test_las_paginas_traen_el_mapa_y_avisan_que_es_simulado(con_ruta):
+    c = con_ruta
+    entrar(c, "3100000001")
+    pagina = c.get("/solicitudes/1").text
+    assert 'id="mapa-ruta"' in pagina and 'data-url="/solicitudes/1/ruta.json"' in pagina
+    assert "Ruta simulada para la demostración" in pagina and 'id="estado-ruta"' in pagina and 'role="alert"' in pagina
+    revisor = _Revisor()
+    revisor.feed(pagina)
+    assert revisor.ids <= revisor.para
+    salir(c)
+    entrar(c, "3100000009")
+    pagina = c.get("/donaciones").text
+    assert 'data-modo="donante"' in pagina and 'id="lista-destinos"' in pagina and "Dónde llegó su ayuda" in pagina
+    salir(c)
+    entrar(c, "3100000004")
+    assert 'data-url="/recorrido/solicitudes/1/ruta.json"' in c.get("/recorrido/solicitudes/1").text
+
+
+def test_una_solicitud_sin_asignar_no_muestra_mapa(app_cliente, equipo_completo, mundo):
+    pedir(app_cliente, mundo)
+    entrar(app_cliente, "3100000001")
+    assert 'id="mapa-ruta"' not in app_cliente.get("/solicitudes/1").text
+
+
+@node
+def test_el_js_describe_los_destinos_en_texto():
+    guion = ("const r=require(process.argv[1]);"
+             "console.log(JSON.stringify([r.lineaDestino({barrio:'Rebolo, Barranquilla',entregas:4,entregadas:1,en_camino:2}),"
+             "r.lineaDestino({barrio:'X',entregas:1,entregadas:0,en_camino:0}),r.escapar('<b>&\"'),"
+             "r.textoActualizado('2026-10-16T08:05:09Z').startsWith('Actualizado a las '),r.textoActualizado('no es fecha')]))")
+    salida = subprocess.run(["node", "-e", guion, str(JS)], capture_output=True, text=True, encoding="utf-8", check=True,
+                            timeout=30).stdout
+    a, b, c, d, e = json.loads(salida)
+    assert a == "Rebolo, Barranquilla: 1 entregada(s), 2 en camino, 1 por salir."
+    assert b == "X: 1 por salir." and c == "&lt;b&gt;&amp;&quot;" and d is True and e == ""
+
+
+def test_mientras_el_equipo_va_en_camino_ese_paso_esta_en_curso(con_ruta, sesiones):
+    from app import recorrido as rc
+
+    salir_en_camino(con_ruta)
+    with sesiones() as db:
+        pasos = {p["clave"]: p["estado"] for p in rc.pasos_solicitud(db, db.get(m.Solicitud, 1))}
+    assert pasos["asignada"] == "hecho" and pasos["en_camino"] == "actual" and pasos["entregada"] == "pendiente"

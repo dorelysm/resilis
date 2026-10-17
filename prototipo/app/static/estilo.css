@@ -172,3 +172,16 @@ button.grande { width: 100%; min-height: 3.25rem; font-size: 1.2rem; }
 .elementos { list-style: none; padding: 0; }
 .elementos li { padding: .5rem 0; border-top: 1px solid var(--borde-suave); }
 .paso details { border: 0; padding: 0; margin: 0; background: none; }
+
+/* Mapa de ruta de una entrega */
+.mapa-ruta { height: 22rem; }
+.estado-ruta { font-size: 1.15rem; font-weight: 600; margin: .5rem 0; }
+.pin-ruta { background: none; border: 0; }
+.pin { display: inline-flex; align-items: center; gap: .3rem; background: #fff; color: var(--azul-profundo); border: 2px solid var(--azul-profundo); border-radius: 1rem; padding: .1rem .5rem .1rem .3rem; font-size: .85rem; font-weight: 700; white-space: nowrap; transform: translate(-.7rem, -.7rem); }
+.pin-punto { width: .9rem; height: .9rem; border-radius: 50%; background: var(--azul); display: inline-block; }
+.pin-origen .pin-punto { background: var(--teal-oscuro); }
+.pin-destino { border-color: var(--naranja-oscuro); color: var(--aviso-texto); }
+.pin-destino .pin-punto { background: var(--naranja-oscuro); }
+.pin-equipo { background: var(--azul-profundo); color: #fff; border-color: #fff; }
+.pin-equipo .pin-punto { background: #fff; }
+.leaflet-marker-icon:focus-visible .pin { outline: 3px solid var(--naranja-oscuro); outline-offset: 2px; }

@@ -19,7 +19,7 @@ from app.migracion import migrar_sectores_a_barrios
 from app.models import (
     Barrio, CentroAcopio, Entrega, Lote, Municipio, PlanAsignacion, Rol, Solicitud, Usuario, Verificacion, ahora,
 )
-from app.rutas import admin, auth, formularios, mapa, operacion, plan, prioridades, recorrido
+from app.rutas import admin, auth, formularios, mapa, operacion, plan, prioridades, recorrido, ruta
 from app.seguridad import hash_password
 from app.simulacion import generar
 from app.territorio import corregir_nombres_municipios
@@ -122,6 +122,7 @@ app.include_router(operacion.router)
 app.include_router(prioridades.router)
 app.include_router(mapa.router)
 app.include_router(recorrido.router)
+app.include_router(ruta.router)
 app.include_router(plan.router)
 app.include_router(admin.router)
 
