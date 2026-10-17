@@ -39,50 +39,67 @@ PRE FACTIBILIDAD ECONÓMICA, SOCIAL Y SUSTENTABILIDAD AMBIENTAL (1500 caracteres
 Describa brevemente las razones que hacen de esta propuesta una propuesta sostenible en el tiempo. Fundamente por qué considera que esta propuesta es presupuestariamente abordable, por qué es viable o aceptable socialmente 
 Viabilidad técnica: el prototipo ya funciona en línea (resilis.dorelys.dev), con 338 pruebas automáticas y accesibilidad WCAG 2.2 AA. Usa software abierto y se adapta a otro territorio cambiando solo los barrios y los pesos.
 
-Económica: el prototipo en línea consume solo US$0,10 de recursos en Railway (unos COP 400) y cuesta menos de COP 50.000 al mes con el plan base. Un piloto de 6 meses con una entidad (mantenimiento, capacitación y revisión jurídica) cuesta unos COP 17 millones, y operarlo después, unos COP 8 millones al año (presupuesto adjunto). Podría financiarse con las oficinas de gestión del riesgo de municipios y departamento, cooperación humanitaria y convocatorias públicas de innovación. Al ser abierto, otras ciudades pueden replicarlo sin pagar licencias.
+Económica: el prototipo en línea consume solo US$0,10 de recursos en Railway (unos COP 400) y cuesta menos de COP 50.000 al mes con el plan base. Operarlo un mes, con soporte, capacitación, asesoría jurídica y gastos administrativos, cuesta unos COP 3,8 millones (presupuesto adjunto). Podría financiarse con las oficinas de gestión del riesgo de municipios y departamento, cooperación humanitaria y convocatorias públicas de innovación. Al ser abierto, otras ciudades pueden replicarlo sin pagar licencias.
 
 Social: se usa desde el celular que ya tiene la gente; quien no lo tiene a mano imprime una ficha con su código. Se piden solo los datos necesarios (nombre, teléfono y, si pide ayuda, barrio), con consentimiento expreso, y cada rol ve solo lo que necesita, según la Ley 1581 de 2012. La auditoría no contiene datos personales.
 
 Ambiental: bajo consumo de datos y menos desplazamientos y desperdicio: lo que vence primero sale primero y se agrupan las entregas.
 
-Próximos pasos: en el piloto se reemplazan los datos simulados por datos oficiales por barrio, se valida la prioridad con una entidad de gestión del riesgo y se completa la revisión jurídica de datos personales.
+Próximos pasos: reemplazar los datos simulados por datos oficiales por barrio, validar la prioridad con una entidad de gestión del riesgo y completar la revisión jurídica de datos personales.
 
 
 PRESUPUESTO
-Estimación de referencia en pesos colombianos (COP). Supuestos: 1 USD = COP 4.000; hora de trabajo técnico a COP 25.000 y de estudiante a COP 20.000; precios sujetos a cotización.
+Presupuesto de un mes de operación de Resilis, en pesos colombianos (COP). Estimación de referencia; precios sujetos a cotización.
 
-1. Prototipo (ya construido en el Rally)
-| Concepto | Detalle | Costo |
-|---|---|---|
-| Hospedaje en la nube (aplicación y base de datos PostgreSQL, Railway) | Uso medido en el periodo actual: US$0,10 (memoria 0,09; procesador 0,01; red y almacenamiento 0). Con el plan base, unos US$5 al mes | COP 400 medidos; hasta COP 20.000 al mes con el plan base |
-| Dominio | subdominio de un dominio ya existente | COP 0 |
-| Software y datos | Python, FastAPI, PostgreSQL, SciPy, Leaflet, OpenStreetMap y datos abiertos | COP 0 |
-| Trabajo del equipo (aporte en especie) | 7 integrantes x 28 horas x COP 20.000 | COP 3.920.000 |
+Datos generales
+| Dato | Valor |
+|---|---|
+| Proyecto | Resilis: priorización y seguimiento de la ayuda tras un desastre |
+| Equipo | NEXUS INNOVA 4.0 |
+| Institución | Corporación Universitaria Americana (Colombia) |
+| Responsable | Dorelys Martinez, líder del equipo |
+| Periodo | 1 mes de operación |
+| Moneda y tasa | Pesos colombianos; 1 USD = COP 4.000 |
+| Tarifas | Hora de trabajo técnico COP 25.000; de coordinación COP 30.000 |
 
-2. Piloto de 6 meses con una entidad de gestión del riesgo (1 a 3 municipios)
+1. Tecnología
 | Concepto | Cálculo | Costo (COP) |
 |---|---|---|
-| Hospedaje con respaldos y monitoreo | US$30 al mes x 6 | 720.000 |
-| Mantenimiento y soporte técnico | 10 horas por semana x 26 semanas x 25.000 | 6.500.000 |
-| Capacitación de brigadistas y organizaciones | 3 talleres de 20 personas (material, refrigerios y transporte) | 1.800.000 |
-| Fichas impresas con código | 2.000 fichas x 200 | 400.000 |
-| Revisión jurídica (Ley 1581 de 2012, política de datos y términos de uso) | servicio profesional | 2.500.000 |
-| Validación de la prioridad con una persona experta en gestión del riesgo | 3 sesiones x 500.000 | 1.500.000 |
-| Integración de datos oficiales por barrio | 40 horas x 25.000 | 1.000.000 |
-| Divulgación y material de apoyo | volantes y video de capacitación | 1.000.000 |
-| Subtotal | | 15.420.000 |
-| Imprevistos (10 %) | | 1.542.000 |
-| Total del piloto | | 16.962.000 |
+| Hospedaje en la nube (aplicación y base de datos PostgreSQL, Railway) | Uso medido: US$0,10 (memoria 0,09; procesador 0,01; red y almacenamiento 0). Con el plan base, unos US$5 al mes | 20.000 |
+| Dominio | US$12 al año, prorrateado por mes | 4.000 |
+| Mantenimiento y soporte técnico | 40 horas x COP 25.000 | 1.000.000 |
+| Subtotal tecnología | | 1.024.000 |
 
-3. Operación anual después del piloto (por entidad)
+2. Operación
 | Concepto | Cálculo | Costo (COP) |
 |---|---|---|
-| Hospedaje | US$30 a US$50 al mes x 12 | 1.440.000 a 2.400.000 |
-| Mantenimiento y soporte | 4 horas por semana x 52 x 25.000 | 5.200.000 |
-| Capacitación de refuerzo | 2 talleres al año | 1.200.000 |
-| Total por año | | 7.840.000 a 8.800.000 |
+| Capacitación de brigadistas y organizaciones | 1 taller de 20 personas (material, refrigerios y transporte) | 600.000 |
+| Fichas impresas con código | 500 fichas x COP 200 | 100.000 |
+| Asesoría jurídica y de protección de datos (Ley 1581 de 2012) | parte mensual de la revisión jurídica | 400.000 |
+| Validación de la prioridad con una persona experta en gestión del riesgo | 1 sesión | 500.000 |
+| Subtotal operación | | 1.600.000 |
 
-Fuentes de financiación posibles: oficinas de gestión del riesgo de municipios y del departamento, cooperación humanitaria y convocatorias de innovación pública. Como el sistema es de software abierto, cada nueva entidad solo asume el hospedaje, el soporte y la capacitación; no paga licencias.
+3. Gastos administrativos
+| Concepto | Cálculo | Costo (COP) |
+|---|---|---|
+| Coordinación y gestión del proyecto | 10 horas x COP 30.000 | 300.000 |
+| Contabilidad y facturación | servicio mensual | 150.000 |
+| Transporte y logística de visitas | desplazamientos del equipo | 150.000 |
+| Internet y datos móviles del equipo | servicio mensual | 100.000 |
+| Herramientas de desarrollo y colaboración (repositorio, correo y asistente de IA) | suscripciones mensuales | 100.000 |
+| Papelería e impresión | material de oficina | 50.000 |
+| Subtotal gastos administrativos | | 850.000 |
+
+Resumen del mes
+| Rubro | Costo (COP) | Parte del total |
+|---|---|---|
+| Tecnología | 1.024.000 | 27 % |
+| Operación | 1.600.000 | 42 % |
+| Gastos administrativos | 850.000 | 22 % |
+| Imprevistos (10 % del subtotal) | 347.400 | 9 % |
+| **Total del mes** | **3.821.400** | 100 % |
+
+Fuentes de financiación posibles: oficinas de gestión del riesgo de municipios y del departamento, cooperación humanitaria y convocatorias públicas de innovación. Como el sistema es de software abierto, cada nueva entidad solo asume el hospedaje, el soporte, la capacitación y su administración; no paga licencias.
 
 
 PROPUESTAS QUE DESCARTARON
