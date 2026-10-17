@@ -14,6 +14,20 @@ jobs:
     defaults:
       run:
         working-directory: prototipo
+    # Las pruebas de las páginas arrancan la aplicación, que se conecta al PostgreSQL de desarrollo (puerto 5440).
+    services:
+      db:
+        image: postgres:17
+        env:
+          POSTGRES_USER: resilis
+          POSTGRES_PASSWORD: resilis
+          POSTGRES_DB: resilis
+        ports:
+          - 5440:5432
+        options: >-
+          --health-cmd "pg_isready -U resilis"
+          --health-interval 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
