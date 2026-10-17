@@ -63,6 +63,18 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Páginas:** `/prioridades` (listas), `/prioridades/sectores/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
 - `motor.ahp_pesos` (AHP: devuelve los pesos y la razón de consistencia CR, que debe ser menor que 0,1) existe y tiene pruebas, pero todavía no hay una pantalla de comparación por pares: `/pesos` recibe los pesos directamente.
 
+## Mapa (bloque 7)
+
+`/mapa` (entidad, brigadista y administrador) dibuja los sectores con Leaflet 1.9.4, que viene incluido en `app/static/vendor/leaflet/` (sin CDN; licencia BSD en el mismo directorio). Los datos salen de `/mapa/datos.json`: un renglón por sector, **sin datos de personas**.
+
+- **Color:** el conmutador alterna entre prioridad y confianza. Las clases son quintiles de lo que se muestra, para que haya contraste aunque los valores se parezcan. Las rampas salen de los colores del logo y el número de cada círculo tiene contraste AA sobre su color.
+- **Sin reportes:** el círculo va rayado y con borde de trazos, para no confundirlo con un sector tranquilo.
+- **El color no es lo único:** el número dentro del círculo es el lugar en la lista y el tamaño crece con la población. Cada círculo se enfoca con el teclado (Enter abre su ventana) y tiene una descripción completa para lectores de pantalla. La misma información está en la tabla de `/prioridades`, que el mapa enlaza.
+- **Filtros:** por municipio y por aviso de información faltante. Un aviso en la página anuncia cuántos sectores se muestran.
+- **Zoom:** los círculos se achican al alejar y los números aparecen al acercar.
+- **Datos:** el JavaScript y los estilos de la página pesan unos 51 KB comprimidos, sin contar los mosaicos. Los mosaicos de fondo vienen de OpenStreetMap, así que sin internet se ven los círculos sobre un fondo vacío.
+- **Límite:** los sectores solo tienen un punto (latitud y longitud), no un contorno; por eso son círculos y no zonas.
+
 ## Plan de asignación (bloque 6)
 
 `/plan` (solo la entidad) propone qué lote entregar a cada solicitud verificada. **Hasta que la entidad lo aprueba no se reserva nada.**

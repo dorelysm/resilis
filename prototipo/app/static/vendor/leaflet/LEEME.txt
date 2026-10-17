@@ -1,0 +1,2 @@
+Leaflet 1.9.4 (https://leafletjs.com). Licencia BSD de 2 cláusulas, en LICENSE.
+Obtenido con: npm pack leaflet@1.9.4. Solo se incluyen los archivos que usa la aplicación.

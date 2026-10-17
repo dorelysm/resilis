@@ -31,6 +31,7 @@
     <section class="tarjeta"><h2>Cuentas</h2><p>Cree cuentas de brigadistas, entidades y equipos de entrega.</p><a class="boton" href="/admin/usuarios">Administrar cuentas</a></section>
   {% endif %}
   {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}
+    <section class="tarjeta"><h2>Mapa</h2><p>Los sectores en el mapa, con su prioridad y la confianza en la información.</p><a class="boton" href="/mapa">Ver el mapa</a></section>
     <section class="tarjeta"><h2>Prioridades</h2><p>Qué sectores y personas atender primero, y qué tan confiable es la información.</p><a class="boton" href="/prioridades">Ver prioridades</a></section>
   {% endif %}
   {% if usuario.rol in ('brigadista', 'entidad') %}

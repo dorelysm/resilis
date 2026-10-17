@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Mapa{% endblock %}
+{% block contenido %}
+<h1>Mapa de sectores</h1>
+<p>Cada círculo es un sector. <strong>El color dice cuánto urge atenderlo o cuánta confianza hay en su información, según lo que elija.</strong> Los sectores sin reportes se dibujan rayados: no es que estén bien, es que no sabemos. Toque o seleccione un círculo para ver los detalles.</p>
+
+<form class="controles-mapa no-imprimir" id="controles" onsubmit="return false">
+  <fieldset>
+    <legend>Qué mostrar con el color</legend>
+    <div class="opcion"><input type="radio" id="ver-prioridad" name="ver" value="prioridad" checked><label for="ver-prioridad">Prioridad: qué atender primero</label></div>
+    <div class="opcion"><input type="radio" id="ver-confianza" name="ver" value="confianza"><label for="ver-confianza">Confianza: qué tan confiable es la información</label></div>
+  </fieldset>
+  <div class="campo"><label for="filtro-municipio">Municipio</label>
+    <select id="filtro-municipio" name="municipio"><option value="">Todos los municipios</option></select></div>
+  <div class="campo"><label for="filtro-aviso">Avisos de información faltante</label>
+    <select id="filtro-aviso" name="aviso">
+      <option value="">Todos los sectores</option>
+      <option value="cualquiera">Cualquier aviso</option>
+      {% for clave, texto in alertas.items() %}<option value="{{ clave }}">{{ texto }}</option>{% endfor %}
+    </select></div>
+</form>
+
+<p id="estado-mapa" class="ayuda" role="status" aria-live="polite">Cargando los sectores…</p>
+<div id="mapa" class="mapa" role="region" aria-label="Mapa de los sectores, con su prioridad y su confianza" data-url="/mapa/datos.json"></div>
+<noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. Puede ver la misma información en la <a href="/prioridades">tabla de prioridades</a>.</p></noscript>
+
+<section aria-labelledby="titulo-leyenda">
+  <h2 id="titulo-leyenda">Cómo leer el mapa</h2>
+  <ul id="leyenda" class="leyenda"></ul>
+  <p class="ayuda">El número dentro del círculo es el lugar del sector en la lista (1 es el que más urge). El tamaño del círculo crece con la población del sector.</p>
+</section>
+<p>¿Prefiere una lista? <a href="/prioridades">Ver las prioridades en una tabla</a> (con la misma información, y con el detalle de cada sector).</p>
+
+<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+<script src="/static/vendor/leaflet/leaflet.js"></script>
+<script src="/static/mapa.js" defer></script>
+{% endblock %}
