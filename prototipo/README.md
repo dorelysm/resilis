@@ -127,6 +127,10 @@ uv run python -m app.simulacion --seed 42 --tipo inundacion  # terremoto | inund
 
 Con la misma semilla se obtienen los mismos datos. Cada ejecución borra la simulación anterior (no toca las viviendas ni los barrios del archivo). La "verdad" del escenario (el daño real de cada barrio, los reportes falsos y las solicitudes duplicadas) queda en la tabla `bitacora` (acción `simulacion_verdad`) para medir después qué tan bien se detectan.
 
+## Simulación del ciclo completo
+
+`uv run python scripts/simular_pipeline.py --seed 42 --tipo inundacion` recorre de punta a punta el ciclo sobre un escenario nuevo, en una base temporal que no toca ninguna real: verificación en campo (con falsas que se cuelan), recepción de donaciones, plan optimizado, aprobación, entrega con código de un solo uso (códigos equivocados y reusos rechazados, incidencias) y revisión de la cadena de auditoría y del inventario. Imprime los conteos y los tiempos. Todo es simulado: sirve para comprobar que el ciclo cierra, no para medir resultados reales.
+
 ## Pruebas
 
 ```bash
