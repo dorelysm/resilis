@@ -2,9 +2,8 @@
 {% macro mapa_ruta(url, modo, titulo) %}
 <section class="ruta" aria-labelledby="titulo-ruta">
   <h2 id="titulo-ruta">{{ titulo }}</h2>
-  <p class="mensaje" role="note"><strong>Ruta simulada para la demostración:</strong> el movimiento va acelerado y no es la posición real de nadie.</p>
-  <p id="estado-ruta" class="estado-ruta" role="status" aria-live="polite">Cargando el mapa…</p>
-  <p id="aviso-cerca" class="mensaje mensaje-error" role="alert" hidden></p>
+  <p id="estado-ruta" class="estado-ruta{{ ' estado-ruta-menor' if modo == 'solicitud' }}"{% if modo != 'solicitud' %} role="status" aria-live="polite"{% endif %}>Cargando el mapa…</p>
+  <p class="ayuda" role="note"><strong>Ruta simulada para la demostración:</strong> el movimiento va acelerado y no es la posición real de nadie.</p>
   <div id="mapa-ruta" class="mapa mapa-ruta" role="region" aria-label="Mapa de la ruta de la entrega" data-url="{{ url }}" data-modo="{{ modo }}"></div>
   <noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. El estado de la entrega está escrito arriba y en el recorrido.</p></noscript>
   {% if modo == 'donante' %}

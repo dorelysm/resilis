@@ -2,37 +2,49 @@
 {% from "_recorrido.html" import recorrido %}
 {% from "_ruta.html" import mapa_ruta %}
 {% block titulo %}Mi solicitud{% endblock %}
+{% set titulares = {
+  'registrada': ('Esperando que la verifiquen', 'Un brigadista revisará su solicitud.'),
+  'verificada': ('Verificada', 'Falta asignarle un equipo de entrega.'),
+  'asignada': ('Un equipo ya tiene su pedido', 'Todavía no ha salido.'),
+  'en_camino': ('Su ayuda va en camino', ''),
+  'entregada': ('Le entregaron su ayuda', 'Falta que usted confirme que la recibió.'),
+  'cerrada': ('Recibida', 'Gracias por confirmar.'),
+  'anulada': ('No pudo continuar', 'Si cree que es un error, comuníquese con la entidad que atiende su caso.') } %}
+{% set titular = titulares.get(sol.estado, (nombres_estado[sol.estado], '')) %}
 {% block contenido %}
-<h1>Mi solicitud</h1>
-<p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar|plural('persona', 'personas') }}. Estado:
-  <span class="estado">{{ nombres_estado[sol.estado] }}</span></p>
+<p class="migas"><a href="/solicitudes">{{ icono('volver') }}Mis solicitudes</a></p>
 
-{% if sol.estado == 'anulada' %}
-  <p>Esta solicitud no pudo continuar. Si cree que es un error, comuníquese con la entidad que atiende su caso.</p>
-{% endif %}
+<section class="tarjeta-estado estado-{{ sol.estado }}" aria-labelledby="titulo-estado">
+  <p class="estado-icono">{{ icono_etapa(sol.estado) }}</p>
+  <h1 id="titulo-estado">{{ titular[0] }}</h1>
+  <p class="estado-que"><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar|plural('persona', 'personas') }}</p>
+  {% if sol.estado in ('asignada', 'en_camino') %}
+  <p id="eta-vivo" class="estado-eta" role="status" aria-live="polite">{{ titular[1] }}</p>
+  {% elif titular[1] %}
+  <p class="estado-eta">{{ titular[1] }}</p>
+  {% endif %}
+
+  {% if codigo %}
+  <div class="estado-codigo">
+    <p class="estado-codigo-titulo" id="titulo-codigo">Su código de entrega</p>
+    <p class="codigo" aria-labelledby="titulo-codigo">{{ codigo }}</p>
+    <p>Dígaselo al equipo{% if equipo %} ({{ equipo.nombre }}){% endif %} cuando llegue. Sin él no pueden entregarle la ayuda. No lo comparta con nadie más.</p>
+    <p><a href="/solicitudes/{{ sol.id }}/ficha">Ver ficha para imprimir</a></p>
+  </div>
+  {% endif %}
+
+  {% if sol.estado == 'entregada' %}
+  <form method="post" action="/solicitudes/{{ sol.id }}/confirmar">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="principal" type="submit">{{ icono('check') }}Sí, ya la recibí</button>
+  </form>
+  {% endif %}
+</section>
 
 {% if sol.estado in ('asignada', 'en_camino', 'entregada', 'cerrada') %}
 {{ mapa_ruta('/solicitudes/' ~ sol.id ~ '/ruta.json', 'solicitud', 'Por dónde va su ayuda') }}
 {% endif %}
 
-{% if codigo %}
-<section aria-labelledby="titulo-codigo">
-  <h2 id="titulo-codigo">Su código de entrega</h2>
-  <p>Cuando llegue el equipo{% if equipo %} ({{ equipo.nombre }}){% endif %}, dígale este código. Sin él no pueden entregarle la ayuda. No lo comparta con nadie más.</p>
-  <p class="codigo" aria-label="Código de entrega: {{ codigo }}">{{ codigo }}</p>
-  <p><a href="/solicitudes/{{ sol.id }}/ficha">Ver ficha para imprimir</a> (para quien no tiene celular a mano).</p>
-</section>
-{% endif %}
-
 <h2>Cómo va</h2>
 {{ recorrido(pasos, 'Recorrido de mi solicitud') }}
-
-{% if sol.estado == 'entregada' %}
-<form method="post" action="/solicitudes/{{ sol.id }}/confirmar">
-  <input type="hidden" name="csrf" value="{{ csrf }}">
-  <p>El equipo registró que le entregó la ayuda. ¿Ya la recibió?</p>
-  <button class="principal" type="submit">{{ icono('check') }}Sí, ya la recibí</button>
-</form>
-{% endif %}
-<p><a href="/solicitudes">Volver a mis solicitudes</a></p>
 {% endblock %}

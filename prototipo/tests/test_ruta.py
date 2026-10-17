@@ -1,5 +1,6 @@
 """Mapa de la ruta de una entrega: posición simulada, privacidad según quién mira y permisos."""
 import json
+import re
 import shutil
 import subprocess
 from datetime import timedelta
@@ -153,7 +154,7 @@ def test_las_paginas_traen_el_mapa_y_avisan_que_es_simulado(con_ruta):
     entrar(c, "3100000001")
     pagina = c.get("/solicitudes/1").text
     assert 'id="mapa-ruta"' in pagina and 'data-url="/solicitudes/1/ruta.json"' in pagina
-    assert "Ruta simulada para la demostración" in pagina and 'id="estado-ruta"' in pagina and 'role="alert"' in pagina
+    assert "Ruta simulada para la demostración" in pagina and 'id="estado-ruta"' in pagina and 'role="alert"' not in pagina
     revisor = _Revisor()
     revisor.feed(pagina)
     assert revisor.ids <= revisor.para
@@ -269,12 +270,12 @@ def test_el_donante_ve_la_zona_aproximada_y_no_la_posicion_exacta(con_ruta, sesi
     assert set(zona) == {"hacia", "lat", "lon", "radio_m", "avance"}
 
 
-def test_el_seguimiento_de_quien_pidio_empieza_por_el_mapa(con_ruta):
+def test_el_seguimiento_de_quien_pidio_empieza_por_el_estado_y_el_codigo(con_ruta):
     c = con_ruta
     salir_en_camino(c)
     entrar(c, "3100000001")
     pagina = c.get("/solicitudes/1").text
-    assert pagina.index('id="mapa-ruta"') < pagina.index("Su código de entrega") < pagina.index("Recorrido de mi solicitud")
+    assert pagina.index("Su código de entrega") < pagina.index('id="mapa-ruta"') < pagina.index("Recorrido de mi solicitud")
     lista = c.get("/solicitudes").text
     assert "Seguir en el mapa" in lista and "/solicitudes/1#titulo-ruta" in lista
 
@@ -291,3 +292,26 @@ def test_el_js_describe_cada_entrega_en_texto():
     assert a == "Equipo Norte: de Acopio central a El Edén, Malambo, en camino, faltan 1,25 km."
     assert b == "Equipo: de el centro a el destino, por salir."
     assert c == "E: de A a B, en camino, faltan 0,3 km (ya está cerca)."
+
+
+def test_mi_solicitud_pone_el_estado_el_codigo_y_un_solo_mensaje_arriba(con_ruta):
+    c = con_ruta
+    entrar(c, "3100000001")
+    pagina = c.get("/solicitudes/1").text
+    assert "Un equipo ya tiene su pedido" in pagina and "Todavía no ha salido" in pagina  # la ruta ya está asignada
+    assert re.search(r'<h1 id="titulo-estado">', pagina) and pagina.count("<h1") == 1 and "Estado:" not in pagina
+    salir(c)
+    salir_en_camino(c)
+    entrar(c, "3100000001")
+    pagina = c.get("/solicitudes/1").text
+    assert "Su ayuda va en camino" in pagina and 'class="tarjeta-estado estado-en_camino"' in pagina
+    assert pagina.index("titulo-estado") < pagina.index('id="eta-vivo"') < pagina.index("Su código de entrega") < pagina.index('id="mapa-ruta"')
+    assert re.search(r'class="codigo"[^>]*>[A-Z0-9]{4}-[A-Z0-9]{4}<', pagina)
+    assert 'id="eta-vivo" class="estado-eta" role="status" aria-live="polite"' in pagina
+    assert 'id="estado-ruta" class="estado-ruta estado-ruta-menor"' in pagina and pagina.count('aria-live="polite"') == 1  # un solo aviso vivo
+    assert pagina.count("Ruta simulada para la demostración") == 1
+
+
+def test_el_js_pone_el_mensaje_de_la_ruta_en_la_tarjeta_y_marca_cuando_esta_cerca():
+    texto = JS.read_text(encoding="utf-8")
+    assert "getElementById('eta-vivo')" in texto and "classList.add('cerca')" in texto and "aviso-cerca" not in texto

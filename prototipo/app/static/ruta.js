@@ -60,7 +60,8 @@
   var listaEntregas = document.getElementById('lista-entregas');
   var url = contenedor.getAttribute('data-url');
   var estado = document.getElementById('estado-ruta');
-  var aviso = document.getElementById('aviso-cerca');
+  var eta = document.getElementById('eta-vivo');   // la tarjeta de estado de quien pidió: el mensaje principal
+  var tarjeta = document.querySelector('.tarjeta-estado');
   var lista = document.getElementById('lista-destinos');
   var mapa = L.map('mapa-ruta', { keyboard: true, scrollWheelZoom: false }).setView([10.95, -74.85], 11);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -159,11 +160,16 @@
 
   function aplicar(d) {
     if (modo === 'donante') dibujarDonante(d); else if (modo === 'logistica') dibujarLogistica(d); else dibujarSolicitud(d);
-    estado.textContent = (modo === 'logistica' ? d.texto : d.texto) + ' ' + textoActualizado(d.actualizado);
-    if (modo === 'solicitud' && d.cerca && !yaAvisoCerca && aviso) {
+    var actualizado = textoActualizado(d.actualizado);
+    if (modo === 'solicitud' && eta) {
+      eta.textContent = d.texto;           // una sola frase de estado, arriba; el mapa solo dice cuándo se actualizó
+      estado.textContent = actualizado;
+    } else {
+      estado.textContent = d.texto + ' ' + actualizado;
+    }
+    if (modo === 'solicitud' && d.cerca && !yaAvisoCerca) {
       yaAvisoCerca = true;
-      aviso.hidden = false;
-      aviso.textContent = 'El equipo está cerca. Tenga a la mano su código de entrega.';
+      if (tarjeta) tarjeta.classList.add('cerca');
       if (navigator.vibrate) navigator.vibrate(200);
     }
     // Cuando ya se entregó, no hace falta seguir preguntando.
