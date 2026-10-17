@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}Inicio{% endblock %} · Resilis</title>
   <meta name="csrf" content="{{ csrf }}">
+  <meta name="theme-color" content="#055c81">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/estilo.css">
   <script src="/static/salir.js" defer></script>
 </head>
@@ -12,7 +16,7 @@
 <a class="salto" href="#contenido">Ir al contenido</a>
 <header>
   <div class="barra">
-    <a class="marca" href="/">Resilis</a>
+    <a class="marca" href="/"><img src="/static/img/emblema-barra.webp" alt="" width="46" height="48"><span>Resilis</span></a>
     <nav aria-label="Menú principal">
       {% if usuario %}
         {% if usuario.rol in ('solicitante',) %}<a href="/solicitudes">Mis solicitudes</a>{% endif %}

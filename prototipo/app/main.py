@@ -71,6 +71,13 @@ app.include_router(prioridades.router)
 app.include_router(admin.router)
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Los navegadores piden el icono en esta ruta aunque la página indique otra."""
+    return FileResponse(Path(__file__).parent / "static" / "img" / "favicon.ico", media_type="image/x-icon",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/sw.js", include_in_schema=False)
 def service_worker():
     """El service worker se sirve desde la raíz para poder cubrir /entregas (uso sin conexión)."""

@@ -63,6 +63,22 @@ Flujo: donación → recepción en el centro de acopio → solicitud → verific
 - **Páginas:** `/prioridades` (listas), `/prioridades/sectores/{id}` (por qué ocupa ese lugar) y `/pesos`. La asignación ya ordena por prioridad.
 - `motor.ahp_pesos` (AHP: devuelve los pesos y la razón de consistencia CR, que debe ser menor que 0,1) existe y tiene pruebas, pero todavía no hay una pantalla de comparación por pares: `/pesos` recibe los pesos directamente.
 
+## Logo y diseño
+
+Los originales están en `../utils/` (`logo_fondo_transparente.png` y `logo_fondo_blanco.jpeg`). `scripts/preparar_logo.py` recorta el emblema y genera las imágenes de `app/static/img/`; `scripts/colores_logo.py` extrae los colores dominantes del logo y su contraste.
+
+| Color | Valor | Uso |
+|---|---|---|
+| Azul profundo | `#0D4C66` | títulos, texto de la marca, botones al pasar el cursor |
+| Azul | `#055C81` | botones, enlaces y barra de navegación |
+| Verde azulado | `#0DA4A0` | franja, bordes de tarjetas y línea de tiempo (nunca como texto) |
+| Naranja | `#F7714A` | franja y acentos; el texto encima es oscuro |
+| Verde azulado oscuro y naranja oscuro | `#046E70`, `#B8420F` | versiones oscurecidas aptas para texto y para el foco del teclado |
+
+Los colores del logo claros (verde azulado y naranja) no tienen contraste suficiente para texto sobre blanco, por eso se usan solo en detalles gráficos. `tests/test_diseno.py` verifica el contraste AA de cada combinación y que las imágenes sean livianas (la imagen de la barra pesa unos 8 KB).
+
+Del logo se usa solo el dibujo, sin su lema. El lema del sistema es "Decisiones inteligentes, recursos optimizados, vidas protegidas".
+
 ## Datos simulados
 
 Genera un escenario completo y reproducible (sectores anclados en las viviendas reales, un evento, usuarios, reportes, solicitudes, donaciones e inventario, todo ficticio):

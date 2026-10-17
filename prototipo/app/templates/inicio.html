@@ -2,11 +2,15 @@
 {% block titulo %}Inicio{% endblock %}
 {% block contenido %}
 {% if not usuario %}
-  <h1>Ayuda después de un desastre, con seguimiento</h1>
-  <p>Si el desastre le afectó, cree una cuenta para pedir ayuda y ver cómo avanza su solicitud. Si quiere ayudar, puede registrarse como donante.</p>
-  <div class="acciones">
-    <a class="boton" href="/registro">Crear cuenta</a>
-    <a class="boton" href="/entrar">Entrar</a>
+  <div class="portada">
+    <img src="/static/img/emblema-grande.webp" alt="" width="346" height="360">
+    <h1>Ayuda después de un desastre, con seguimiento</h1>
+    <p class="lema">Decisiones inteligentes, recursos optimizados, vidas protegidas</p>
+    <p>Si el desastre le afectó, cree una cuenta para pedir ayuda y ver cómo avanza su solicitud. Si quiere ayudar, puede registrarse como donante.</p>
+    <div class="acciones">
+      <a class="boton" href="/registro">Crear cuenta</a>
+      <a class="boton" href="/entrar">Entrar</a>
+    </div>
   </div>
 {% else %}
   <h1>Hola, {{ usuario.nombre.split(' ')[0] }}</h1>
