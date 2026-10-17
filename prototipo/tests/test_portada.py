@@ -63,7 +63,7 @@ def test_la_seccion_de_fundadores_sale_de_la_lista_del_equipo(app_cliente, monke
 def test_el_equipo_completo_aparece_con_sus_nombres():
     nombres = [f["nombre"] for f in equipo.FUNDADORES]
     assert nombres == ["Dorelys Martinez", "Adriana Barrios Paez", "Carmela Miranda Gutierrez", "Evelin Gómez Vergara",
-                       "Maritza Domínguez Cervantes", "Leandro Rodríguez Polo"]
+                       "Maritza Domínguez Cervantes", "Leandro Rodríguez Polo", "Stefania De La Cruz"]
     assert (RAIZ / "app" / "static" / "img" / equipo.FOTO_EQUIPO).stat().st_size < 150_000
 
 
