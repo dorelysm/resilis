@@ -217,3 +217,14 @@ def test_la_portada_explica_el_reto_y_como_responde_el_proyecto(app_cliente):
     for pregunta in ("¿A quién atender primero?", "¿Dónde concentrar los esfuerzos?", "¿Qué recursos asignar?"):
         assert pregunta in seccion  # las tres decisiones que plantea el reto, cada una con su respuesta
     assert html.index('id="reto"') < html.index('id="que-es"')  # el contexto va antes que la descripción
+
+
+def test_la_barra_de_secciones_cuida_la_accesibilidad_con_teclado_y_zoom():
+    css = (RAIZ / "app" / "static" / "estilo.css").read_text(encoding="utf-8")
+    bloque = css[css.index("/* Barra de secciones de la portada"):]
+    assert "scroll-padding-top: 5rem" in bloque  # 2.4.11: la barra fija no oculta el elemento enfocado
+    assert ".indice-portada a:focus-visible { outline: 3px solid" in bloque
+    assert "padding: 4px; display: flex" in bloque  # el borde de enfoque no se recorta dentro de la lista con desplazamiento
+    ancho = bloque[bloque.index("/* Pantallas anchas"):]
+    assert "flex-wrap: wrap; overflow: visible" in ancho  # en pantalla ancha nada queda oculto ni a medias
+    assert "mask-image: linear-gradient(90deg" in bloque  # en celular, el degradado avisa que hay más
