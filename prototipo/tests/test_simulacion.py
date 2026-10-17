@@ -240,3 +240,21 @@ def test_si_regenerar_falla_a_la_mitad_no_se_pierde_lo_anterior(base):
         generar(base, semilla=38, tipo="inundacion", municipios=["99999"], conservar_cuentas=True)
     base.rollback()
     assert base.scalar(select(func.count()).select_from(m.Solicitud)) == antes > 0
+
+
+def test_un_perfil_de_donante_real_sin_donaciones_se_conserva_y_con_donaciones_bloquea(base):
+    generar(base, semilla=43, tipo="inundacion")
+    _admin_real(base)
+    persona = m.Usuario(nombre="Donante Real", telefono="3004445566", rol="donante", ficticio=False, password_hash="x")
+    base.add(persona)
+    base.flush()
+    perfil = m.Donante(usuario_id=persona.id, nombre="Donante Real", tipo="persona", consentimiento=True)
+    base.add(perfil)
+    base.commit()
+    generar(base, semilla=44, tipo="inundacion", conservar_cuentas=True)
+    base.expire_all()
+    assert base.get(m.Donante, perfil.id) is not None and base.get(m.Donante, perfil.id).usuario_id == persona.id
+    base.add(m.Donacion(donante_id=perfil.id, tipo_bien="agua", cantidad=10, unidad="litros"))
+    base.commit()
+    with pytest.raises(RuntimeError, match="donaciones"):
+        generar(base, semilla=45, tipo="inundacion", conservar_cuentas=True)

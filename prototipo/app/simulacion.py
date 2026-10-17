@@ -81,7 +81,8 @@ def _datos_de_cuentas_reales(db: Session, ids: list[int]) -> dict[str, int]:
     return {k: v for k, v in {
         "solicitudes": contar(select(m.Solicitud.id).where(m.Solicitud.solicitante_id.in_(ids) | m.Solicitud.creador_id.in_(ids))),
         "reportes de daños": contar(select(m.ReporteDanos.id).where(m.ReporteDanos.autor_id.in_(ids))),
-        "perfiles de donante": contar(select(m.Donante.id).where(m.Donante.usuario_id.in_(ids))),
+        "donaciones": contar(select(m.Donacion.id).join(m.Donante, m.Donante.id == m.Donacion.donante_id)
+                             .where(m.Donante.usuario_id.in_(ids))),
         "verificaciones": contar(select(m.Verificacion.id).where(m.Verificacion.verificador_id.in_(ids))),
         "entregas": contar(select(m.Entrega.id).where(m.Entrega.equipo_id.in_(ids))),
         "planes aprobados": contar(select(m.PlanAsignacion.id).where(m.PlanAsignacion.aprobado_por.in_(ids))),
@@ -121,10 +122,11 @@ def limpiar_simulacion(db: Session, conservar_cuentas: bool = False) -> dict:
     db.execute(delete(m.Bitacora).where(m.Bitacora.usuario_id.is_(None) | m.Bitacora.usuario_id.in_(simulados)))
     for modelo in (
         m.MovimientoInventario, m.PlanResumen, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega,
-        m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.Solicitud,
+        m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Solicitud,
         m.ReporteDanos, m.PuntajeBarrio, m.EventoAuditoria,
     ):
         db.execute(delete(modelo))
+    db.execute(delete(m.Donante).where(m.Donante.usuario_id.is_(None) | m.Donante.usuario_id.in_(simulados)))  # los reales se conservan
     conservados = [c.id for c in centros_reales]
     db.execute(delete(m.CentroAcopio).where(m.CentroAcopio.id.not_in(conservados)) if conservados
                else delete(m.CentroAcopio))
