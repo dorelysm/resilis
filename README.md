@@ -12,6 +12,8 @@ Plataforma web para priorizar la ayuda después de un desastre y comprobar que l
 
 </div>
 
+[![Pruebas](https://github.com/dorelysm/resilis/actions/workflows/pruebas.yml/badge.svg)](https://github.com/dorelysm/resilis/actions/workflows/pruebas.yml) ![Licencia del código: MIT](https://img.shields.io/badge/código-MIT-blue) ![Licencia de los documentos: CC BY 4.0](https://img.shields.io/badge/documentos-CC%20BY%204.0-lightgrey)
+
 > **Prototipo del Rally Latinoamericano de Innovación 2026.** Los datos son ficticios y simulados. Equipo **NEXUS INNOVA 4.0**, Corporación Universitaria Americana, Colombia.
 
 ---
@@ -135,4 +137,8 @@ Se usó Claude (Anthropic), incluido Claude Code, para organizar y redactar las 
 
 ## Licencia
 
-Pendiente de definir por el equipo.
+- **Código** (`prototipo/`): [MIT](LICENSE).
+- **Documentos** (propuesta, formulario, requerimientos, análisis y textos): [CC BY 4.0](LICENSE-DOCS.md). Dé el crédito a NEXUS INNOVA 4.0, Corporación Universitaria Americana.
+- Los datos de OpenStreetMap y la biblioteca Leaflet conservan sus propias licencias (ver arriba). Las fotografías del equipo no se licencian para reutilización.
+
+Para reportar un problema de seguridad, vea [`SECURITY.md`](SECURITY.md). Esperamos que la comunidad siga el [código de conducta](CODE_OF_CONDUCT.md).
