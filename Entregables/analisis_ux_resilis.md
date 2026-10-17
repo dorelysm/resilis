@@ -185,7 +185,9 @@ El punto 8, **Mi solicitud al estilo de una app de entregas**, también está he
 
 El punto 10, **tablas como tarjetas en celular**, también está hecho: un guion pequeño (`tablas.js`) etiqueta cada celda con el nombre de su columna y, en pantallas angostas, cada fila se apila como una tarjeta (Inventario, Prioridades, Asignar, Plan, barrio, cuentas y auditoría). Sin JavaScript queda la tabla con desplazamiento; los encabezados siguen disponibles para lectores de pantalla. Revisado a 390 px: sin desplazamiento lateral y sin fallas de axe en Inventario, Prioridades, Asignar, Plan y Mi solicitud.
 
-Siguen pendientes los puntos 11 a 18 ("aprobar los siguientes N paquetes" y el registro mínimo, entre otros).
+El punto 11, **Plan**, también está hecho: "Aprobar varios paquetes de una vez" (los siguientes 5, 10, 20 o todos los pendientes; cada paquete sale con el equipo que en ese momento tiene menos entregas abiertas, y cada uno se guarda por separado), un filtro por municipio que también limita esa aprobación, y "Asignar" ya no está en el menú: la asignación a mano se alcanza desde el Plan ("Asignar a mano una solicitud") y vuelve a él. Un plan de 105 paquetes pasa de 105 aprobaciones a unas pocas. Hay pruebas del orden, el reparto entre equipos, el filtro, los límites, la falta de equipos, el token y los permisos.
+
+Siguen pendientes los puntos 12 a 18 (el registro mínimo, entre otros).
 
 ## 7. Cómo comprobar que mejoró
 

@@ -31,7 +31,7 @@
         {% if usuario.rol == 'donante' %}<a href="/donaciones">{{ icono('donaciones') }}Mis donaciones</a>{% endif %}
         {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}<a href="/mapa">{{ icono('mapa') }}Mapa</a><a href="/prioridades">{{ icono('prioridades') }}Prioridades</a><a href="/recorrido">{{ icono('recorrido') }}Recorrido</a>{% endif %}
         {% if usuario.rol in ('brigadista', 'entidad') %}<a href="/verificacion">{{ icono('verificar') }}Verificar</a>{% endif %}
-        {% if usuario.rol == 'entidad' %}<a href="/plan">{{ icono('plan') }}Plan</a><a href="/asignacion">{{ icono('equipos') }}Asignar</a>{% endif %}
+        {% if usuario.rol == 'entidad' %}<a href="/plan">{{ icono('plan') }}Plan</a>{% endif %}
         {% if usuario.rol in ('centro_acopio', 'entidad') %}<a href="/inventario">{{ icono('inventario') }}Inventario</a>{% endif %}
         {% if usuario.rol == 'centro_acopio' %}<a href="/recepcion">{{ icono('recibir') }}Recibir donaciones</a>{% endif %}
         {% if usuario.rol == 'equipo_entrega' %}<a href="/entregas">{{ icono('entregas') }}Mis entregas</a>{% endif %}

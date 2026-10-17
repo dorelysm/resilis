@@ -49,12 +49,11 @@
     {{ tarjeta('Recorrido', 'Dónde va cada solicitud, donación y reporte.', '/recorrido', 'Ver el recorrido', 'recorrido') }}
     {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes', 'reportes') }}
   {% elif usuario.rol == 'entidad' %}
-    {{ tarjeta('Plan de asignación', 'Qué entregar a cada solicitud para cubrir la mayor necesidad, de a un paquete.', '/plan', 'Ver el plan', 'plan') }}
+    {{ tarjeta('Plan de asignación', 'Qué entregar a cada solicitud para cubrir la mayor necesidad, por paquetes. Desde ahí también puede asignar a mano.', '/plan', 'Ver el plan', 'plan') }}
     {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar', 'verificar') }}
     {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido', 'recorrido') }}
     {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa', 'mapa') }}
     {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades', 'prioridades') }}
-    {{ tarjeta('Asignar entregas', 'Elija a mano qué equipo entrega cada solicitud verificada.', '/asignacion', 'Asignar', 'equipos') }}
     {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario', 'inventario') }}
     {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte', 'aviso') }}
     {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes', 'reportes') }}

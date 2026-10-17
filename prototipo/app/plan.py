@@ -325,6 +325,36 @@ def aprobar_paquete(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, sec
     return _ejecutar(db, plan, usuario, secreto, solicitudes, {j: equipo_id for j in solicitudes}, excluir or set())
 
 
+MAX_SIGUIENTES = 50  # tope de paquetes que se aprueban de una vez
+
+
+def aprobar_siguientes(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, secreto: str, cuantos: int,
+                       municipio: str = "") -> dict:
+    """Aprueba los siguientes `cuantos` paquetes pendientes, en el orden del plan (opcionalmente solo los de un
+    municipio). Cada paquete sale con el equipo que en ese momento tiene menos entregas abiertas, así el trabajo se
+    reparte entre los equipos. Cada paquete se aprueba y se guarda por separado."""
+    if plan.estado != m.EstadoPlan.PROPUESTO:
+        raise sv.ErrorNegocio("Este plan ya fue resuelto.")
+    pendientes = [p for p in armar_paquetes(db, plan)
+                  if not p["resuelto"] and (not municipio or p["municipio_codigo"] == municipio)]
+    elegidos = pendientes[:max(1, min(int(cuantos), MAX_SIGUIENTES))]
+    if not elegidos:
+        raise sv.ErrorNegocio("No hay paquetes pendientes para aprobar.")
+    total = {"paquetes": 0, "asignadas": 0, "omitidas": [], "excluidas": 0}
+    for paquete in elegidos:
+        equipo = equipo_sugerido(db)
+        if equipo is None:
+            if total["paquetes"] == 0:
+                raise sv.ErrorNegocio("No hay equipos de entrega aprobados. Pida al administrador que cree uno.")
+            break
+        r = _ejecutar(db, plan, usuario, secreto, paquete["solicitudes"], {j: equipo for j in paquete["solicitudes"]}, set())
+        total["paquetes"] += 1
+        total["asignadas"] += r["asignadas"]
+        total["omitidas"] += r["omitidas"]
+        total["excluidas"] += r["excluidas"]
+    return total
+
+
 def rechazar_plan(db: Session, plan: m.PlanAsignacion, usuario: m.Usuario, motivo: str = "") -> None:
     if plan.estado != m.EstadoPlan.PROPUESTO:
         raise sv.ErrorNegocio("Este plan ya fue resuelto.")

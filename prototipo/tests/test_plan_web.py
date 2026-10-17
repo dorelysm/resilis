@@ -228,3 +228,109 @@ def test_un_paquete_inventado_o_sin_equipo_se_rechaza(app_cliente, sesiones, equ
     assert c.post("/plan/1/paquete", data={"solicitudes": "1", "equipo": "1"}).status_code == 403  # sin token CSRF
     with sesiones() as db:
         assert db.scalar(select(m.Entrega)) is None
+
+
+# ----------------------------------------------------------------------------- aprobar varios paquetes y filtrar por municipio
+def _con_dos_municipios(c, ids, mundo, sesiones, en_el_primero=14, en_el_segundo=8):
+    """El municipio 08001 (14 solicitudes = 3 paquetes) y Soledad 08758 (8 = 2 paquetes), todas verificadas."""
+    recibir_inventario(c, ids, 1000)
+    with sesiones() as db:
+        db.add(m.Municipio(codigo="08758", nombre="Soledad"))
+        db.flush()
+        otro = m.Barrio(municipio_codigo="08758", nombre="Barrio de Soledad", personas=500, viviendas=150)
+        db.add(otro)
+        db.flush()
+        for barrio, n in ((mundo["barrio_id"], en_el_primero), (otro.id, en_el_segundo)):
+            for _ in range(n):
+                db.add(m.Solicitud(solicitante_id=ids["solicitante"], creador_id=ids["solicitante"], barrio_id=barrio,
+                                   necesidad="agua", cantidad=6, personas_hogar=1, estado="verificada"))
+        db.commit()
+    entrar(c, "3100000004")
+    calcular(c)
+
+
+def test_aprobar_los_siguientes_paquetes_los_resuelve_en_orden_y_reparte_entre_equipos(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones, n=45)  # 8 paquetes
+    pagina = c.get("/plan").text
+    assert "Aprobar varios paquetes de una vez" in pagina and 'action="/plan/1/siguientes"' in pagina
+    opciones = pagina.split('id="cuantos"')[1].split("</select>")[0]
+    assert 'value="5"' in opciones and 'value="8"' in opciones and 'value="10"' not in opciones  # solo opciones que tienen sentido
+    r = c.post("/plan/1/siguientes", follow_redirects=False, data={"csrf": csrf(c, "/plan"), "cuantos": "5"})
+    assert r.status_code == 303 and r.headers["location"] == "/plan"
+    assert "5 paquetes aprobados: 30 entregas asignadas" in c.get("/plan").text  # el aviso aparece una vez
+    with sesiones() as db:
+        entregas = db.scalars(select(m.Entrega)).all()
+        assert len(entregas) == 30  # 5 paquetes de 6
+        por_equipo = {}
+        for e in entregas:
+            por_equipo[e.equipo_id] = por_equipo.get(e.equipo_id, 0) + 1
+        assert set(por_equipo) == {ids["equipo"], ids["equipo2"]} and abs(por_equipo[ids["equipo"]] - por_equipo[ids["equipo2"]]) <= 6
+        assert db.get(m.PlanAsignacion, 1).estado == "propuesto"
+    despues = c.get("/plan").text
+    assert "5 de 8</strong> paquetes resueltos" in despues and "Siguiente: paquete 6" in despues
+
+
+def test_aprobar_todos_los_pendientes_cierra_el_plan_y_no_se_repite(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones, n=14)  # 3 paquetes
+    texto = c.post("/plan/1/siguientes", data={"csrf": csrf(c, "/plan"), "cuantos": "3"}, follow_redirects=True).text
+    assert "3 paquetes aprobados" in texto and "14 entregas asignadas" in texto
+    with sesiones() as db:
+        assert db.get(m.PlanAsignacion, 1).estado == "aprobado" and len(db.scalars(select(m.Entrega)).all()) == 14
+    de_nuevo = c.post("/plan/1/siguientes", data={"csrf": csrf(c, "/plan"), "cuantos": "3"}, follow_redirects=True).text
+    assert "ya fue resuelto" in de_nuevo
+    with sesiones() as db:
+        assert len(db.scalars(select(m.Entrega)).all()) == 14
+
+
+def test_el_filtro_por_municipio_solo_muestra_y_aprueba_los_de_ese_municipio(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _con_dos_municipios(c, ids, mundo, sesiones)  # 5 paquetes: 3 de 08001 y 2 de 08758
+    todo = c.get("/plan").text
+    assert 'id="municipio"' in todo and "Soledad" in todo and "Barranquilla" in todo
+    filtrada = c.get("/plan?municipio=08758").text
+    assert "Siguiente: paquete" in filtrada and "Soledad" in filtrada.split('id="varios"')[0].split("Siguiente: paquete")[1][:80]
+    assert "Quedan 2 paquetes (8 entregas)" in filtrada and 'name="municipio" value="08758"' in filtrada
+    r = c.post("/plan/1/siguientes", follow_redirects=False,
+               data={"csrf": csrf(c, "/plan"), "cuantos": "10", "municipio": "08758"})
+    assert r.headers["location"] == "/plan?municipio=08758"
+    with sesiones() as db:
+        sols = {e.solicitud_id for e in db.scalars(select(m.Entrega))}
+        barrios = {db.get(m.Solicitud, j).barrio_id for j in sols}
+        assert len(sols) == 8 and len(barrios) == 1 and mundo["barrio_id"] not in barrios  # solo Soledad
+    assert "2 de 5</strong> paquetes resueltos" in c.get("/plan").text
+
+
+def test_aprobar_varios_exige_numero_valido_equipos_y_token(app_cliente, sesiones, equipo_completo, mundo):
+    c, ids = app_cliente, equipo_completo
+    _plan_grande(c, ids, mundo, sesiones, n=14)
+    for malo in ("", "0", "-1", "abc", "51", "2.5"):
+        texto = c.post("/plan/1/siguientes", data={"csrf": csrf(c, "/plan"), "cuantos": malo}, follow_redirects=True).text
+        assert "Elija cuántos paquetes aprobar" in texto, malo
+    assert c.post("/plan/1/siguientes", data={"cuantos": "2"}).status_code == 403  # sin token
+    assert c.post("/plan/99/siguientes", data={"csrf": csrf(c, "/plan"), "cuantos": "2"}).status_code == 404
+    with sesiones() as db:
+        assert db.scalar(select(m.Entrega)) is None
+        for e in db.scalars(select(m.Usuario).where(m.Usuario.rol == m.Rol.EQUIPO_ENTREGA)):
+            e.aprobado = False
+        db.commit()
+    sin_equipos = c.post("/plan/1/siguientes", data={"csrf": csrf(c, "/plan"), "cuantos": "2"}, follow_redirects=True).text
+    assert "No hay equipos de entrega aprobados" in sin_equipos
+    with sesiones() as db:
+        assert db.scalar(select(m.Entrega)) is None
+    salir(c)
+    entrar(c, "3100000003")  # un brigadista no aprueba planes
+    assert c.post("/plan/1/siguientes", data={"cuantos": "2"}).status_code == 403
+
+
+def test_asignar_a_mano_ahora_cuelga_del_plan_y_no_del_menu(app_cliente, equipo_completo):
+    c = app_cliente
+    entrar(c, "3100000004")
+    inicio = c.get("/").text
+    menu = inicio[inicio.index('id="menu-principal"'):inicio.index("</nav>")]
+    assert 'href="/plan"' in menu and 'href="/asignacion"' not in menu and "Asignar entregas" not in inicio
+    plan = c.get("/plan").text
+    assert 'href="/asignacion"' in plan and "Asignar a mano una solicitud" in plan
+    manual = c.get("/asignacion").text
+    assert "Asignar a mano" in manual and 'href="/plan"' in manual and "Volver al plan" in manual

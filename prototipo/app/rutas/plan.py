@@ -43,7 +43,7 @@ MAX_GRUPOS = 40  # cuántas solicitudes se detallan en pantalla; el resto se apr
 PAQUETES_ABIERTOS = 1  # cuántos paquetes se muestran abiertos para revisar; el resto, en una lista corta
 
 
-def _paquetes_vista(db: Session, plan: m.PlanAsignacion | None) -> dict | None:
+def _paquetes_vista(db: Session, plan: m.PlanAsignacion | None, municipio: str = "") -> dict | None:
     """Los paquetes pendientes, cada uno con lo mínimo para decidir: qué, dónde, para cuántas personas."""
     if plan is None or not db.scalar(select(func.count()).select_from(m.PlanLinea).where(m.PlanLinea.plan_id == plan.id)):
         return None
@@ -61,14 +61,17 @@ def _paquetes_vista(db: Session, plan: m.PlanAsignacion | None) -> dict | None:
         p["filas"] = filas
         p["unidades"] = sum(f["asignado"] for f in filas)
     adjuntar_detalles(db, [f["sol"] for p in todos for f in p["filas"]])
-    pendientes = [p for p in todos if not p["resuelto"]]
-    return {"todos": todos, "pendientes": pendientes, "abiertos": pendientes[:PAQUETES_ABIERTOS],
+    todos_pendientes = [p for p in todos if not p["resuelto"]]
+    municipios = list({p["municipio_codigo"]: p["municipio"] for p in todos_pendientes}.items())
+    pendientes = [p for p in todos_pendientes if not municipio or p["municipio_codigo"] == municipio]
+    return {"todos": todos, "pendientes": pendientes, "municipios": municipios, "municipio": municipio,
+            "entregas_pendientes": sum(len(p["solicitudes"]) for p in pendientes), "abiertos": pendientes[:PAQUETES_ABIERTOS],
             "siguientes": pendientes[PAQUETES_ABIERTOS:PAQUETES_ABIERTOS + 12],
             "mas": max(0, len(pendientes) - PAQUETES_ABIERTOS - 12), "hechos": len(todos) - len(pendientes),
             "equipo_sugerido": pl.equipo_sugerido(db)}
 
 
-def _vista(db: Session, plan: m.PlanAsignacion | None, todos: bool = False):
+def _vista(db: Session, plan: m.PlanAsignacion | None, todos: bool = False, municipio: str = ""):
     """Todo lo que la página necesita saber de un plan, ya ordenado y con nombres."""
     if plan is None:
         return None
@@ -94,21 +97,21 @@ def _vista(db: Session, plan: m.PlanAsignacion | None, todos: bool = False):
     base = datos.get("cubierta_ponderada_voraz") or 0.0
     if base > 0:
         mejora = round((datos.get("cubierta_ponderada", 0.0) / base - 1.0) * 100, 1)
-    return {"plan": plan, "datos": datos, "paquetes": _paquetes_vista(db, plan), "grupos": grupos, "sin_cubrir": sin, "mejora": mejora,
+    return {"plan": plan, "datos": datos, "paquetes": _paquetes_vista(db, plan, municipio), "grupos": grupos, "sin_cubrir": sin, "mejora": mejora,
             "total_grupos": total_grupos, "ocultos": total_grupos - len(grupos)}
 
 
-def _redir() -> RedirectResponse:
-    return RedirectResponse("/plan", status_code=303)
+def _redir(municipio: str = "") -> RedirectResponse:
+    return RedirectResponse("/plan" + (f"?municipio={municipio}" if municipio.isalnum() else ""), status_code=303)
 
 
 @router.get("")
-def ver_plan(request: Request, db: Db, usuario: Entidad, todos: str = ""):
+def ver_plan(request: Request, db: Db, usuario: Entidad, todos: str = "", municipio: str = ""):
     recientes = db.scalars(select(m.PlanAsignacion).order_by(m.PlanAsignacion.id.desc()).limit(6)).all()
     verificadas = db.scalar(select(func.count()).select_from(m.Solicitud).where(
         m.Solicitud.estado == m.EstadoSolicitud.VERIFICADA))
     disponible = db.scalar(select(func.coalesce(func.sum(m.Lote.cantidad_disponible), 0)))
-    return render(request, "plan.html", usuario, vista=_vista(db, recientes[0] if recientes else None, todos == "si"),
+    return render(request, "plan.html", usuario, vista=_vista(db, recientes[0] if recientes else None, todos == "si", municipio),
                   historial=recientes[1:], equipos=_equipos(db), parametros=pl.leer_parametros(db), estados=ESTADOS,
                   necesidad=NECESIDAD, urgencia=URGENCIA, unidad=UNIDAD, verificadas=verificadas, disponible=disponible,
                   errores={})
@@ -209,6 +212,31 @@ async def aprobar_un_paquete(plan_id: int, request: Request, db: Db, usuario: En
         texto += f" {r['excluidas']} quedaron fuera por decisión suya."
     mensaje(request, texto)
     return _redir()
+
+
+@router.post("/{plan_id}/siguientes")
+async def aprobar_siguientes(plan_id: int, request: Request, db: Db, usuario: Entidad):
+    form = await request.form()
+    chequear_csrf(request, str(form.get("csrf", "")))
+    plan = _plan(db, plan_id)
+    cuantos = str(form.get("cuantos", "")).strip()
+    municipio = str(form.get("municipio", "")).strip()
+    if not cuantos.isdigit() or not 1 <= int(cuantos) <= pl.MAX_SIGUIENTES:
+        mensaje_error(request, f"Elija cuántos paquetes aprobar, de 1 a {pl.MAX_SIGUIENTES}.")
+        return _redir(municipio)
+    try:
+        r = pl.aprobar_siguientes(db, plan, usuario, get_settings().secret_key, int(cuantos), municipio)
+    except sv.ErrorNegocio as e:
+        mensaje_error(request, str(e))
+        return _redir(municipio)
+    refrescar(db)
+    texto = (f"{plural(r['paquetes'], 'paquete aprobado', 'paquetes aprobados')}: "
+             f"{plural(r['asignadas'], 'entrega asignada', 'entregas asignadas')}, cada una con su código. "
+             "Cada paquete salió con el equipo que tenía menos entregas.")
+    if r["omitidas"]:
+        texto += f" {len(r['omitidas'])} no se pudieron asignar porque el inventario cambió."
+    mensaje(request, texto)
+    return _redir(municipio)
 
 
 @router.post("/{plan_id}/rechazar")

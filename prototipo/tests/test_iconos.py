@@ -50,7 +50,7 @@ def test_las_plantillas_solo_piden_iconos_que_existen():
 
 def test_cada_enlace_del_menu_lleva_su_icono_y_su_texto(app_cliente, equipo_completo):
     c = app_cliente
-    for telefono, esperados in (("3100000004", ["Mapa", "Prioridades", "Recorrido", "Verificar", "Plan", "Asignar", "Inventario"]),
+    for telefono, esperados in (("3100000004", ["Mapa", "Prioridades", "Recorrido", "Verificar", "Plan", "Inventario"]),
                                 ("3100000005", ["Mis entregas"]), ("3100000007", ["Inventario", "Recibir donaciones"])):
         entrar(c, telefono)
         pagina = c.get("/").text

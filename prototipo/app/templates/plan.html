@@ -6,6 +6,7 @@
 <h1>Plan de asignación</h1>
 <p>El sistema reparte lo que hay en inventario entre las solicitudes verificadas. <strong>Usted aprueba un paquete pequeño a la vez; hasta entonces no se reserva nada.</strong></p>
 {{ resumen_errores(errores) }}
+<p class="no-imprimir"><a href="/asignacion">{{ icono('equipos') }}Asignar a mano una solicitud</a> (elegir el equipo de una en una, sin el plan).</p>
 
 <form method="post" action="/plan/calcular" class="no-imprimir">
   <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -25,6 +26,16 @@
   </div>
 
   {% if p.estado == 'propuesto' %}
+    {% if pq.municipios|length > 1 or pq.municipio %}
+    <form method="get" action="/plan" class="no-imprimir filtro-municipio">
+      <div class="campo"><label for="municipio">Ver solo un municipio</label>
+        <select id="municipio" name="municipio">
+          <option value="">Todos los municipios</option>
+          {% for codigo, nombre in pq.municipios %}<option value="{{ codigo }}"{% if codigo == pq.municipio %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+        </select></div>
+      <button class="principal" type="submit">{{ icono('mapa') }}Filtrar</button>
+    </form>
+    {% endif %}
     {% for paq in pq.abiertos %}
     <section class="paquete" aria-labelledby="paq-{{ paq.numero }}">
       <h3 id="paq-{{ paq.numero }}">Siguiente: paquete {{ paq.numero }} · {{ paq.municipio }}</h3>
@@ -55,6 +66,23 @@
     {% else %}
     <p class="mensaje">Todos los paquetes de este plan están resueltos.</p>
     {% endfor %}
+
+    {% if pq.pendientes|length > 1 %}
+    <section class="paquete" aria-labelledby="varios">
+      <h3 id="varios">Aprobar varios paquetes de una vez</h3>
+      <p class="ayuda">Para cuando ya revisó el primero y los demás se ven igual. Cada paquete sale con el equipo que en ese momento tiene menos entregas abiertas{% if pq.municipio %}; solo los del municipio elegido{% endif %}. Quedan {{ pq.pendientes|length|plural('paquete', 'paquetes') }} ({{ pq.entregas_pendientes|plural('entrega', 'entregas') }}).</p>
+      <form method="post" action="/plan/{{ p.id }}/siguientes">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="municipio" value="{{ pq.municipio }}">
+        <div class="campo"><label for="cuantos">Cuántos paquetes aprobar</label>
+          <select id="cuantos" name="cuantos">
+            {% for n in (5, 10, 20) %}{% if n < pq.pendientes|length %}<option value="{{ n }}"{% if n == 10 %} selected{% endif %}>Los siguientes {{ n }}</option>{% endif %}{% endfor %}
+            <option value="{{ [pq.pendientes|length, 50]|min }}">Todos los pendientes{% if pq.pendientes|length > 50 %} (hasta 50){% endif %}</option>
+          </select></div>
+        <div class="acciones"><button class="principal" type="submit"{% if not equipos %} disabled aria-disabled="true"{% endif %}>{{ icono('check') }}Aprobar estos paquetes</button></div>
+      </form>
+    </section>
+    {% endif %}
 
     {% if pq.siguientes %}
     <section aria-labelledby="proximos">

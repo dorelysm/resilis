@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% from "_solicitud.html" import que_pidio %}
 {% from "_niveles.html" import prioridad, confianza %}
-{% block titulo %}Asignar entregas{% endblock %}
+{% block titulo %}Asignar a mano{% endblock %}
 {% block contenido %}
-<h1>Asignar entregas</h1>
-<p>Elija qué equipo entrega cada solicitud verificada. Al asignar se reserva el inventario y se genera el código de entrega.</p>
+<p class="migas"><a href="/plan">{{ icono('volver') }}Volver al plan</a></p>
+<h1>Asignar a mano</h1>
+<p>Es la forma manual del <a href="/plan">plan</a>: elija qué equipo entrega cada solicitud verificada. Al asignar se reserva el inventario y se genera el código de entrega.</p>
 
 <h2>Solicitudes por asignar</h2>
 {% if filas %}
