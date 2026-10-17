@@ -55,7 +55,7 @@ def test_los_datos_del_mapa_son_los_justos_y_sin_datos_personales(app_cliente, c
     assert {x["municipio"] for x in d["barrios"]} == {"Barranquilla", "Soledad"}
     assert {mu["codigo"] for mu in d["municipios"]} == {"08001", "08758"}
     campos = {"id", "nombre", "municipio", "codigo_municipio", "lat", "lon", "personas", "prioridad", "posicion",
-              "confianza", "alertas", "n_reportes", "n_solicitudes", "base_previa"}
+              "confianza", "alertas", "n_reportes", "n_solicitudes", "base_previa", "necesidades"}
     assert all(set(x) == campos for x in d["barrios"])
     assert [x["posicion"] for x in d["barrios"]] == list(range(1, d["total"] + 1))  # vienen en orden de prioridad
     assert all(0 <= x["prioridad"] <= 1 and 0 <= x["confianza"] <= 1 for x in d["barrios"])
@@ -230,3 +230,68 @@ def test_por_defecto_el_mapa_oculta_los_barrios_sin_reportes_ni_solicitudes():
     assert ids("{municipio: '', aviso: '', sinInfo: false}") == [1, 2]   # con información: reportes o solicitudes
     assert ids("{municipio: '', aviso: '', sinInfo: true}") == [1, 2, 3]  # con la casilla marcada se ven todos
     assert ids("{municipio: '', aviso: ''}") == [1, 2, 3]                 # sin la opción, nada cambia
+
+
+def test_el_mapa_trae_las_necesidades_por_barrio_sin_datos_personales(app_cliente, con_barrios, sesiones):
+    """Qué piden en cada barrio: tipo, lo específico, cantidad y descripción; nunca el punto de la vivienda ni quién lo pidió."""
+    with sesiones() as db:
+        barrio = db.scalar(select(m.Barrio).where(m.Barrio.municipio_codigo == "08001").limit(1))
+        persona = db.scalar(select(m.Usuario).where(m.Usuario.rol == "solicitante"))
+        sol = m.Solicitud(solicitante_id=persona.id, creador_id=persona.id, barrio_id=barrio.id, necesidad="otro", cantidad=1,
+                          descripcion="Mi silla de ruedas quedó destruida con el vendaval. " + "x" * 300, urgencia=2,
+                          direccion="Calle 99 # 88-77", lat=10.12345, lon=-74.98765, estado="verificada")
+        db.add(sol)
+        db.flush()
+        db.add(m.Vulnerabilidad(solicitud_id=sol.id, tipo="discapacidad", descripcion_situacion="Movilidad reducida",
+                                necesidad_especifica="Silla de ruedas estándar", consentimiento=True))
+        cerrada = m.Solicitud(solicitante_id=persona.id, creador_id=persona.id, barrio_id=barrio.id, necesidad="agua",
+                              cantidad=5, estado="cerrada")
+        db.add(cerrada)
+        db.commit()
+        barrio_id = barrio.id
+    entrar(app_cliente, "3100000004")
+    r = app_cliente.get("/mapa/datos.json")
+    d = r.json()
+    assert {t["clave"] for t in d["tipos"]} == {"alimentos", "agua", "medicamentos", "higiene", "abrigo_vivienda", "otro"}
+    ns = next(b for b in d["barrios"] if b["id"] == barrio_id)["necesidades"]
+    assert len(ns) == 1  # la solicitud cerrada ya no es una necesidad abierta
+    n = ns[0]
+    assert set(n) == {"id", "tipo", "especifica", "cantidad", "unidad", "urgencia", "estado", "descripcion"}
+    assert (n["tipo"], n["especifica"], n["cantidad"], n["unidad"]) == ("otro", "Silla de ruedas estándar", 1, "unidades")
+    assert n["descripcion"].startswith("Mi silla de ruedas") and n["descripcion"].endswith("…") and len(n["descripcion"]) <= 160
+    for secreto in ("Calle 99", "10.12345", "-74.98765", "Movilidad reducida", "direccion", "solicitante_id"):
+        assert secreto not in r.text, secreto
+
+
+def test_la_pagina_del_mapa_trae_el_filtro_y_el_resumen_de_necesidades(app_cliente, con_barrios):
+    entrar(app_cliente, "3100000004")
+    pagina = app_cliente.get("/mapa").text
+    assert 'id="filtro-tipos"' in pagina and 'id="resumen-necesidades"' in pagina and "Qué se necesita" in pagina
+
+
+@node
+def test_el_js_filtra_y_resume_las_necesidades():
+    barrios = [
+        {"id": 1, "codigo_municipio": "A", "alertas": [], "necesidades": [
+            {"tipo": "agua", "especifica": "", "cantidad": 12, "unidad": "litros", "descripcion": "Sin agua potable"},
+            {"tipo": "otro", "especifica": "Silla de ruedas", "cantidad": 1, "unidad": "unidades", "descripcion": "Se dañó"}]},
+        {"id": 2, "codigo_municipio": "A", "alertas": [], "necesidades": [
+            {"tipo": "agua", "especifica": "", "cantidad": 6, "unidad": "litros", "descripcion": ""}]},
+        {"id": 3, "codigo_municipio": "A", "alertas": [], "necesidades": []},
+    ]
+    nombres = {"agua": "Agua", "otro": "Otro"}
+    base = f"const S = {json.dumps(barrios)}; const N = {json.dumps(nombres)}; const m = require(process.argv[1]);"
+
+    def js(expr):
+        guion = f"{base} console.log(JSON.stringify({expr}));"
+        return json.loads(subprocess.run(["node", "-e", guion, str(JS)], capture_output=True, text=True, encoding="utf-8",
+                                         check=True).stdout)
+
+    assert js("m.filtrar(S, {tipos: ['otro']}).map(s => s.id)") == [1]            # solo donde piden lo elegido
+    assert js("m.filtrar(S, {tipos: ['agua']}).map(s => s.id)") == [1, 2]
+    assert js("m.filtrar(S, {tipos: []}).map(s => s.id)") == [1, 2, 3]            # sin marcar, todos
+    assert js("m.filtrar(S, {tipos: ['agua', 'otro']}).map(s => s.id)") == [1, 2]
+    assert js("m.resumenNecesidades(S, [], N)") == ["Agua: 2 solicitudes, 18 litros", "Otro: 1 solicitud, 1 unidades"]
+    assert js("m.resumenNecesidades(S, ['otro'], N)") == ["Otro: 1 solicitud, 1 unidades"]
+    assert js("m.lineaNecesidad(S[0].necesidades[1], N)") == "Otro: Silla de ruedas · 1 unidades — «Se dañó»"
+    assert js("m.lineaNecesidad(S[1].necesidades[0], N)") == "Agua · 6 litros"

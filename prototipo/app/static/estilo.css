@@ -188,3 +188,8 @@ button.grande { width: 100%; min-height: 3.25rem; font-size: 1.2rem; }
 
 /* Qué pidió una solicitud */
 .que-pidio .descripcion { font-style: italic; color: var(--texto-suave); }
+
+/* Necesidades en el mapa */
+.opciones-en-fila { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
+.popup-necesidades { margin: .25rem 0 .25rem 1rem; padding: 0; max-width: 18rem; }
+.popup-necesidades li { margin: .15rem 0; }

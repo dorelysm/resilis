@@ -78,9 +78,37 @@
     return aviso === 'cualquiera' ? alertas.length > 0 : alertas.indexOf(aviso) !== -1;
   }
 
+  function necesidadesDe(barrio, tipos) {
+    // Las necesidades abiertas del barrio; con tipos elegidos, solo las de esos tipos.
+    return (barrio.necesidades || []).filter(function (n) { return !tipos || !tipos.length || tipos.indexOf(n.tipo) !== -1; });
+  }
+
+  function lineaNecesidad(n, nombres) {
+    var nombre = (nombres && nombres[n.tipo]) || n.tipo;
+    return nombre + (n.especifica ? ': ' + n.especifica : '') + ' · ' + n.cantidad + ' ' + n.unidad +
+      (n.descripcion ? ' — «' + n.descripcion + '»' : '');
+  }
+
+  function resumenNecesidades(barrios, tipos, nombres) {
+    // Totales por tipo en los barrios que se ven: cuántas solicitudes y cuánto se pide.
+    var por = {};
+    barrios.forEach(function (b) {
+      necesidadesDe(b, tipos).forEach(function (n) {
+        var t = por[n.tipo] || (por[n.tipo] = { solicitudes: 0, cantidad: 0, unidad: n.unidad });
+        t.solicitudes += 1; t.cantidad += n.cantidad;
+      });
+    });
+    return Object.keys(por).sort().map(function (clave) {
+      var t = por[clave];
+      return ((nombres && nombres[clave]) || clave) + ': ' + t.solicitudes + (t.solicitudes === 1 ? ' solicitud' : ' solicitudes') +
+        ', ' + t.cantidad + ' ' + t.unidad;
+    });
+  }
+
   function filtrar(barrios, filtros) {
     return barrios.filter(function (s) {
-      return (!filtros.municipio || s.codigo_municipio === filtros.municipio) && tieneAviso(s, filtros.aviso) &&
+      return (!filtros.tipos || !filtros.tipos.length || necesidadesDe(s, filtros.tipos).length > 0) &&
+        (!filtros.municipio || s.codigo_municipio === filtros.municipio) && tieneAviso(s, filtros.aviso) &&
         (filtros.sinInfo !== false || conInfo(s));  // con sinInfo === false se ocultan los barrios sin reportes ni solicitudes
     });
   }
@@ -107,7 +135,8 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RAMPAS: RAMPAS, CLASES: CLASES, BORDE: BORDE, escapar: escapar, cuantiles: cuantiles,
       claseDe: claseDe, escala: escala, mostrarNumero: mostrarNumero, contraste: contraste, textoSobre: textoSobre, tamano: tamano, filtrar: filtrar,
-      tieneAviso: tieneAviso, sinDatos: sinDatos, conInfo: conInfo, resumen: resumen };
+      tieneAviso: tieneAviso, sinDatos: sinDatos, conInfo: conInfo, necesidadesDe: necesidadesDe,
+      lineaNecesidad: lineaNecesidad, resumenNecesidades: resumenNecesidades, resumen: resumen };
     return;
   }
 
@@ -119,6 +148,9 @@
   var selMunicipio = document.getElementById('filtro-municipio');
   var selAviso = document.getElementById('filtro-aviso');
   var chkSinInfo = document.getElementById('ver-sin-info');
+  var cajaTipos = document.getElementById('filtro-tipos');
+  var resumenNec = document.getElementById('resumen-necesidades');
+  var nombresTipo = {};
   var leyenda = document.getElementById('leyenda');
   var datos = null;
   var capa = null;
@@ -126,6 +158,31 @@
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(mapa);
+
+  function tiposElegidos() {
+    return Array.prototype.map.call(document.querySelectorAll('input[name="tipo"]:checked'), function (c) { return c.value; });
+  }
+
+  function listaNecesidades(barrio, tipos) {
+    var ns = necesidadesDe(barrio, tipos);
+    if (!ns.length) return '';
+    return '<br><strong>Qué piden</strong><ul class="popup-necesidades">' +
+      ns.map(function (n) { return '<li>' + escapar(lineaNecesidad(n, nombresTipo)) + '</li>'; }).join('') + '</ul>';
+  }
+
+  function dibujarResumen(visibles, tipos) {
+    var lineas = resumenNecesidades(visibles, tipos, nombresTipo);
+    resumenNec.innerHTML = lineas.length ? lineas.map(function (l) { return '<li>' + escapar(l) + '</li>'; }).join('')
+      : '<li>No hay solicitudes abiertas en los barrios que se ven.</li>';
+  }
+
+  function dibujarTipos(tipos) {
+    cajaTipos.innerHTML = tipos.map(function (t) {
+      nombresTipo[t.clave] = t.nombre;
+      return '<div class="opcion"><input type="checkbox" id="tipo-' + t.clave + '" name="tipo" value="' + escapar(t.clave) +
+        '"><label for="tipo-' + t.clave + '">' + escapar(t.nombre) + '</label></div>';
+    }).join('');
+  }
 
   function vistaActual() {
     var marcado = document.querySelector('input[name="ver"]:checked');
@@ -151,7 +208,8 @@
     // Por defecto solo los barrios con información; si todavía no hay ninguno, se muestran todos.
     var hayInfo = datos.barrios.some(conInfo);
     var sinInfo = chkSinInfo.checked || !hayInfo;
-    var visibles = filtrar(datos.barrios, { municipio: selMunicipio.value, aviso: selAviso.value, sinInfo: sinInfo });
+    var tipos = tiposElegidos();
+    var visibles = filtrar(datos.barrios, { municipio: selMunicipio.value, aviso: selAviso.value, sinInfo: sinInfo, tipos: tipos });
     if (capa) mapa.removeLayer(capa);
     capa = L.layerGroup();
     var conDatos = visibles.filter(function (s) { return !sinDatos(s); });
@@ -176,7 +234,7 @@
         '<br>Lugar ' + s.posicion + ' de ' + datos.total + '<br>Prioridad: ' + pct(s.prioridad) +
         '<br>Confianza: ' + pct(s.confianza) +
         (s.alertas.length ? '<br>Avisos: ' + escapar(s.alertas.map(function (a) { return datos.alertas[a] || a; }).join(', ')) : '') +
-        '<br>' + s.n_reportes + ' reporte(s), ' + s.n_solicitudes + ' solicitud(es) abiertas' +
+        '<br>' + s.n_reportes + ' reporte(s), ' + s.n_solicitudes + ' solicitud(es) abiertas' + listaNecesidades(s, tipos) +
         '<br><a href="/prioridades/barrios/' + s.id + '">Ver por qué ocupa este lugar</a>');
       marcador.on('add', function () {
         var el = marcador.getElement();
@@ -186,7 +244,8 @@
       puntos.push([s.lat, s.lon]);
     });
     capa.addTo(mapa);
-    if (ajustar !== false && puntos.length) mapa.fitBounds(L.latLngBounds(puntos).pad(0.15), { maxZoom: 14 });
+    dibujarResumen(visibles, tipos);
+    if (ajustar !== false && puntos.length) mapa.fitBounds(L.latLngBounds(puntos).pad(0.15), { maxZoom: 17 });
     dibujarLeyenda(vista, cortes, visibles.some(sinDatos));
     estado.textContent = visibles.length === 0
       ? 'Ningún barrio cumple con ese filtro.'
@@ -199,6 +258,7 @@
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (d) {
         datos = d;
+        dibujarTipos(d.tipos || []);
         d.municipios.forEach(function (m) {
           var op = document.createElement('option');
           op.value = m.codigo; op.textContent = m.nombre;

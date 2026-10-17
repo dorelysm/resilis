@@ -10,6 +10,10 @@
     <div class="opcion"><input type="radio" id="ver-prioridad" name="ver" value="prioridad" checked><label for="ver-prioridad">Prioridad: qué atender primero</label></div>
     <div class="opcion"><input type="radio" id="ver-confianza" name="ver" value="confianza"><label for="ver-confianza">Confianza: qué tan confiable es la información</label></div>
   </fieldset>
+  <fieldset>
+    <legend>Qué se necesita <span class="opcional">(sin marcar, se ven todos)</span></legend>
+    <div id="filtro-tipos" class="opciones-en-fila"><p class="ayuda">Cargando…</p></div>
+  </fieldset>
   <div class="campo"><label for="filtro-municipio">Municipio</label>
     <select id="filtro-municipio" name="municipio"><option value="">Todos los municipios</option></select></div>
   <div class="campo"><label for="filtro-aviso">Avisos de información faltante</label>
@@ -24,6 +28,12 @@
 <p id="estado-mapa" class="ayuda" role="status" aria-live="polite">Cargando los barrios…</p>
 <div id="mapa" class="mapa" role="region" aria-label="Mapa de los barrios, con su prioridad y su confianza" data-url="/mapa/datos.json"></div>
 <noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. Puede ver la misma información en la <a href="/prioridades">tabla de prioridades</a>.</p></noscript>
+
+<section aria-labelledby="titulo-necesidades">
+  <h2 id="titulo-necesidades">Qué se necesita en los barrios que se ven</h2>
+  <ul id="resumen-necesidades"><li>Cargando…</li></ul>
+  <p class="ayuda">Las necesidades se muestran por barrio, sin nombres, teléfonos ni direcciones. Toque un barrio para ver lo que piden ahí.</p>
+</section>
 
 <section aria-labelledby="titulo-leyenda">
   <h2 id="titulo-leyenda">Cómo leer el mapa</h2>
