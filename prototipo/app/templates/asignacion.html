@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_solicitud.html" import que_pidio %}
+{% from "_niveles.html" import prioridad, confianza %}
 {% block titulo %}Asignar entregas{% endblock %}
 {% block contenido %}
 <h1>Asignar entregas</h1>
@@ -9,8 +10,8 @@
 {% if filas %}
   {% for s, barrio, disponible in filas %}
   <section class="fila-accion" aria-label="Solicitud en {{ barrio }}">
-    <p>{{ que_pidio(s, 220) }}<br>Para {{ s.personas_hogar }} persona(s) en {{ barrio }}. {{ urgencia[s.urgencia] }}.
-      {% if s.prioridad is not none %}<br>Prioridad {{ (s.prioridad * 100)|round|int }} %{% if s.confianza is not none %} · confianza {{ (s.confianza * 100)|round|int }} %{% endif %}.{% endif %}</p>
+    <p>{{ que_pidio(s, 220) }}<br>Para {{ s.personas_hogar|plural('persona', 'personas') }} en {{ barrio }}. {{ urgencia[s.urgencia] }}.
+      {% if s.prioridad is not none %}<br>Prioridad {{ prioridad(s.prioridad) }}{% if s.confianza is not none %} · confianza {{ confianza(s.confianza) }}{% endif %}.{% endif %}</p>
     <p>Inventario disponible para esta solicitud: <strong>{{ disponible }}</strong>{% if disponible < s.cantidad %} <span class="error">(no alcanza)</span>{% endif %}.</p>
     {% if equipos %}
     <form method="post" action="/asignacion/{{ s.id }}">
@@ -33,7 +34,7 @@
 <table>
   <caption class="ayuda">Entregas asignadas que todavía no terminan.</caption>
   <thead><tr><th scope="col">Equipo</th><th scope="col">Estado</th><th scope="col">Asignada</th></tr></thead>
-  <tbody>{% for e, equipo in en_curso %}<tr><td>{{ equipo }}</td><td><span class="estado">{{ 'En camino' if e.estado == 'en_camino' else 'Asignada' }}</span></td><td>{{ e.creado_en.strftime('%d/%m/%Y %H:%M') }}</td></tr>{% endfor %}</tbody>
+  <tbody>{% for e, equipo in en_curso %}<tr><td>{{ equipo }}</td><td><span class="estado">{{ 'En camino' if e.estado == 'en_camino' else 'Asignada' }}</span></td><td>{{ e.creado_en|hora_co }}</td></tr>{% endfor %}</tbody>
 </table>
 </div>
 {% else %}<p>No hay entregas en curso.</p>{% endif %}

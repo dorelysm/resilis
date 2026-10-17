@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Donante, Rol, Barrio, Usuario, ahora
 from app.seguridad import hash_password, verificar_password
+from app.inicio import que_sigue
 from app.web import UsuarioOpcional, chequear_csrf, entero, mensaje, opciones_barrios, render, solo_digitos
 
 router = APIRouter()
@@ -24,8 +25,8 @@ def _barrios(db: Session) -> list[tuple[int, str]]:
 
 
 @router.get("/")
-def inicio(request: Request, usuario: UsuarioOpcional):
-    return render(request, "inicio.html", usuario)
+def inicio(request: Request, db: Db, usuario: UsuarioOpcional):
+    return render(request, "inicio.html", usuario, pendientes=que_sigue(db, usuario) if usuario else [])
 
 
 @router.get("/registro")

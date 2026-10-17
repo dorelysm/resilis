@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block titulo %}Inicio{% endblock %}
+{% macro tarjeta(titulo, texto, enlace, boton) %}
+<section class="tarjeta"><h2>{{ titulo }}</h2><p>{{ texto }}</p><a class="boton" href="{{ enlace }}">{{ boton }}</a></section>
+{% endmacro %}
 {% block contenido %}
 {% if not usuario %}
   <div class="portada">
@@ -14,41 +17,57 @@
   </div>
 {% else %}
   <h1>Hola, {{ usuario.nombre.split(' ')[0] }}</h1>
+
+  <section class="que-sigue" aria-labelledby="titulo-que-sigue">
+    <h2 id="titulo-que-sigue">Qué sigue</h2>
+    {% if pendientes %}
+    <ul>
+      {% for p in pendientes %}
+      <li class="{{ 'urgente' if p.urgente }}"><span>{{ p.texto }}</span> <a class="boton" href="{{ p.enlace }}">{{ p.boton }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No hay nada pendiente ahora.</p>
+    {% endif %}
+  </section>
+
   <div class="tarjetas">
+  {# Primero lo que más se usa en cada rol #}
   {% if usuario.rol == 'solicitante' %}
-    <section class="tarjeta"><h2>Necesito ayuda</h2><p>Cuéntenos qué necesita.</p><a class="boton" href="/solicitudes/nueva">Pedir ayuda</a></section>
-    <section class="tarjeta"><h2>Mis solicitudes</h2><p>Vea cómo avanza lo que pidió.</p><a class="boton" href="/solicitudes">Ver solicitudes</a></section>
-  {% endif %}
-  {% if usuario.rol in ('solicitante', 'brigadista', 'entidad') %}
-    <section class="tarjeta"><h2>Avisar de daños</h2><p>Informe cómo quedó un barrio.</p><a class="boton" href="/reportes/nuevo">Enviar reporte</a></section>
-    <section class="tarjeta"><h2>Mis reportes</h2><p>Los reportes que usted envió.</p><a class="boton" href="/reportes">Ver reportes</a></section>
-  {% endif %}
-  {% if usuario.rol == 'donante' %}
-    <section class="tarjeta"><h2>Quiero donar</h2><p>Ofrezca alimentos, agua u otros bienes, o una donación en dinero.</p><a class="boton" href="/donaciones/nueva">Registrar donación</a></section>
-    <section class="tarjeta"><h2>Mis donaciones</h2><p>Vea en qué estado está cada una.</p><a class="boton" href="/donaciones">Ver donaciones</a></section>
-  {% endif %}
-  {% if usuario.rol == 'administrador' %}
-    <section class="tarjeta"><h2>Cuentas</h2><p>Cree cuentas de brigadistas, entidades y equipos de entrega.</p><a class="boton" href="/admin/usuarios">Administrar cuentas</a></section>
-  {% endif %}
-  {% if usuario.rol in ('brigadista', 'entidad', 'administrador') %}
-    <section class="tarjeta"><h2>Mapa</h2><p>Los barrios en el mapa, con su prioridad y la confianza en la información.</p><a class="boton" href="/mapa">Ver el mapa</a></section>
-    <section class="tarjeta"><h2>Prioridades</h2><p>Qué barrios y personas atender primero, y qué tan confiable es la información.</p><a class="boton" href="/prioridades">Ver prioridades</a></section>
-  {% endif %}
-  {% if usuario.rol in ('brigadista', 'entidad') %}
-    <section class="tarjeta"><h2>Verificar</h2><p>Revise solicitudes y reportes pendientes.</p><a class="boton" href="/verificacion">Ir a verificar</a></section>
-  {% endif %}
-  {% if usuario.rol == 'entidad' %}
-    <section class="tarjeta"><h2>Plan de asignación</h2><p>Qué lote entregar a cada solicitud para cubrir la mayor necesidad.</p><a class="boton" href="/plan">Ver el plan</a></section>
-    <section class="tarjeta"><h2>Asignar entregas</h2><p>Elija qué equipo entrega cada solicitud verificada.</p><a class="boton" href="/asignacion">Asignar</a></section>
-  {% endif %}
-  {% if usuario.rol in ('centro_acopio', 'entidad') %}
-    <section class="tarjeta"><h2>Inventario</h2><p>Lo que hay disponible, reservado y entregado.</p><a class="boton" href="/inventario">Ver inventario</a></section>
-  {% endif %}
-  {% if usuario.rol == 'centro_acopio' %}
-    <section class="tarjeta"><h2>Recibir donaciones</h2><p>Confirme lo que llega a su centro.</p><a class="boton" href="/recepcion">Recibir</a></section>
-  {% endif %}
-  {% if usuario.rol == 'equipo_entrega' %}
-    <section class="tarjeta"><h2>Mis entregas</h2><p>Las entregas que le asignaron.</p><a class="boton" href="/entregas">Ver entregas</a></section>
+    {{ tarjeta('Necesito ayuda', 'Cuéntenos qué necesita.', '/solicitudes/nueva', 'Pedir ayuda') }}
+    {{ tarjeta('Mis solicitudes', 'Vea cómo avanza lo que pidió.', '/solicitudes', 'Ver solicitudes') }}
+    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte') }}
+    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes') }}
+  {% elif usuario.rol == 'donante' %}
+    {{ tarjeta('Quiero donar', 'Ofrezca alimentos, agua u otros bienes, o una donación en dinero.', '/donaciones/nueva', 'Registrar donación') }}
+    {{ tarjeta('Mis donaciones', 'Vea en qué estado está cada una y por dónde va.', '/donaciones', 'Ver donaciones') }}
+  {% elif usuario.rol == 'brigadista' %}
+    {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar') }}
+    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte') }}
+    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa') }}
+    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades') }}
+    {{ tarjeta('Recorrido', 'Dónde va cada solicitud, donación y reporte.', '/recorrido', 'Ver el recorrido') }}
+    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes') }}
+  {% elif usuario.rol == 'entidad' %}
+    {{ tarjeta('Plan de asignación', 'Qué entregar a cada solicitud para cubrir la mayor necesidad, de a un paquete.', '/plan', 'Ver el plan') }}
+    {{ tarjeta('Verificar', 'Revise solicitudes y reportes pendientes.', '/verificacion', 'Ir a verificar') }}
+    {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido') }}
+    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa') }}
+    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades') }}
+    {{ tarjeta('Asignar entregas', 'Elija a mano qué equipo entrega cada solicitud verificada.', '/asignacion', 'Asignar') }}
+    {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario') }}
+    {{ tarjeta('Avisar de daños', 'Informe cómo quedó un barrio.', '/reportes/nuevo', 'Enviar reporte') }}
+    {{ tarjeta('Mis reportes', 'Los reportes que usted envió.', '/reportes', 'Ver reportes') }}
+  {% elif usuario.rol == 'centro_acopio' %}
+    {{ tarjeta('Recibir donaciones', 'Confirme lo que llega a su centro.', '/recepcion', 'Recibir') }}
+    {{ tarjeta('Inventario', 'Lo que hay disponible, reservado y entregado.', '/inventario', 'Ver inventario') }}
+  {% elif usuario.rol == 'equipo_entrega' %}
+    {{ tarjeta('Mis entregas', 'Las entregas que le asignaron.', '/entregas', 'Ver entregas') }}
+  {% elif usuario.rol == 'administrador' %}
+    {{ tarjeta('Cuentas', 'Cree cuentas de brigadistas, entidades, equipos de entrega y centros de acopio.', '/admin/usuarios', 'Administrar cuentas') }}
+    {{ tarjeta('Recorrido', 'Dónde va cada cosa y las entregas en marcha en el mapa.', '/recorrido', 'Ver el recorrido') }}
+    {{ tarjeta('Mapa', 'Los barrios en el mapa y lo que se necesita en cada uno.', '/mapa', 'Ver el mapa') }}
+    {{ tarjeta('Prioridades', 'Qué barrios y personas atender primero.', '/prioridades', 'Ver prioridades') }}
   {% endif %}
   </div>
 {% endif %}

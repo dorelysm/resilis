@@ -29,7 +29,7 @@
 {% if reportes %}
   {% for r, barrio in reportes %}
   <section class="fila-accion" aria-label="Reporte de {{ barrio }}">
-    <p><strong>{{ barrio }}</strong>: {{ dano[r.nivel_dano] }}, {{ r.personas_afectadas }} persona(s) afectadas.</p>
+    <p><strong>{{ barrio }}</strong>: {{ dano[r.nivel_dano] }}, {{ r.personas_afectadas|plural('persona afectada', 'personas afectadas') }}.</p>
     <form method="post" action="/verificacion/reportes/{{ r.id }}">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <div class="campo"><label for="nota-{{ r.id }}">Nota <span class="opcional">(opcional)</span></label>

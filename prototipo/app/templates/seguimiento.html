@@ -4,7 +4,7 @@
 {% block titulo %}Mi solicitud{% endblock %}
 {% block contenido %}
 <h1>Mi solicitud</h1>
-<p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar }} persona(s). Estado:
+<p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar|plural('persona', 'personas') }}. Estado:
   <span class="estado">{{ nombres_estado[sol.estado] }}</span></p>
 
 {% if sol.estado == 'anulada' %}

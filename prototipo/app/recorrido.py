@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import models as m
+from app.formato import plural
 from app.solicitud_info import adjuntar_detalles
 
 HECHO, ACTUAL, PENDIENTE, PROBLEMA = "hecho", "actual", "pendiente", "problema"
@@ -255,7 +256,7 @@ def elementos_de_etapa(db: Session, tipo: str, etapa: str, limite: int = 25) -> 
             r = revisados.get(rep.id)
             et = "anulado" if rep.estado != "activo" and r != "desmentido" else {"verificado": "verificado", "desmentido": "desmentido"}.get(r, "sin_revisar")
             if et == etapa:
-                filas.append({"titulo": f"Daño nivel {rep.nivel_dano} · {rep.personas_afectadas} persona(s)", "lugar": barrio,
+                filas.append({"titulo": f"Daño nivel {rep.nivel_dano} · {plural(rep.personas_afectadas, 'persona', 'personas')}", "lugar": barrio,
                               "horas": _horas_desde(rep.hora_captura, ahora), "enlace": "", "id": rep.id})
     filas.sort(key=lambda f: -(f["horas"] or 0))
     return filas[:limite]

@@ -115,7 +115,7 @@ def test_el_donante_ve_barrios_con_circulo_y_no_personas(con_ruta, sesiones):
     for secreto in ("10.9605", "-74.8005", "Calle 1", "3100000001", "solicitante", "solicitud_id", "nombre_persona"):
         assert secreto not in texto, secreto
     assert len(d["en_camino"]) == 1 and d["en_camino"][0]["hacia"].startswith("Barrio de prueba")
-    assert "1 entrega(s) en 1 barrio(s)" in d["texto"]
+    assert "1 entrega en 1 barrio" in d["texto"]
 
 
 def test_un_donante_sin_entregas_ve_el_mapa_vacio(con_ruta, sesiones):
@@ -181,7 +181,7 @@ def test_el_js_describe_los_destinos_en_texto():
     salida = subprocess.run(["node", "-e", guion, str(JS)], capture_output=True, text=True, encoding="utf-8", check=True,
                             timeout=30).stdout
     a, b, c, d, e = json.loads(salida)
-    assert a == "Rebolo, Barranquilla: 1 entregada(s), 2 en camino, 1 por salir."
+    assert a == "Rebolo, Barranquilla: 1 entregada, 2 en camino, 1 por salir."
     assert b == "X: 1 por salir." and c == "&lt;b&gt;&amp;&quot;" and d is True and e == ""
 
 

@@ -12,6 +12,7 @@ from app import plan as pl
 from app.solicitud_info import adjuntar_detalles
 from app import servicios as sv
 from app.config import get_settings
+from app.formato import plural
 from app.simulacion import UNIDADES
 from app.db import get_db
 from app.rutas.prioridades import refrescar
@@ -175,7 +176,7 @@ async def aprobar(plan_id: int, request: Request, db: Db, usuario: Entidad):
         mensaje_error(request, str(e))
         return _redir()
     refrescar(db)
-    texto = f"Plan aprobado: {r['asignadas']} solicitud(es) asignadas, cada una con su código de entrega."
+    texto = f"Plan aprobado: {plural(r['asignadas'], 'solicitud asignada', 'solicitudes asignadas')}, cada una con su código de entrega."
     if r["omitidas"]:
         texto += f" {len(r['omitidas'])} no se pudieron asignar porque el inventario cambió."
     if r["excluidas"]:
@@ -201,7 +202,7 @@ async def aprobar_un_paquete(plan_id: int, request: Request, db: Db, usuario: En
         mensaje_error(request, str(e))
         return _redir()
     refrescar(db)
-    texto = f"Paquete aprobado: {r['asignadas']} entrega(s) asignadas, cada una con su código."
+    texto = f"Paquete aprobado: {plural(r['asignadas'], 'entrega asignada', 'entregas asignadas')}, cada una con su código."
     if r["omitidas"]:
         texto += f" {len(r['omitidas'])} no se pudieron asignar porque el inventario cambió."
     if r["excluidas"]:

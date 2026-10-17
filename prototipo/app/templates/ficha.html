@@ -4,7 +4,7 @@
 <img class="logo-ficha" src="/static/img/emblema-ficha.png" alt="" width="135" height="140">
 <h1>Ficha de entrega</h1>
 {% if codigo %}
-  <p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar }} persona(s).</p>
+  <p><strong>{{ necesidad[sol.necesidad] }}</strong> para {{ sol.personas_hogar|plural('persona', 'personas') }}.</p>
   <p>Entregue este código al equipo cuando llegue:</p>
   <p class="codigo">{{ codigo }}</p>
   <p>No lo comparta con nadie más. Sin este código no se puede entregar la ayuda.</p>

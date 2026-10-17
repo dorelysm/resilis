@@ -165,6 +165,22 @@ Ordenadas por impacto y esfuerzo. Cada una dice qué problema resuelve.
 17. **Cuentas:** buscador, edición y asignación de centro de acopio a una cuenta existente (A1, C2).
 18. **Pruebas con lector de pantalla** y un modo de letra grande y alto contraste.
 
+## 6 bis. Estado: mejoras rápidas hechas (17 de octubre de 2026)
+
+Los siete puntos de la ola "Ya" están implementados, con pruebas (292 en total) y revisión de accesibilidad sin fallas:
+
+| # | Mejora | Resultado medido |
+|---|---|---|
+| 1 | Reflow corregido (`position: relative` en las tablas con desplazamiento) | A 320 px, Verificar y el detalle de un barrio ya no se desplazan de lado (317 px de ancho de desplazamiento, antes 421 y 446) |
+| 2 | Todas las horas en hora de Colombia, y el pie lo dice | Una entrega de las 23:38 ya no aparece como "04:38"; los mapas usan la misma hora |
+| 3 | Cabecera compacta en celular: logo, "Menú" y "Salir" en una fila; los enlaces se despliegan debajo, uno por renglón (48 px). Aviso de prototipo de una línea | Cabecera de entidad de 198 px a 54 px; sin JavaScript el menú sigue completo |
+| 4 | "Qué sigue" arriba del inicio de cada rol, con conteos y un botón directo, y tarjetas reordenadas por tarea principal | Verificar y Plan pasan de la 5.ª posición a la 1.ª y 2.ª; la entidad ve "7 solicitudes por verificar" sin entrar a ninguna página |
+| 5 | Prioridad y confianza en palabras (Alta, Media, Baja) con el porcentaje al lado, y "Conviene verificar" si la confianza es baja | En listas, detalle de barrio, asignación, recorrido y globo del mapa |
+| 6 | Mapa primero: una línea de introducción, el mapa y los filtros plegados | El mapa pasa de la posición 1193 a unos 355 |
+| 7 | Textos: "lote", "dimensión" y "huella" sustituidos; plurales sin paréntesis ("1 entrega", "3 entregas") | Una prueba revisa que no queden plurales con paréntesis |
+
+Siguen pendientes los puntos 8 a 18 (la cola de verificación para brigadistas, Mi solicitud al estilo de una app de entregas, tablas como tarjetas, "aprobar los siguientes N paquetes" y el registro mínimo, entre otros).
+
 ## 7. Cómo comprobar que mejoró
 
 Pruebas de uso con 5 personas por rol que más pesan (solicitante, brigadista, equipo de entrega) y 2 a 3 de la entidad, con tareas guionadas:

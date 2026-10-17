@@ -37,7 +37,10 @@ header { background: var(--fondo); border-bottom: 5px solid var(--azul); border-
 header .barra { max-width: 60rem; margin: 0 auto; padding: .5rem 1rem; display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-items: center; }
 header .marca { display: inline-flex; align-items: center; gap: .6rem; margin-right: auto; font-weight: 700; font-size: 1.5rem; letter-spacing: .01em; color: var(--azul-profundo); text-decoration: none; }
 header .marca img { display: block; height: 48px; width: auto; }
-header nav { display: flex; flex-wrap: wrap; gap: .25rem .9rem; align-items: center; }
+header nav { display: flex; flex-wrap: wrap; gap: .25rem .9rem; align-items: center; order: 2; }
+header .salir { order: 3; margin: 0; }
+header .menu-boton { order: 2; }
+header nav[hidden] { display: none; }
 header nav a { color: var(--azul); padding: .45rem .2rem; font-weight: 600; }
 header nav a:hover { color: var(--azul-profundo); }
 header button { background: var(--fondo); color: var(--azul); border: 2px solid var(--azul); padding: .35rem .9rem; border-radius: .4rem; font: inherit; font-weight: 600; cursor: pointer; }
@@ -193,3 +196,39 @@ button.grande { width: 100%; min-height: 3.25rem; font-size: 1.2rem; }
 .opciones-en-fila { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
 .popup-necesidades { margin: .25rem 0 .25rem 1rem; padding: 0; max-width: 18rem; }
 .popup-necesidades li { margin: .15rem 0; }
+
+/* Las tablas con desplazamiento contienen a su texto oculto: si no, ensanchan toda la página (WCAG 1.4.10) */
+.tabla-scroll { position: relative; }
+
+/* Celular: cabecera de una sola fila (logo, Menú, Salir); los enlaces se despliegan debajo, uno por renglón */
+.aviso-prototipo .corto { display: none; }
+@media (max-width: 47.99rem) {
+  header .barra { padding: .35rem 1rem; gap: .25rem .6rem; }
+  header .marca { font-size: 1.25rem; }
+  header .marca img { height: 38px; }
+  header .menu-boton { order: 2; }
+  header .salir { order: 3; }
+  header nav[data-plegable] { order: 4; flex: 1 1 100%; flex-direction: column; align-items: stretch; gap: 0; padding-bottom: .4rem; }
+  header nav[data-plegable] a { padding: .7rem .4rem; border-top: 1px solid var(--borde-suave); }
+  .aviso-prototipo { padding: .25rem 1rem; font-size: .8rem; }
+  .aviso-prototipo .largo { display: none; }
+  .aviso-prototipo .corto { display: inline; }
+}
+.hora-colombia { margin: 0 0 .25rem; }
+
+/* Qué sigue (inicio) */
+.que-sigue { border: 2px solid var(--azul); border-radius: .75rem; padding: .75rem 1rem 1rem; margin: 0 0 1.25rem; background: var(--tinte-azul); }
+.que-sigue h2 { margin: 0 0 .5rem; font-size: 1.15rem; }
+.que-sigue ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.que-sigue li { display: grid; gap: .4rem; font-size: 1.05rem; }
+.que-sigue li.urgente { border-left: 5px solid var(--naranja-oscuro); padding-left: .6rem; }
+.que-sigue li .boton { justify-self: start; }
+.que-sigue p { margin: 0; }
+
+/* Niveles en palabras: Alta, Media, Baja (el porcentaje queda al lado, como detalle) */
+.nivel { display: inline-block; padding: .05rem .6rem; border-radius: 1rem; font-weight: 700; border: 1px solid var(--borde); }
+.nivel-alta { background: var(--azul-profundo); color: #fff; border-color: var(--azul-profundo); }
+.nivel-media { background: var(--tinte-azul); color: var(--azul-profundo); border-color: var(--azul); }
+.nivel-baja { background: #fff; color: var(--texto-suave); }
+.detalle-nivel { color: var(--texto-suave); font-size: .9rem; }
+.conviene { color: var(--texto-error); font-weight: 600; font-size: .9rem; }

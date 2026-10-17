@@ -123,6 +123,13 @@
 
   function pct(valor) { return Math.round(valor * 100) + ' %'; }
 
+  function plural(n, singular, plurales) { return n + ' ' + (n === 1 ? singular : plurales); }
+
+  // Niveles en palabras: mismos cortes que el servidor (app/formato.py).
+  function nivel(valor, cortes) { return valor >= cortes[1] ? 'Alta' : valor >= cortes[0] ? 'Media' : 'Baja'; }
+  function nivelPrioridad(valor) { return nivel(valor, [0.33, 0.66]); }
+  function nivelConfianza(valor) { return nivel(valor, [0.4, 0.66]); }
+
   function resumen(barrio, nombresAlerta, total) {
     var partes = [barrio.nombre + ' (' + barrio.municipio + ')',
       'lugar ' + barrio.posicion + ' de ' + total,
@@ -135,7 +142,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RAMPAS: RAMPAS, CLASES: CLASES, BORDE: BORDE, escapar: escapar, cuantiles: cuantiles,
       claseDe: claseDe, escala: escala, mostrarNumero: mostrarNumero, contraste: contraste, textoSobre: textoSobre, tamano: tamano, filtrar: filtrar,
-      tieneAviso: tieneAviso, sinDatos: sinDatos, conInfo: conInfo, necesidadesDe: necesidadesDe,
+      tieneAviso: tieneAviso, sinDatos: sinDatos, conInfo: conInfo, plural: plural, nivelPrioridad: nivelPrioridad, nivelConfianza: nivelConfianza, necesidadesDe: necesidadesDe,
       lineaNecesidad: lineaNecesidad, resumenNecesidades: resumenNecesidades, resumen: resumen };
     return;
   }
@@ -231,10 +238,10 @@
       });
       marcador.bindPopup(
         '<strong>' + escapar(s.nombre) + '</strong><br>' + escapar(s.municipio) +
-        '<br>Lugar ' + s.posicion + ' de ' + datos.total + '<br>Prioridad: ' + pct(s.prioridad) +
-        '<br>Confianza: ' + pct(s.confianza) +
+        '<br>Lugar ' + s.posicion + ' de ' + datos.total + '<br>Prioridad: ' + nivelPrioridad(s.prioridad) + ' (' + pct(s.prioridad) + ')' +
+        '<br>Confianza: ' + nivelConfianza(s.confianza) + ' (' + pct(s.confianza) + ')' + (nivelConfianza(s.confianza) === 'Baja' ? ' · conviene verificar' : '') +
         (s.alertas.length ? '<br>Avisos: ' + escapar(s.alertas.map(function (a) { return datos.alertas[a] || a; }).join(', ')) : '') +
-        '<br>' + s.n_reportes + ' reporte(s), ' + s.n_solicitudes + ' solicitud(es) abiertas' + listaNecesidades(s, tipos) +
+        '<br>' + plural(s.n_reportes, 'reporte', 'reportes') + ', ' + plural(s.n_solicitudes, 'solicitud abierta', 'solicitudes abiertas') + listaNecesidades(s, tipos) +
         '<br><a href="/prioridades/barrios/' + s.id + '">Ver por qué ocupa este lugar</a>');
       marcador.on('add', function () {
         var el = marcador.getElement();

@@ -6,7 +6,7 @@
   <dt>Persona</dt><dd>{{ persona.nombre }}{% if persona.documento %} (documento {{ persona.documento }}){% endif %}</dd>
   <dt>Teléfono</dt><dd>{{ persona.telefono }}</dd>
   <dt>Barrio y dirección</dt><dd>{{ barrio.etiqueta }}. {{ sol.direccion }}</dd>
-  <dt>Necesita</dt><dd>{{ necesidad[sol.necesidad] }}: {{ sol.cantidad }} para {{ sol.personas_hogar }} persona(s)</dd>
+  <dt>Necesita</dt><dd>{{ necesidad[sol.necesidad] }}: {{ sol.cantidad }} para {{ sol.personas_hogar|plural('persona', 'personas') }}</dd>
   <dt>Urgencia declarada</dt><dd>{{ urgencia[sol.urgencia] }}</dd>
   <dt>Situación</dt><dd>{{ sol.descripcion }}</dd>
   {% if vuln %}

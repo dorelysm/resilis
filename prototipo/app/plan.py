@@ -14,6 +14,7 @@ from app import models as m
 from app import optimizacion as op
 from app import puntaje as pj
 from app import servicios as sv
+from app.formato import plural
 from app.models import ahora
 
 PARAMETROS = {"kappa": op.KAPPA, "lambda": op.LAMBDA, "theta": op.THETA}
@@ -74,7 +75,7 @@ def _texto_vencimiento(venc: datetime | None, ahora_: datetime) -> str:
     if v is None:
         return "no vence"
     dias = (v - ahora_).total_seconds() / 86400
-    return f"vence en {dias:.0f} día(s)" if dias >= 1 else "vence en menos de un día"
+    return f"vence en {plural(round(dias), 'día', 'días')}" if dias >= 1 else "vence en menos de un día"
 
 
 # ----------------------------------------------------------------------------- cálculo

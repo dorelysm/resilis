@@ -8,7 +8,7 @@
   {% for r, barrio in filas %}
   <section class="tarjeta-recorrido" aria-labelledby="rep-{{ r.id }}">
     <h2 id="rep-{{ r.id }}">{{ barrio }}: {{ niveles[r.nivel_dano] }}</h2>
-    <p class="ayuda">{{ r.personas_afectadas }} persona(s) afectadas. Enviado el {{ r.hora_captura.strftime('%d/%m/%Y %H:%M') }}.</p>
+    <p class="ayuda">{{ r.personas_afectadas|plural('persona afectada', 'personas afectadas') }}. Enviado el {{ r.hora_captura|hora_co }}.</p>
     {{ recorrido(pasos[r.id], 'Recorrido del reporte') }}
   </section>
   {% endfor %}

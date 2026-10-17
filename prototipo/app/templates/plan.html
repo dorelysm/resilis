@@ -9,7 +9,7 @@
 
 <form method="post" action="/plan/calcular" class="no-imprimir">
   <input type="hidden" name="csrf" value="{{ csrf }}">
-  <p class="ayuda">Hay {{ verificadas if verificadas is not none else '—' }} solicitud(es) verificadas y {{ disponible if disponible is not none else '—' }} unidades disponibles.</p>
+  <p class="ayuda">Hay {{ verificadas|plural('solicitud verificada', 'solicitudes verificadas') if verificadas is not none else '—' }} y {{ disponible if disponible is not none else '—' }} unidades disponibles.</p>
   <button class="principal" type="submit">Calcular un plan nuevo</button>
 </form>
 
@@ -28,7 +28,7 @@
     {% for paq in pq.abiertos %}
     <section class="paquete" aria-labelledby="paq-{{ paq.numero }}">
       <h3 id="paq-{{ paq.numero }}">Siguiente: paquete {{ paq.numero }} · {{ paq.municipio }}</h3>
-      <p class="resumen-paquete">{{ paq.filas|length }} entrega(s) · {{ paq.personas }} persona(s) · {{ paq.unidades }} unidades en total</p>
+      <p class="resumen-paquete">{{ paq.filas|length|plural('entrega', 'entregas') }} · {{ paq.personas|plural('persona', 'personas') }} · {{ paq.unidades }} unidades en total</p>
       <form method="post" action="/plan/{{ p.id }}/paquete">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         <input type="hidden" name="solicitudes" value="{{ paq.solicitudes|join(',') }}">
@@ -36,7 +36,7 @@
         {% for f in paq.filas %}
           <li>
             <span class="que">{{ que_pidio(f.sol, 200) }}<br>Recibe {{ f.asignado }} {{ unidad[f.sol.necesidad] }}.</span>
-            <span class="donde">{{ f.barrio }} · {{ f.sol.personas_hogar }} persona(s)</span>
+            <span class="donde">{{ f.barrio }} · {{ f.sol.personas_hogar|plural('persona', 'personas') }}</span>
             <span class="estado">{{ urgencia[f.sol.urgencia] }}</span>
             {% if f.aislado %}<span class="estado estado-aviso">Barrio aislado: confirme la ruta</span>{% endif %}
             <span class="opcion"><input type="checkbox" id="excluir-{{ f.sol.id }}" name="excluir_{{ f.sol.id }}" value="si">
@@ -60,13 +60,13 @@
     <section aria-labelledby="proximos">
       <h3 id="proximos">Los que siguen</h3>
       <ol class="proximos" start="{{ pq.siguientes[0].numero }}">
-      {% for paq in pq.siguientes %}<li>Paquete {{ paq.numero }} · {{ paq.municipio }} · {{ paq.solicitudes|length }} entrega(s)</li>{% endfor %}
+      {% for paq in pq.siguientes %}<li>Paquete {{ paq.numero }} · {{ paq.municipio }} · {{ paq.solicitudes|length|plural('entrega', 'entregas') }}</li>{% endfor %}
       </ol>
-      {% if pq.mas %}<p class="ayuda">Y {{ pq.mas }} paquete(s) más.</p>{% endif %}
+      {% if pq.mas %}<p class="ayuda">Y {{ pq.mas|plural('paquete', 'paquetes') }} más.</p>{% endif %}
     </section>
     {% endif %}
   {% else %}
-    <p class="mensaje">Este plan ya se resolvió.{% if d.resultado %} Se asignaron {{ d.resultado.asignadas|length }} entrega(s).{% endif %}</p>
+    <p class="mensaje">Este plan ya se resolvió.{% if d.resultado %} Se asignaron {{ d.resultado.asignadas|length|plural('entrega', 'entregas') }}.{% endif %}</p>
   {% endif %}
   {% else %}
   <p class="mensaje">Este plan no asigna nada: no hay inventario que sirva para las solicitudes verificadas.</p>
@@ -74,7 +74,7 @@
 
   <details class="no-imprimir">
     <summary>Cómo se calculó, lo que queda sin cubrir y opciones avanzadas</summary>
-    <p>Calculado el {{ p.creado_en.strftime('%d/%m/%Y %H:%M') }}. Cubre <strong>{{ p.necesidad_cubierta|int }} de {{ p.necesidad_total|int }}</strong> unidades pedidas.</p>
+    <p>Calculado el {{ p.creado_en|hora_co }}. Cubre <strong>{{ p.necesidad_cubierta|int }} de {{ p.necesidad_total|int }}</strong> unidades pedidas.</p>
     <h3>Qué tan bueno es</h3>
     <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
     <table>
@@ -92,7 +92,7 @@
 
     {% if d.resultado %}
     <h3>Lo aprobado hasta ahora</h3>
-    <p>{{ d.resultado.asignadas|length }} solicitud(es) asignadas{% if d.resultado.excluidas %}, {{ d.resultado.excluidas|length }} dejadas fuera{% endif %}{% if d.resultado.omitidas %}, {{ d.resultado.omitidas|length }} omitidas porque el inventario cambió{% endif %}.</p>
+    <p>{{ d.resultado.asignadas|length|plural('solicitud asignada', 'solicitudes asignadas') }}{% if d.resultado.excluidas %}, {{ d.resultado.excluidas|length }} dejadas fuera{% endif %}{% if d.resultado.omitidas %}, {{ d.resultado.omitidas|length }} omitidas porque el inventario cambió{% endif %}.</p>
     {% if d.resultado.omitidas %}<ul>{% for o in d.resultado.omitidas %}<li>Solicitud {{ o.solicitud_id }}: {{ o.motivo }}</li>{% endfor %}</ul>{% endif %}
     {% endif %}
     {% if d.motivo_rechazo %}<p>Motivo del rechazo: {{ d.motivo_rechazo }}.</p>{% endif %}
@@ -147,7 +147,7 @@
 
 {% if historial %}
 <details class="no-imprimir"><summary>Planes anteriores</summary>
-<ul>{% for h in historial %}<li>Plan {{ h.id }}: {{ estados[h.estado] }}, {{ h.necesidad_cubierta|int }} de {{ h.necesidad_total|int }} unidades ({{ h.creado_en.strftime('%d/%m/%Y %H:%M') }}).</li>{% endfor %}</ul>
+<ul>{% for h in historial %}<li>Plan {{ h.id }}: {{ estados[h.estado] }}, {{ h.necesidad_cubierta|int }} de {{ h.necesidad_total|int }} unidades ({{ h.creado_en|hora_co }}).</li>{% endfor %}</ul>
 </details>
 {% endif %}
 {% endblock %}

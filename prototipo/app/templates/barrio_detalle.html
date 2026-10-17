@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% from "_solicitud.html" import que_pidio %}
+{% from "_niveles.html" import prioridad, confianza %}
 {% block titulo %}{{ barrio.etiqueta }}{% endblock %}
 {% block contenido %}
 <h1>{{ barrio.etiqueta }}</h1>
 <p><a href="/prioridades">Volver a las prioridades</a></p>
 
-<p>Ocupa el lugar <strong>{{ p.posicion }} de {{ total }}</strong>. Prioridad: <strong>{{ pct(p.prioridad) }}</strong>. Confianza en la información: <strong>{{ pct(p.confianza) }}</strong>.</p>
+<p>Ocupa el lugar <strong>{{ p.posicion }} de {{ total }}</strong>. Prioridad: <strong>{{ prioridad(p.prioridad) }}</strong>. Confianza en la información: <strong>{{ confianza(p.confianza) }}</strong>.</p>
 {% if p.base_previa %}<p class="mensaje">Este barrio no tiene reportes confiables. Su lugar se calculó solo con la información previa (amenaza, vulnerabilidad y acceso de siempre). <strong>Conviene enviar a alguien a verificar.</strong></p>{% endif %}
 {% if p.alertas %}
 <section aria-labelledby="avisos">
@@ -15,11 +16,11 @@
 {% endif %}
 
 <h2>Por qué ocupa este lugar</h2>
-<p>La prioridad suma cinco dimensiones. Esta tabla muestra qué parte de su puntaje viene de cada una y cuánto pesa cada dimensión.</p>
+<p>La prioridad suma cinco criterios. Esta tabla muestra qué parte de su puntaje viene de cada uno y cuánto pesa cada criterio.</p>
 <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
   <caption class="ayuda">De la que más aporta a la que menos.</caption>
-  <thead><tr><th scope="col">Dimensión</th><th scope="col">Valor</th><th scope="col">Parte del puntaje</th><th scope="col">Peso</th></tr></thead>
+  <thead><tr><th scope="col">Criterio</th><th scope="col">Valor</th><th scope="col">Parte del puntaje</th><th scope="col">Peso</th></tr></thead>
   <tbody>
   {% for clave, parte in ranking %}
     <tr><th scope="row">{{ etiquetas[clave] }}</th><td>{% if clave == 'expuestas' %}{{ '{:,.0f}'.format(p.indicadores[clave]).replace(',', '.') }} personas (aprox.){% else %}{{ '%.2f'|format(p.indicadores[clave]) }} de 1{% endif %}</td><td>{{ pct(parte) }}</td><td>{{ pct(pesos[clave]) }}</td></tr>
@@ -38,7 +39,7 @@
   <tbody>
   {% for r, rol in reportes %}
     <tr><td>{{ etiqueta_rol[rol] if rol else 'Fuente oficial' }}</td><td>{{ dano[r.nivel_dano] }}</td><td>{{ r.personas_afectadas }}</td>
-        <td>{{ {'verificado': 'Verificado', 'desmentido': 'Desmentido'}.get(revision.get(r.id), 'Sin verificar') }}</td><td>{{ pct(r.confianza or 0) }}</td></tr>
+        <td>{{ {'verificado': 'Verificado', 'desmentido': 'Desmentido'}.get(revision.get(r.id), 'Sin verificar') }}</td><td>{{ confianza(r.confianza or 0) }}</td></tr>
   {% endfor %}
   </tbody>
 </table>
@@ -51,7 +52,7 @@
 <table>
   <caption class="ayuda">Lo que pidió cada una, de la más prioritaria a la menos. Sin nombres ni direcciones.</caption>
   <thead><tr><th scope="col">Qué pidió</th><th scope="col">Urgencia</th><th scope="col">Prioridad</th><th scope="col">Estado</th><th scope="col">Detalle</th></tr></thead>
-  <tbody>{% for s in solicitudes %}<tr><td>{{ que_pidio(s, 400) }}</td><td>{{ urgencia[s.urgencia] }}</td><td>{{ pct(s.prioridad) if s.prioridad is not none else '—' }}</td><td>{{ s.estado.replace('_', ' ')|capitalize }}</td><td><a href="/recorrido/solicitudes/{{ s.id }}">Ver recorrido<span class="visually-hidden"> de la solicitud {{ s.id }}</span></a></td></tr>{% endfor %}</tbody>
+  <tbody>{% for s in solicitudes %}<tr><td>{{ que_pidio(s, 400) }}</td><td>{{ urgencia[s.urgencia] }}</td><td>{{ prioridad(s.prioridad) }}</td><td>{{ s.estado.replace('_', ' ')|capitalize }}</td><td><a href="/recorrido/solicitudes/{{ s.id }}">Ver recorrido<span class="visually-hidden"> de la solicitud {{ s.id }}</span></a></td></tr>{% endfor %}</tbody>
 </table>
 </div>
 {% else %}<p>No hay solicitudes abiertas.</p>{% endif %}

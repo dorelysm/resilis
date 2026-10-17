@@ -8,12 +8,15 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Rol, TipoNecesidad, Usuario
+from app.formato import hora_co, iso_utc, nivel_confianza, nivel_prioridad, plural
 from app.simulacion import UNIDADES
 from app.seguridad import csrf_valido, token_csrf
 
 plantillas = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 plantillas.env.globals["NOMBRE_NECESIDAD"] = {t.value: t.name.replace("_", " ").capitalize() for t in TipoNecesidad}
 plantillas.env.globals["UNIDAD_NECESIDAD"] = dict(UNIDADES)
+plantillas.env.filters.update(hora_co=hora_co, iso_utc=iso_utc, plural=plural, nivel_prioridad=nivel_prioridad,
+                              nivel_confianza=nivel_confianza)
 
 ETIQUETA_ROL = {
     Rol.SOLICITANTE: "Persona que necesita ayuda",

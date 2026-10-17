@@ -1,0 +1,12 @@
+{# Prioridad y confianza como palabras (Alta, Media, Baja), con el porcentaje como detalle. #}
+{% macro prioridad(valor) -%}
+{%- if valor is none %}—{% else -%}
+<span class="nivel nivel-{{ valor|nivel_prioridad|lower }}">{{ valor|nivel_prioridad }}</span> <span class="detalle-nivel">({{ (valor * 100)|round|int }} %)</span>
+{%- endif %}
+{%- endmacro %}
+{% macro confianza(valor) -%}
+{%- if valor is none %}—{% else -%}
+<span class="nivel nivel-{{ valor|nivel_confianza|lower }}">{{ valor|nivel_confianza }}</span> <span class="detalle-nivel">({{ (valor * 100)|round|int }} %)</span>
+{%- if valor|nivel_confianza == 'Baja' %} <span class="conviene">Conviene verificar</span>{% endif %}
+{%- endif %}
+{%- endmacro %}

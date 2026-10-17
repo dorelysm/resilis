@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% from "_recorrido.html" import recorrido %}
 {% from "_solicitud.html" import que_pidio %}
+{% from "_niveles.html" import prioridad, confianza %}
 {% from "_ruta.html" import mapa_ruta %}
 {% block titulo %}Recorrido de una solicitud{% endblock %}
 {% block contenido %}
 <h1>Recorrido de la solicitud {{ sol.id }}</h1>
-<p>{{ que_pidio(sol, 600) }}<br>Para {{ sol.personas_hogar }} persona(s) en {{ barrio }}. {{ urgencia[sol.urgencia] }}.
-  {% if sol.prioridad is not none %}Prioridad {{ (sol.prioridad * 100)|round|int }} %.{% endif %}</p>
+<p>{{ que_pidio(sol, 600) }}<br>Para {{ sol.personas_hogar|plural('persona', 'personas') }} en {{ barrio }}. {{ urgencia[sol.urgencia] }}.
+  {% if sol.prioridad is not none %}Prioridad {{ prioridad(sol.prioridad) }}.{% endif %}</p>
 {{ recorrido(pasos, 'Recorrido de la solicitud') }}
 {{ mapa_ruta('/recorrido/solicitudes/' ~ sol.id ~ '/ruta.json', 'solicitud', 'Ruta de la entrega') }}
 <p><a href="/recorrido">Volver al recorrido de la ayuda</a></p>

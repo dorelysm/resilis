@@ -357,7 +357,7 @@ def crear_solicitudes(db, rng, evento, barrios, dano, usuarios, brigadistas, ver
                 solicitante_id=solicitante.id, creador_id=creador.id, barrio_id=s.id, evento_id=evento.id,
                 necesidad=necesidad, personas_hogar=hogar,
                 cantidad=hogar * UNIDAD_POR_PERSONA[necesidad] * (3 if falsa else 1),
-                descripcion=f"Necesita {necesidad.replace('_', ' ')} para {hogar} persona(s) tras el evento.",
+                descripcion=f"Necesita {necesidad.replace('_', ' ')} para {hogar} persona{"" if hogar == 1 else "s"} tras el evento.",
                 urgencia=urgencia, direccion=f"Calle {rng.integers(1, 99)} # {rng.integers(1, 99)}-{rng.integers(1, 99)}",
                 lat=la, lon=lo,
                 fuente=m.FuenteReporte.PAPEL if creador is not solicitante and rng.random() < 0.5 else m.FuenteReporte.APP,

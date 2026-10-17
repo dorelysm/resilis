@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import models as m
+from app.formato import plural
 
 VELOCIDAD_DEMO_KMH = 600.0     # velocidad simulada (unas 20 veces la real), para que la demo no dure media hora
 DURACION_MINIMA_S = 40.0
@@ -198,8 +199,9 @@ def ruta_de_donante(db: Session, donante: m.Donante | None, ahora: datetime | No
             d["entregadas"] += 1
     lista = sorted(destinos.values(), key=lambda x: x["barrio"])
     total = sum(d["entregas"] for d in lista)
-    texto = (f"Su ayuda va a {total} entrega(s) en {len(lista)} barrio(s): "
-             f"{sum(d['entregadas'] for d in lista)} entregada(s), {sum(d['en_camino'] for d in lista)} en camino."
+    texto = (f"Su ayuda va a {plural(total, 'entrega', 'entregas')} en {plural(len(lista), 'barrio', 'barrios')}: "
+             f"{plural(sum(d['entregadas'] for d in lista), 'entregada', 'entregadas')}, "
+             f"{sum(d['en_camino'] for d in lista)} en camino."
              if lista else "Todavía no hay entregas hechas con su donación.")
     return {**vacio, "origenes": list(origenes.values()), "destinos": lista, "en_camino": en_camino, "texto": texto}
 
@@ -229,4 +231,4 @@ def ruta_logistica(db: Session, equipo_id: int | None = None, ahora: datetime | 
             "resumen": {"por_salir": sum(1 for f in filas if f["etapa"] == "asignada"),
                         "en_camino": sum(1 for f in filas if f["etapa"] == "en_camino"), "entregadas": entregadas},
             "texto": (f"{sum(1 for f in filas if f['etapa'] == 'en_camino')} en camino, "
-                      f"{sum(1 for f in filas if f['etapa'] == 'asignada')} por salir, {entregadas} entregada(s).")}
+                      f"{sum(1 for f in filas if f['etapa'] == 'asignada')} por salir, {plural(entregadas, 'entregada', 'entregadas')}.")}

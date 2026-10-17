@@ -21,7 +21,7 @@
   // Una línea por barrio para la lista de quien dona: lo mismo que dice el mapa, en texto.
   function lineaDestino(d) {
     var partes = [];
-    if (d.entregadas) partes.push(d.entregadas + ' entregada(s)');
+    if (d.entregadas) partes.push(d.entregadas + (d.entregadas === 1 ? ' entregada' : ' entregadas'));
     if (d.en_camino) partes.push(d.en_camino + ' en camino');
     var otras = d.entregas - d.entregadas - d.en_camino;
     if (otras > 0) partes.push(otras + ' por salir');
@@ -42,8 +42,10 @@
   function textoActualizado(iso) {
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '';
+    // Siempre hora de Colombia (UTC-5, sin cambio de hora), igual que el resto de la aplicación.
+    var hora = new Date(d.getTime() - 5 * 3600 * 1000);
     var dos = function (n) { return (n < 10 ? '0' : '') + n; };
-    return 'Actualizado a las ' + dos(d.getHours()) + ':' + dos(d.getMinutes()) + ':' + dos(d.getSeconds()) + '.';
+    return 'Actualizado a las ' + dos(hora.getUTCHours()) + ':' + dos(hora.getUTCMinutes()) + ':' + dos(hora.getUTCSeconds()) + ' (hora de Colombia).';
   }
 
   if (typeof module !== 'undefined' && module.exports) {

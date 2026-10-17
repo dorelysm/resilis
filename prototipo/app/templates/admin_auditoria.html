@@ -2,9 +2,9 @@
 {% block titulo %}Auditoría{% endblock %}
 {% block contenido %}
 <h1>Auditoría de eventos</h1>
-<p>Cada cambio en una solicitud (verificada, asignada, entregada…) queda en una cadena. Cada evento guarda la huella del anterior, así que si alguien altera uno, se nota. La cadena no contiene datos personales.</p>
+<p>Cada cambio en una solicitud (verificada, asignada, entregada…) queda en una cadena. Cada evento guarda un código que lo une al anterior, así que si alguien altera uno, se nota. La cadena no contiene datos personales.</p>
 {% if integra %}
-  <p class="mensaje" role="status">La cadena está íntegra: {{ total }} evento(s) revisados.</p>
+  <p class="mensaje" role="status">La cadena está íntegra: {{ total|plural('evento revisado', 'eventos revisados') }}.</p>
 {% else %}
   <p class="mensaje mensaje-error" role="alert">Se detectó una alteración en el evento número {{ roto }}. Revise la base de datos.</p>
 {% endif %}
@@ -13,7 +13,7 @@
 <table>
   <caption class="ayuda">Los últimos eventos.</caption>
   <thead><tr><th scope="col">N.º</th><th scope="col">Evento</th><th scope="col">Solicitud</th><th scope="col">Hora</th></tr></thead>
-  <tbody>{% for ev in ultimos %}<tr><td>{{ ev.id }}</td><td>{{ ev.tipo.replace('_', ' ') }}</td><td>{{ ev.solicitud_id or '' }}</td><td>{{ ev.hora.strftime('%d/%m/%Y %H:%M') }}</td></tr>{% endfor %}</tbody>
+  <tbody>{% for ev in ultimos %}<tr><td>{{ ev.id }}</td><td>{{ ev.tipo.replace('_', ' ') }}</td><td>{{ ev.solicitud_id or '' }}</td><td>{{ ev.hora|hora_co }}</td></tr>{% endfor %}</tbody>
 </table>
 </div>
 {% endif %}

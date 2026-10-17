@@ -12,7 +12,7 @@
   <section class="tarjeta-recorrido" aria-labelledby="don-{{ d.id }}">
     <h2 id="don-{{ d.id }}">{% if d.monetaria %}Dinero: ${{ '{:,}'.format(d.monto or 0).replace(',', '.') }}{% else %}{{ d.cantidad }} {{ d.unidad }} de {{ tipos[d.tipo_bien]|lower }}{% endif %}
       <span class="estado">{{ d.estado.replace('_', ' ')|capitalize }}</span></h2>
-    <p class="ayuda">Registrada el {{ d.creado_en.strftime('%d/%m/%Y') }}.</p>
+    <p class="ayuda">Registrada el {{ d.creado_en|hora_co('%d/%m/%Y') }}.</p>
     {{ recorrido(pasos[d.id], 'Recorrido de la donación') }}
   </section>
   {% endfor %}

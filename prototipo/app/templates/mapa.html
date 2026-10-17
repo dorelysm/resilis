@@ -2,8 +2,14 @@
 {% block titulo %}Mapa{% endblock %}
 {% block contenido %}
 <h1>Mapa de barrios</h1>
-<p>Cada círculo es un barrio. <strong>El color dice cuánto urge atenderlo o cuánta confianza hay en su información, según lo que elija.</strong> Por defecto solo se ven los barrios donde alguien reportó daños o pidió ayuda. Los barrios sin reportes, si los muestra, se dibujan rayados: no es que estén bien, es que no sabemos. Toque o seleccione un círculo para ver los detalles.</p>
+<p>Cada círculo es un barrio y su número es el lugar en la lista: el 1 es el que más urge. Toque un círculo para ver lo que piden ahí.</p>
 
+<p id="estado-mapa" class="ayuda" role="status" aria-live="polite">Cargando los barrios…</p>
+<div id="mapa" class="mapa" role="region" aria-label="Mapa de los barrios, con su prioridad y su confianza" data-url="/mapa/datos.json"></div>
+<noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. Puede ver la misma información en la <a href="/prioridades">tabla de prioridades</a>.</p></noscript>
+
+<details class="filtros-mapa no-imprimir">
+<summary>Filtros: qué mostrar, qué se necesita y dónde</summary>
 <form class="controles-mapa no-imprimir" id="controles" onsubmit="return false">
   <fieldset>
     <legend>Qué mostrar con el color</legend>
@@ -24,10 +30,7 @@
     </select></div>
   <div class="opcion"><input type="checkbox" id="ver-sin-info" name="ver-sin-info"><label for="ver-sin-info">Mostrar también los barrios sin información (sin reportes ni solicitudes)</label></div>
 </form>
-
-<p id="estado-mapa" class="ayuda" role="status" aria-live="polite">Cargando los barrios…</p>
-<div id="mapa" class="mapa" role="region" aria-label="Mapa de los barrios, con su prioridad y su confianza" data-url="/mapa/datos.json"></div>
-<noscript><p class="mensaje mensaje-error">El mapa necesita JavaScript. Puede ver la misma información en la <a href="/prioridades">tabla de prioridades</a>.</p></noscript>
+</details>
 
 <section aria-labelledby="titulo-necesidades">
   <h2 id="titulo-necesidades">Qué se necesita en los barrios que se ven</h2>
@@ -38,7 +41,7 @@
 <section aria-labelledby="titulo-leyenda">
   <h2 id="titulo-leyenda">Cómo leer el mapa</h2>
   <ul id="leyenda" class="leyenda"></ul>
-  <p class="ayuda">El número dentro del círculo es el lugar del barrio en la lista (1 es el que más urge). El tamaño del círculo crece con la población del barrio.</p>
+  <p class="ayuda">El color dice cuánto urge atenderlo o cuánta confianza hay en su información, según lo que elija en los filtros. El tamaño del círculo crece con la población del barrio. Por defecto solo se ven los barrios donde alguien reportó daños o pidió ayuda; los barrios sin información, si los muestra, se dibujan rayados: no es que estén bien, es que no sabemos.</p>
 </section>
 <p>¿Prefiere una lista? <a href="/prioridades">Ver las prioridades en una tabla</a> (con la misma información, y con el detalle de cada barrio).</p>
 

@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% from "_solicitud.html" import que_pidio %}
+{% from "_niveles.html" import prioridad, confianza %}
 {% block titulo %}Prioridades{% endblock %}
 {% block contenido %}
 <h1>Prioridades</h1>
-<p>Qué barrios y qué personas atender primero, y qué tan confiable es la información de cada uno. La prioridad va de 0 a 100 %; la confianza también. <strong>Una confianza baja quiere decir que hay que verificar, no que el barrio no importe.</strong></p>
+<p>Qué barrios y qué personas atender primero, y qué tan confiable es la información de cada uno. La prioridad y la confianza se dicen en palabras (Alta, Media o Baja), con su porcentaje al lado. <strong>Una confianza baja quiere decir que hay que verificar, no que el barrio no importe.</strong></p>
 <form method="post" action="/prioridades/recalcular" class="no-imprimir">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="acciones">
@@ -26,7 +27,7 @@
   {% for r in municipios %}
     <tr>
       <td>{% if r.codigo == elegido %}<strong>{{ r.nombre }}</strong> <a href="/prioridades{% if not solo_con_datos %}?sin_info=si{% endif %}">(ver todos)</a>{% else %}<a href="/prioridades?municipio={{ r.codigo }}{% if not solo_con_datos %}&amp;sin_info=si{% endif %}">{{ r.nombre }}</a>{% endif %}</td>
-      <td>{{ r.barrios }}</td><td>{{ pct(r.maxima) }}</td><td>{{ pct(r.promedio) }}</td><td>{{ r.con_alerta }}</td><td>{{ r.pendientes }}</td>
+      <td>{{ r.barrios }}</td><td>{{ prioridad(r.maxima) }}</td><td>{{ prioridad(r.promedio) }}</td><td>{{ r.con_alerta }}</td><td>{{ r.pendientes }}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -45,8 +46,8 @@
       <td>{{ p.posicion }}</td>
       <td><a href="/prioridades/barrios/{{ p.barrio_id }}">{{ nombre }}</a></td>
       <td>{{ municipio }}</td>
-      <td>{{ pct(p.prioridad) }}</td>
-      <td>{{ pct(p.confianza) }}</td>
+      <td>{{ prioridad(p.prioridad) }}</td>
+      <td>{{ confianza(p.confianza) }}</td>
       <td>{% if p.alertas %}{% for a in p.alertas %}<span class="estado">{{ alertas[a] }}</span> {% endfor %}{% else %}Sin avisos{% endif %}{% if p.base_previa %}<br><span class="ayuda">Calculado solo con datos previos.</span>{% endif %}</td>
     </tr>
   {% endfor %}
@@ -64,7 +65,7 @@
   <tbody>
   {% for s, barrio, municipio in solicitudes %}
     <tr><td>{{ barrio }}</td><td>{{ municipio }}</td><td>{{ que_pidio(s, 140) }}</td><td>{{ urgencia[s.urgencia] }}</td>
-        <td>{{ pct(s.prioridad) }}</td><td>{{ pct(s.confianza or 0) }}</td>
+        <td>{{ prioridad(s.prioridad) }}</td><td>{{ confianza(s.confianza or 0) }}</td>
         <td>{{ 'Verificada' if s.estado == 'verificada' else 'Por verificar' }}</td></tr>
   {% endfor %}
   </tbody>

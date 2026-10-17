@@ -16,7 +16,7 @@
     <h2 id="titulo-{{ e.id }}">{{ persona.nombre }}</h2>
     <p>{{ barrio.etiqueta }}. {{ sol.direccion }}<br>
        Teléfono: {{ persona.telefono }}<br>
-       Lleva: {{ que_pidio(sol, 220) }}<br>Para {{ sol.personas_hogar }} persona(s).</p>
+       Lleva: {{ que_pidio(sol, 220) }}<br>Para {{ sol.personas_hogar|plural('persona', 'personas') }}.</p>
     {% if vuln %}<p><strong>Atención:</strong> {{ tipo_vuln[vuln.tipo] }}.{% if vuln.necesidad_especifica %} Necesita en especial: {{ vuln.necesidad_especifica }}.{% endif %}</p>{% endif %}
     <p>Estado: <span class="estado">{{ 'En camino' if e.estado == 'en_camino' else 'Por salir' }}</span></p>
 
