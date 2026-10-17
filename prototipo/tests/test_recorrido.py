@@ -159,3 +159,36 @@ def test_las_listas_muestran_que_pidio_cada_solicitud(app_cliente, sesiones, equ
         assert "Silla de ruedas" in pagina and "silla de ruedas quedó destruida" in pagina, ruta
     etapa = app_cliente.get("/recorrido?tipo=solicitud&etapa=verificada").text
     assert "Otro: Silla de ruedas" in etapa and "silla de ruedas quedó destruida" in etapa
+
+
+def test_un_brigadista_puede_verificar_solicitudes_de_cualquier_municipio(app_cliente, sesiones, equipo_completo, mundo):
+    """Su zona de trabajo ordena la lista (las suyas primero), pero no le impide verificar donde hace falta."""
+    with sesiones() as db:
+        db.add(m.Municipio(codigo="08433", nombre="Malambo"))
+        db.flush()
+        otro = m.Barrio(municipio_codigo="08433", nombre="El Edén", personas=500, viviendas=150)
+        db.add(otro)
+        db.flush()
+        brigadista = db.scalar(select(m.Usuario).where(m.Usuario.rol == "brigadista"))
+        brigadista.barrio_id = mundo["barrio_id"]  # trabaja en Barranquilla
+        db.commit()
+        malambo_id = otro.id
+    pedir(app_cliente, mundo)  # solicitud 1: en Barranquilla, su zona
+    entrar(app_cliente, "3100000001")
+    app_cliente.post("/solicitudes/nueva", data={
+        "barrio_id": str(malambo_id), "necesidad": "agua", "personas_hogar": "3", "urgencia": "3",
+        "descripcion": "Se cayó el techo.", "direccion": "Calle 5 # 6-7", "csrf": csrf(app_cliente, "/solicitudes/nueva")})
+    salir(app_cliente)
+
+    entrar(app_cliente, "3100000003")
+    lista = app_cliente.get("/verificacion").text
+    assert "El Edén, Malambo" in lista and "Barranquilla" in lista  # ve las de todos los municipios
+    assert lista.index("Barranquilla") < lista.index("El Edén, Malambo")  # las de su zona primero, aunque la otra es más urgente
+    assert "Su zona de trabajo es <strong>Barranquilla</strong>" in lista and "Ver solo las de Barranquilla" in lista
+    solo = app_cliente.get("/verificacion?zona=mia").text
+    assert "Barranquilla" in solo and "El Edén, Malambo" not in solo and "Ver las de todos los municipios" in solo
+    r = app_cliente.post("/verificacion/solicitudes/2", follow_redirects=False, data={
+        "resultado": "verificado", "nota": "Comprobada en la vivienda", "csrf": csrf(app_cliente, "/verificacion/solicitudes/2")})
+    assert r.status_code == 303
+    with sesiones() as db:
+        assert db.get(m.Solicitud, 2).estado == "verificada"

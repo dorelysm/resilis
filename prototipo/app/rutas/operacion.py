@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from app import models as m
@@ -49,30 +49,43 @@ def _como_utc(hora: datetime | None) -> datetime | None:
 
 
 # ----------------------------------------------------------------------------- verificación
-def _solicitudes_a_verificar(db: Session, usuario: m.Usuario):
+def _zona_de(db: Session, usuario: m.Usuario):
+    """El municipio donde trabaja una persona (el de su barrio), o None si no tiene zona."""
+    barrio = db.get(m.Barrio, usuario.barrio_id) if usuario.barrio_id else None
+    return db.get(m.Municipio, barrio.municipio_codigo) if barrio else None
+
+
+def _solicitudes_a_verificar(db: Session, usuario: m.Usuario, solo_mi_zona: bool = False):
+    """Todas las solicitudes sin verificar: cualquier brigadista puede verificar cualquiera, porque en una emergencia
+    hay que ir donde hace falta. Las de su zona de trabajo salen primero y, si lo pide, puede ver solo esas."""
     q = (select(m.Solicitud, m.Usuario.nombre, m.Barrio.etiqueta)
          .join(m.Usuario, m.Usuario.id == m.Solicitud.solicitante_id)
          .join(m.Barrio, m.Barrio.id == m.Solicitud.barrio_id)
-         .where(m.Solicitud.estado == m.EstadoSolicitud.REGISTRADA)
-         .order_by(m.Solicitud.urgencia.desc(), m.Solicitud.creado_en).limit(100))
-    if usuario.rol == m.Rol.BRIGADISTA and usuario.barrio_id:  # un brigadista revisa lo de su zona de trabajo
-        zona = db.get(m.Barrio, usuario.barrio_id)
-        q = q.where(m.Barrio.municipio_codigo == zona.municipio_codigo)
-    filas = db.execute(q).all()
+         .where(m.Solicitud.estado == m.EstadoSolicitud.REGISTRADA).limit(100))
+    zona = _zona_de(db, usuario)
+    if zona is not None and solo_mi_zona:
+        q = q.where(m.Barrio.municipio_codigo == zona.codigo)
+    orden = [m.Solicitud.urgencia.desc(), m.Solicitud.creado_en]
+    if zona is not None:
+        orden.insert(0, case((m.Barrio.municipio_codigo == zona.codigo, 0), else_=1))  # primero las de su zona
+    filas = db.execute(q.order_by(*orden)).all()
     adjuntar_detalles(db, [f[0] for f in filas])
     return filas
 
 
 @router.get("/verificacion")
-def verificacion(request: Request, db: Db, usuario: Verificador):
+def verificacion(request: Request, db: Db, usuario: Verificador, zona: str = ""):
     reportes = db.execute(
         select(m.ReporteDanos, m.Barrio.etiqueta).join(m.Barrio, m.Barrio.id == m.ReporteDanos.barrio_id)
         .where(~select(m.Verificacion.id).where(m.Verificacion.objeto_tipo == "reporte",
                                                 m.Verificacion.objeto_id == m.ReporteDanos.id).exists(),
                m.ReporteDanos.estado == "activo")
         .order_by(m.ReporteDanos.hora_captura.desc()).limit(50)).all()
-    return render(request, "verificacion.html", usuario, solicitudes=_solicitudes_a_verificar(db, usuario),
-                  reportes=reportes, necesidad=NECESIDAD, urgencia=URGENCIA, dano=DANO)
+    mi_zona = _zona_de(db, usuario)
+    solo_mi_zona = zona == "mia" and mi_zona is not None
+    return render(request, "verificacion.html", usuario,
+                  solicitudes=_solicitudes_a_verificar(db, usuario, solo_mi_zona), mi_zona=mi_zona,
+                  solo_mi_zona=solo_mi_zona, reportes=reportes, necesidad=NECESIDAD, urgencia=URGENCIA, dano=DANO)
 
 
 def _detalle_solicitud(db: Session, sol_id: int):

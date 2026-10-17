@@ -5,6 +5,11 @@
 <h1>Verificar</h1>
 
 <h2>Solicitudes por verificar</h2>
+{% if mi_zona %}
+<p>Su zona de trabajo es <strong>{{ mi_zona.nombre }}</strong>.
+  {% if solo_mi_zona %}Se muestran solo las de su zona. <a href="/verificacion">Ver las de todos los municipios</a>.
+  {% else %}Se muestran las de todos los municipios, con las de su zona primero. <a href="/verificacion?zona=mia">Ver solo las de {{ mi_zona.nombre }}</a>.{% endif %}</p>
+{% endif %}
 {% if solicitudes %}
 <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla, se puede desplazar con las flechas">
 <table>
