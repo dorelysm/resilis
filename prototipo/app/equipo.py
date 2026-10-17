@@ -3,7 +3,9 @@
 Para agregar a alguien, se añade un diccionario a la lista. `foto` es opcional (nombre de un archivo en
 /static/img/); sin foto se muestran las iniciales. `texto` es opcional: una frase sobre lo que aportó.
 """
+NOMBRE_EQUIPO = "NEXUS INNOVA 4.0"
 INSTITUCION = "Corporación Universitaria Americana"
+PAIS = "Colombia"
 
 FUNDADORES = [
     {"nombre": "Dorelys Martinez", "rol": "Líder del equipo", "texto": "", "foto": "fundador-dorelys-martinez.webp"},

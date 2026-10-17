@@ -43,6 +43,8 @@ def test_la_seccion_de_fundadores_sale_de_la_lista_del_equipo(app_cliente, monke
     for f in equipo.FUNDADORES:
         assert f["nombre"] in seccion and f["rol"] in seccion
     assert equipo.INSTITUCION in seccion
+    assert equipo.NOMBRE_EQUIPO == "NEXUS INNOVA 4.0" and equipo.PAIS == "Colombia" and equipo.INSTITUCION == "Corporación Universitaria Americana"
+    assert f"el equipo {equipo.NOMBRE_EQUIPO}, de la {equipo.INSTITUCION} ({equipo.PAIS})" in seccion
     assert "<h3>Mentoría</h3>" in seccion and "Abril Isabel García Caro" in seccion and "Mentora del equipo" in seccion
     assert seccion.index("<h3>Fundadores</h3>") < seccion.index("<h3>Mentoría</h3>")
     from app.web import plantillas
