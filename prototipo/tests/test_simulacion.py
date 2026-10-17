@@ -144,3 +144,58 @@ def test_reiniciar_borra_tambien_lo_calculado(base):
     generar(base, semilla=22, tipo="vendaval")  # reinicia por defecto: no debe chocar con las claves foráneas
     assert base.scalar(select(func.count()).select_from(m.PlanAsignacion)) == 0
     assert base.scalar(select(func.count()).select_from(m.PuntajeSector)) == 0
+
+
+def _admin_real(db, telefono="3001112233"):
+    admin = m.Usuario(nombre="Admin Real", telefono=telefono, rol="administrador", ficticio=False,
+                      password_hash="hash-de-prueba")
+    db.add(admin)
+    db.flush()
+    db.add(m.Bitacora(usuario_id=admin.id, accion="crear_usuario", objeto="usuario:99"))
+    db.commit()
+    return admin
+
+
+def test_regenerar_conserva_la_cuenta_del_administrador_real(base):
+    generar(base, semilla=31, tipo="inundacion")
+    admin = _admin_real(base)
+    viejos = {u.id for u in base.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(True)))}
+    generar(base, semilla=32, tipo="vendaval", conservar_administradores=True)
+    assert base.get(m.Usuario, admin.id) is not None and base.get(m.Usuario, admin.id).password_hash == "hash-de-prueba"
+    nuevos = {u.id for u in base.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(True)))}
+    assert nuevos and not (viejos & nuevos)  # los simulados son otros
+    assert base.scalar(select(func.count()).select_from(m.Evento)) == 1
+    assert base.scalar(select(m.Bitacora).where(m.Bitacora.usuario_id == admin.id)) is not None  # su historial sigue
+    assert base.scalar(select(func.count()).select_from(m.Municipio)) == 23  # lo real no se toca
+
+
+def test_regenerar_se_niega_si_hay_otras_cuentas_reales_y_no_borra_nada(base):
+    generar(base, semilla=33, tipo="inundacion")
+    _admin_real(base)
+    base.add(m.Usuario(nombre="Persona Real", telefono="3009998877", rol="solicitante", ficticio=False))
+    base.commit()
+    eventos = base.scalar(select(func.count()).select_from(m.Evento))
+    sectores = base.scalar(select(func.count()).select_from(m.Sector))
+    with pytest.raises(RuntimeError, match="cuentas reales"):
+        generar(base, semilla=34, tipo="vendaval", conservar_administradores=True)
+    base.rollback()
+    assert base.scalar(select(func.count()).select_from(m.Evento)) == eventos
+    assert base.scalar(select(func.count()).select_from(m.Sector)) == sectores
+
+
+def test_sin_la_opcion_un_administrador_real_tambien_bloquea(base):
+    generar(base, semilla=35, tipo="inundacion")
+    _admin_real(base)
+    with pytest.raises(RuntimeError, match="cuentas reales"):
+        generar(base, semilla=36, tipo="inundacion")  # el permiso para conservar administradores es explícito
+
+
+def test_si_regenerar_falla_a_la_mitad_no_se_pierde_lo_anterior(base):
+    """Todo ocurre en una sola transacción: si algo falla, al deshacerla queda el escenario anterior."""
+    generar(base, semilla=37, tipo="inundacion")
+    _admin_real(base)
+    antes = base.scalar(select(func.count()).select_from(m.Solicitud))
+    with pytest.raises(KeyError):
+        generar(base, semilla=38, tipo="inundacion", municipios=["99999"], conservar_administradores=True)
+    base.rollback()
+    assert base.scalar(select(func.count()).select_from(m.Solicitud)) == antes > 0

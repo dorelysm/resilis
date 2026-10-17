@@ -84,19 +84,28 @@ def _jitter(rng, lat, lon, grados=0.004):
     return float(lat + rng.normal(0, grados)), float(lon + rng.normal(0, grados))
 
 
-def limpiar_simulacion(db: Session) -> None:
+def limpiar_simulacion(db: Session, conservar_administradores: bool = False) -> None:
     """Borra todo lo simulado (RF-50), menos los municipios, las proyecciones y los datos oficiales.
 
-    Por seguridad se niega a actuar si ya hay cuentas reales: borraría sus solicitudes y sus datos."""
-    if db.scalar(select(m.Usuario.id).where(m.Usuario.ficticio.is_(False)).limit(1)) is not None:
+    Por seguridad se niega a actuar si ya hay cuentas reales: borraría sus solicitudes y sus datos.
+    Con `conservar_administradores` se permite una sola excepción: que las únicas cuentas reales sean de
+    administradores. Esas cuentas y su historial se conservan (sirve para renovar la demostración en producción
+    después de crear el primer administrador, y antes de crear otras cuentas)."""
+    reales = db.scalars(select(m.Usuario).where(m.Usuario.ficticio.is_(False))).all()
+    if reales and not (conservar_administradores and all(u.rol == m.Rol.ADMINISTRADOR for u in reales)):
         raise RuntimeError("Hay cuentas reales: reiniciar la simulación borraría datos de personas. "
                            "Use generar(..., reiniciar=False) o limpie la base de desarrollo.")
+    simulados = select(m.Usuario.id).where(m.Usuario.ficticio.is_(True))
+    db.execute(delete(m.Bitacora).where(m.Bitacora.usuario_id.is_(None) | m.Bitacora.usuario_id.in_(simulados)))
     for modelo in (
         m.MovimientoInventario, m.PlanResumen, m.PlanLinea, m.PlanAsignacion, m.Incidencia, m.Entrega,
         m.Verificacion, m.Vulnerabilidad, m.Lote, m.Donacion, m.Donante, m.CentroAcopio, m.Solicitud,
-        m.ReporteDanos, m.PuntajeSector, m.EventoAuditoria, m.Bitacora, m.Peso, m.Usuario, m.Evento, m.Sector,
+        m.ReporteDanos, m.PuntajeSector, m.EventoAuditoria, m.Peso,
     ):
         db.execute(delete(modelo))
+    db.execute(delete(m.Usuario).where(m.Usuario.ficticio.is_(True)))
+    db.execute(delete(m.Evento))
+    db.execute(delete(m.Sector))
     db.flush()
 
 
@@ -408,12 +417,12 @@ def sembrar_pesos(db: Session) -> int:
 
 # ----------------------------------------------------------------------------- orquestación
 def generar(db: Session, semilla: int = 42, tipo: str = "inundacion", municipios: list[str] | None = None,
-            reiniciar: bool = True) -> dict:
+            reiniciar: bool = True, conservar_administradores: bool = False) -> dict:
     """Genera un escenario completo. Devuelve un resumen con los conteos."""
     rng = np.random.default_rng(semilla)
     municipios = municipios or list(MUNICIPIOS)
     if reiniciar:
-        limpiar_simulacion(db)
+        limpiar_simulacion(db, conservar_administradores)
 
     sectores = crear_sectores(db, rng, municipios)
     intensidad = float(rng.uniform(0.6, 1.0))

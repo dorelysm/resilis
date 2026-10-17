@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import sessionmaker
 
 from app import main
+from app.cargas import cargar_viviendas
 from app.db import get_db
 from app.models import (
     Donacion, Donante, Evento, Municipio, ReporteDanos, Rol, Sector, Solicitud, Usuario, Vulnerabilidad, ahora,
@@ -330,3 +331,32 @@ def test_formularios_internos_son_accesibles(app_cliente, sesiones, ruta, rol, t
     revisor = _Revisor()
     revisor.feed(app_cliente.get(ruta).text)
     assert revisor.ids <= revisor.para, f"campos sin etiqueta: {revisor.ids - revisor.para}"
+
+
+def test_renovar_la_demostracion_conserva_al_administrador(sesiones, monkeypatch, capsys):
+    monkeypatch.setattr(main, "SessionLocal", sesiones)
+    with sesiones() as db:
+        cargar_viviendas(db)
+        db.add(Usuario(nombre="Admin Real", telefono="3001112233", rol=Rol.ADMINISTRADOR, ficticio=False,
+                       password_hash=hash_password(CLAVE)))
+        db.commit()
+    main.reiniciar_demo()
+    assert "DEMO renovada" in capsys.readouterr().out
+    with sesiones() as db:
+        assert db.scalar(select(func.count()).select_from(Sector)) > 100
+        assert db.scalar(select(Usuario.nombre).where(Usuario.ficticio.is_(False))) == "Admin Real"
+    main.reiniciar_demo()  # se puede repetir: vuelve a generar lo mismo (semilla fija)
+    with sesiones() as db:
+        assert db.scalar(select(func.count()).select_from(Sector)) > 100
+
+
+def test_renovar_la_demostracion_se_niega_si_hay_otras_cuentas_reales(sesiones, monkeypatch, capsys):
+    monkeypatch.setattr(main, "SessionLocal", sesiones)
+    with sesiones() as db:
+        cargar_viviendas(db)
+        db.add(Usuario(nombre="Persona Real", telefono="3009998877", rol=Rol.SOLICITANTE, ficticio=False))
+        db.commit()
+    main.reiniciar_demo()  # no lanza: la aplicación sigue arrancando
+    assert "DEMO no renovada" in capsys.readouterr().out
+    with sesiones() as db:
+        assert db.scalar(select(func.count()).select_from(Sector)) == 0 and db.scalar(select(func.count()).select_from(Usuario)) == 1

@@ -114,6 +114,8 @@ uv run python -m app.cargas                                  # antes: las vivien
 uv run python -m app.simulacion --seed 42 --tipo inundacion  # terremoto | inundacion | vendaval | deslizamiento
 ```
 
+**Renovar la demostración en producción:** con `REINICIAR_DEMO=true` en el servicio, al arrancar se genera de nuevo el escenario (semilla 42, inundación). Conserva las cuentas de administrador y su historial, y **se niega** (sin tumbar la aplicación) si ya existen otras cuentas reales, para no borrar datos de personas. Es de un solo uso: hay que quitar la variable después. Reinicia también los pesos a los valores iniciales. Lo hace en una sola transacción: si algo falla, queda lo anterior.
+
 Con la misma semilla se obtienen los mismos datos. Cada ejecución borra la simulación anterior (no toca las viviendas). La "verdad" del escenario (el daño real de cada sector, los reportes falsos y las solicitudes duplicadas) queda en la tabla `bitacora` (acción `simulacion_verdad`) para medir después qué tan bien se detectan.
 
 ## Pruebas

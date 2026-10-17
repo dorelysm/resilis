@@ -29,6 +29,8 @@ async def lifespan(app: FastAPI):
     crear_tablas()
     if get_settings().sembrar_demo:
         sembrar_demo()
+    if get_settings().reiniciar_demo:
+        reiniciar_demo()
     crear_primer_admin()
     yield
 
@@ -41,6 +43,19 @@ def sembrar_demo() -> None:
             return
         cargar_viviendas(db)
         generar(db, semilla=42, tipo="inundacion", reiniciar=False)
+
+
+def reiniciar_demo() -> None:
+    """Renueva el escenario simulado (semilla 42, inundación). Conserva las cuentas de administrador y se niega,
+    sin tumbar la aplicación, si ya hay otras cuentas reales. Todo ocurre en una sola transacción: si algo falla,
+    queda lo anterior."""
+    try:
+        with SessionLocal() as db:
+            r = generar(db, semilla=42, tipo="inundacion", reiniciar=True, conservar_administradores=True)
+        print(f"DEMO renovada: {r['sectores']} sectores, {r['reportes']} reportes, {r['solicitudes']} solicitudes, "
+              f"{r['lotes']} lotes", flush=True)
+    except RuntimeError as e:
+        print(f"DEMO no renovada: {e}", flush=True)
 
 
 def crear_primer_admin() -> None:
