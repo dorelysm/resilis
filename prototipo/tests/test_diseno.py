@@ -76,8 +76,11 @@ def test_la_barra_muestra_el_logo_y_el_nombre(app_cliente):
 def test_el_icono_de_la_pestana_se_sirve(app_cliente):
     r = app_cliente.get("/favicon.ico")
     assert r.status_code == 200 and r.headers["content-type"] == "image/x-icon" and r.content[:4] == b"\x00\x00\x01\x00"
-    for ruta in ("emblema-barra.webp", "emblema-grande.webp", "favicon-32.png", "apple-touch-icon.png"):
-        assert app_cliente.get(f"/static/img/{ruta}").status_code == 200, ruta
+    tipos = {"emblema-barra.webp": "image/webp", "emblema-grande.webp": "image/webp", "favicon-32.png": "image/png",
+             "apple-touch-icon.png": "image/png"}
+    for ruta, tipo in tipos.items():
+        r = app_cliente.get(f"/static/img/{ruta}")
+        assert r.status_code == 200 and r.headers["content-type"] == tipo, (ruta, r.headers["content-type"])
 
 
 def test_la_portada_usa_el_lema_elegido_y_no_el_del_logo(app_cliente):

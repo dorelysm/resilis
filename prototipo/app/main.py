@@ -1,4 +1,5 @@
 """Punto de entrada de la aplicación web de Resilis."""
+import mimetypes
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -57,6 +58,7 @@ def crear_primer_admin() -> None:
         db.commit()
 
 
+mimetypes.add_type("image/webp", ".webp")  # no todos los sistemas lo traen registrado
 settings = get_settings()
 app = FastAPI(title="Resilis", version="0.2.0", lifespan=lifespan)
 app.add_middleware(
