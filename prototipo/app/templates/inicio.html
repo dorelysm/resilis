@@ -90,17 +90,25 @@
     </details>
   </section>
 
-  <section class="bloque" aria-labelledby="fundadores">
-    <h2 id="fundadores">Fundadores</h2>
-    <p>Resilis lo construye un equipo de la {{ INSTITUCION }} para el Rally Latinoamericano de Innovación 2026.</p>
+  {% macro personas(lista) %}
     <ul class="fundadores">
-      {% for f in FUNDADORES %}
+      {% for f in lista %}
       <li class="fundador">
         {% if f.foto %}<img src="/static/img/{{ f.foto }}" alt="" width="96" height="96" loading="lazy">{% else %}<span class="iniciales" aria-hidden="true">{{ iniciales(f.nombre) }}</span>{% endif %}
-        <div><h3>{{ f.nombre }}</h3><p class="rol">{{ f.rol }}</p>{% if f.texto %}<p>{{ f.texto }}</p>{% endif %}</div>
+        <div><h4>{{ f.nombre }}</h4><p class="rol">{{ f.rol }}</p>{% if f.texto %}<p>{{ f.texto }}</p>{% endif %}</div>
       </li>
       {% endfor %}
     </ul>
+  {% endmacro %}
+  <section class="bloque" aria-labelledby="fundadores">
+    <h2 id="fundadores">Fundadores y mentoría</h2>
+    <p>Resilis lo construye un equipo de la {{ INSTITUCION }} para el Rally Latinoamericano de Innovación 2026.</p>
+    <h3>Fundadores</h3>
+    {{ personas(FUNDADORES) }}
+    {% if MENTORES %}
+    <h3>Mentoría</h3>
+    {{ personas(MENTORES) }}
+    {% endif %}
   </section>
 
   <p class="ayuda">Esta es una versión de demostración, con datos ficticios, en construcción.</p>

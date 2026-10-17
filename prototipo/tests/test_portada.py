@@ -11,7 +11,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 def test_la_portada_describe_el_proyecto_en_secciones_con_indice(app_cliente):
     html = app_cliente.get("/").text
     for ancla, titulo in (("que-es", "¿Qué es Resilis?"), ("como-funciona", "Cómo funciona"), ("para-quien", "Para quién es"),
-                          ("distinto", "Lo que lo distingue"), ("logo", "Qué significa nuestro logo"), ("fundadores", "Fundadores")):
+                          ("distinto", "Lo que lo distingue"), ("logo", "Qué significa nuestro logo"), ("fundadores", "Fundadores y mentoría")):
         assert f'<h2 id="{ancla}">{titulo}</h2>' in html, ancla
     for ancla in ("que-es", "como-funciona", "para-quien", "logo", "fundadores"):
         assert f'href="#{ancla}"' in html  # el índice lleva a cada sección
@@ -43,13 +43,15 @@ def test_la_seccion_de_fundadores_sale_de_la_lista_del_equipo(app_cliente, monke
     for f in equipo.FUNDADORES:
         assert f["nombre"] in seccion and f["rol"] in seccion
     assert equipo.INSTITUCION in seccion
+    assert "<h3>Mentoría</h3>" in seccion and "Abril Isabel García Caro" in seccion and "Mentora del equipo" in seccion
+    assert seccion.index("<h3>Fundadores</h3>") < seccion.index("<h3>Mentoría</h3>")
     from app.web import plantillas
 
     gente = [{"nombre": "Ana María Pérez Gómez", "rol": "Datos", "texto": "Armó el modelo de prioridad.", "foto": ""},
              {"nombre": "Luis Rojas", "rol": "Diseño", "texto": "", "foto": "luis.webp"}]
     monkeypatch.setitem(plantillas.env.globals, "FUNDADORES", gente)
     seccion = app_cliente.get("/").text.split('id="fundadores"')[1]
-    assert seccion.count('class="fundador"') == 2 and "Armó el modelo de prioridad." in seccion
+    assert seccion.count('class="fundador"') == 2 + len(equipo.MENTORES) and "Armó el modelo de prioridad." in seccion
     assert 'aria-hidden="true">AG<' in seccion  # sin foto: iniciales (primer nombre y último apellido)
     assert 'src="/static/img/luis.webp" alt=""' in seccion  # con foto, decorativa: el nombre ya está escrito al lado
 
@@ -83,7 +85,7 @@ def test_la_portada_es_accesible(app_cliente):
 
 
 def test_toda_foto_de_fundador_existe_y_es_liviana():
-    for f in equipo.FUNDADORES:
+    for f in equipo.FUNDADORES + equipo.MENTORES:
         if f["foto"]:
             archivo = RAIZ / "app" / "static" / "img" / f["foto"]
             assert archivo.exists() and archivo.stat().st_size < 100_000, f["nombre"]

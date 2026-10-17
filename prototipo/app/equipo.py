@@ -10,6 +10,11 @@ FUNDADORES = [
 ]
 
 
+MENTORES = [
+    {"nombre": "Abril Isabel García Caro", "rol": "Mentora del equipo", "texto": "", "foto": "mentora-abril-isabel-garcia-caro.webp"},
+]
+
+
 def iniciales(nombre: str) -> str:
     partes = [p for p in nombre.split() if p]
     if len(partes) > 1:

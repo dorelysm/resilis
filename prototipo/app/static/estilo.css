@@ -339,6 +339,6 @@ button.grande .icono, a.boton.grande .icono { width: 1.3em; height: 1.3em; }
 .fundador { display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-items: center; border: 2px solid var(--borde-suave); border-top: 5px solid var(--naranja-oscuro, #b34a10); border-radius: .5rem; padding: .9rem; background: #fff; }
 .fundador img, .fundador .iniciales { width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover; }
 .fundador .iniciales { display: flex; align-items: center; justify-content: center; background: var(--azul-profundo); color: #fff; font-weight: 700; font-size: 1.5rem; }
-.fundador h3 { margin: 0; font-size: 1.1rem; }
+.fundador h4 { margin: 0; font-size: 1.1rem; }
 .fundador .rol { margin: .1rem 0 0; color: var(--texto-suave); }
 @media (min-width: 48rem) { main:has(.portada) { max-width: 52rem; } }
