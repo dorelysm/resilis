@@ -19,6 +19,7 @@
 
   <nav class="indice-portada" aria-label="En esta página">
     <ul>
+      <li><a href="#historia">{{ icono('donaciones') }}La historia</a></li>
       <li><a href="#reto">{{ icono('prioridades') }}El reto</a></li>
       <li><a href="#que-es">{{ icono('otro') }}Qué es</a></li>
       <li><a href="#como-funciona">{{ icono('recorrido') }}Cómo funciona</a></li>
@@ -28,6 +29,39 @@
     </ul>
   </nav>
   <script src="/static/indice.js" defer></script>
+
+  <section class="bloque historia" aria-labelledby="historia">
+    <h2 id="historia">La historia de Daniel</h2>
+    <p class="historia-entrada">Después de un fuerte desastre natural, una comunidad puede quedar completamente devastada. Muchas familias pierden sus hogares, sus pertenencias y, en algunos casos, incluso la posibilidad de cubrir sus necesidades básicas.</p>
+    <p class="historia-pregunta">Pero, ¿qué ocurre cuando una persona necesita una ayuda específica y esa ayuda nunca llega?</p>
+    <p>Este es el caso de <strong>Daniel</strong>, un hombre con discapacidad que dependía de su silla de ruedas para movilizarse.</p>
+
+    <h3 class="capitulo"><span>1</span>La espera</h3>
+    <p>Después del desastre, su silla de ruedas quedó inservible y desplazarse por sí mismo se convirtió en una tarea prácticamente imposible.</p>
+    <p>Daniel buscó una solución y encontró en redes sociales una fundación que prometía entregar ayudas a las personas damnificadas. Confiando en esta iniciativa, llenó el formulario, explicó su situación y solicitó una silla de ruedas.</p>
+    <p>Sin embargo, pasaron los días y la silla nunca llegó.</p>
+    <blockquote class="cita">Nadie podía decirle dónde estaba su ayuda, quién la transportaba o cuándo finalmente llegaría.</blockquote>
+    <p>Daniel intentó comunicarse con la fundación, pero no recibió respuestas claras.</p>
+    <p>Esta situación demuestra que, después de una emergencia, la solidaridad por sí sola no es suficiente. También se necesitan <strong>organización, transparencia y responsabilidad</strong>.</p>
+
+    <h3 class="capitulo"><span>2</span>Nace Resilis</h3>
+    <p>A partir de esta problemática nació <strong>Resilis</strong>, una propuesta de aplicación diseñada para conectar a las personas damnificadas con las organizaciones que pueden ayudarlas.</p>
+    <p>A través de esta plataforma, las personas afectadas pueden registrar sus necesidades, mientras que las organizaciones cuentan con información organizada para identificar los casos que requieren atención prioritaria. Para establecer estas prioridades se tienen en cuenta factores como la urgencia, la vulnerabilidad y el tipo de ayuda solicitada.</p>
+
+    <h3 class="capitulo"><span>3</span>Así habría sido con Resilis</h3>
+    <ol class="camino-daniel">
+      <li><span class="icono-redondo">{{ icono('ayuda') }}</span><div><strong>Daniel pide su silla de ruedas</strong> y cuenta su situación: la solicitud dice exactamente qué necesita, no solo «ayuda».</div></li>
+      <li><span class="icono-redondo">{{ icono('verificar') }}</span><div><strong>Un brigadista verifica su caso</strong>, para que la ayuda llegue a quien de verdad la necesita.</div></li>
+      <li><span class="icono-redondo">{{ icono('prioridades') }}</span><div><strong>El sistema le da prioridad</strong> por su urgencia y su vulnerabilidad, y las organizaciones ven su caso arriba de la lista.</div></li>
+      <li><span class="icono-redondo">{{ icono('entregas') }}</span><div><strong>Daniel ve dónde está su ayuda</strong>, qué equipo la lleva y cuándo llega, y la recibe con un código de un solo uso.</div></li>
+    </ol>
+
+    <h3 class="capitulo"><span>4</span>Lo que cambia</h3>
+    <p>Porque si Daniel hubiera solicitado su silla de ruedas a través de Resilis y esta hubiera llegado a sus manos, no habría recibido solamente un objeto.</p>
+    <blockquote class="cita cita-final">Habría recuperado una parte de su independencia y una oportunidad para avanzar en su proceso de recuperación.</blockquote>
+    <p>Resilis busca construir una realidad en la que la solidaridad esté acompañada de organización, transparencia y responsabilidad. Porque ayudar no solo significa ofrecer una solución, sino también <strong>asegurarse de que esa ayuda llegue a quien realmente la necesita</strong>.</p>
+    <p class="historia-cta"><a class="boton" href="/como-funciona">{{ icono('recorrido') }}Ver cómo lo hace Resilis</a></p>
+  </section>
 
   <section class="bloque" aria-labelledby="reto">
     <h2 id="reto">El reto</h2>

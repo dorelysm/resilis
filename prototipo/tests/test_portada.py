@@ -10,10 +10,10 @@ RAIZ = Path(__file__).resolve().parent.parent
 
 def test_la_portada_describe_el_proyecto_en_secciones_con_indice(app_cliente):
     html = app_cliente.get("/").text
-    for ancla, titulo in (("reto", "El reto"), ("que-es", "¿Qué es Resilis?"), ("como-funciona", "Cómo funciona"), ("para-quien", "Para quién es"),
+    for ancla, titulo in (("historia", "La historia de Daniel"), ("reto", "El reto"), ("que-es", "¿Qué es Resilis?"), ("como-funciona", "Cómo funciona"), ("para-quien", "Para quién es"),
                           ("distinto", "Lo que lo distingue"), ("logo", "Qué significa nuestro logo"), ("fundadores", "Fundadores y Mentoría")):
         assert f'<h2 id="{ancla}">{titulo}</h2>' in html, ancla
-    for ancla in ("reto", "que-es", "como-funciona", "para-quien", "logo", "fundadores"):
+    for ancla in ("historia", "reto", "que-es", "como-funciona", "para-quien", "logo", "fundadores"):
         assert f'href="#{ancla}"' in html  # el índice lleva a cada sección
     assert html.count("<h1") == 1 and "Después de un desastre, la ayuda llega primero a quien más la necesita" in html
     assert "23 municipios y 600 barrios" in html and "datos ficticios" in html
@@ -119,7 +119,7 @@ def test_la_barra_de_secciones_son_pildoras_con_icono_y_texto_que_llevan_a_secci
     html = app_cliente.get("/").text
     barra = html.split('<nav class="indice-portada"')[1].split("</nav>")[0]
     enlaces = re.findall(r'<li><a href="#([a-z-]+)">(<svg.*?</svg>)([^<]+)</a></li>', barra, re.S)
-    assert [t for _, _, t in enlaces] == ["El reto", "Qué es", "Cómo funciona", "Para quién", "Nuestro logo", "Equipo"]
+    assert [t for _, _, t in enlaces] == ["La historia", "El reto", "Qué es", "Cómo funciona", "Para quién", "Nuestro logo", "Equipo"]
     assert all(s.count('aria-hidden="true"') == 1 for _, s, _ in enlaces)  # el icono es decorativo y el texto va siempre
     for ancla, _, _ in enlaces:
         assert f'id="{ancla}"' in html, ancla
@@ -231,3 +231,19 @@ def test_la_barra_de_secciones_cuida_la_accesibilidad_con_teclado_y_zoom():
     ancho = bloque[bloque.index("/* Pantallas anchas"):]
     assert "flex-wrap: wrap; overflow: visible" in ancho  # en pantalla ancha nada queda oculto ni a medias
     assert "mask-image: linear-gradient(90deg" in bloque  # en celular, el degradado avisa que hay más
+
+
+def test_la_historia_de_daniel_cuenta_el_problema_y_el_camino_con_resilis(app_cliente):
+    html = app_cliente.get("/").text
+    historia = html.split('<h2 id="historia">')[1].split('<section class="bloque" aria-labelledby="reto">')[0]
+    for frase in ("¿qué ocurre cuando una persona necesita una ayuda específica y esa ayuda nunca llega?", "Daniel",
+                  "silla de ruedas", "Nadie podía decirle dónde estaba su ayuda, quién la transportaba o cuándo finalmente llegaría.",
+                  "organización, transparencia y responsabilidad", "una parte de su independencia"):
+        assert frase in historia, frase
+    capitulos = re.findall(r'<h3 class="capitulo"><span>(\d)</span>([^<]+)</h3>', historia)
+    assert capitulos == [("1", "La espera"), ("2", "Nace Resilis"), ("3", "Así habría sido con Resilis"), ("4", "Lo que cambia")]
+    # lo que le faltó a Daniel (dónde, quién, cuándo) es justo lo que el sistema muestra
+    camino = historia.split('class="camino-daniel"')[1].split("</ol>")[0]
+    assert camino.count("<li>") == 4 and "dónde está su ayuda" in camino and "qué equipo la lleva" in camino and "código de un solo uso" in camino
+    assert html.index('id="historia"') < html.index('id="reto"')  # primero la emoción, después el contexto del reto
+    assert html.count("<blockquote") == 2 and 'href="/como-funciona"' in historia
